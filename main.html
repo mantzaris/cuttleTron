@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Electron App</title>
+    <link rel="stylesheet" href="main-ui.css">
+    <link rel="stylesheet" href="main-menu.css">
+    <link rel="stylesheet" href="widget-styles.css">
+    <link rel="stylesheet" href="./components/screenshot/screenshot-style.css">
+    <link rel="stylesheet" href="./components/screenrecord/screenrecord-style.css">
+</head>
+<body>
+    <div class="menu">
+        <!-- Menu content goes here -->
+        <p>Menu</p>
+    </div>
+    <div class="content">
+        <!-- Example of a component -->
+        <div class="component">
+            <div class="component-header">
+                <span class="component-title">Screen Shot</span>
+                <button id="screenshot-expand" class="toggle-button" data-action="expand">Expand</button>
+            </div>
+            <div id="screenshot" class="component-content">
+                <div id="screenshot-feed">
+                    <!-- Image goes here -->
+                    <video id="screenshot-video" alt="Screenshot">
+                    <canvas id="screenshot-canvas" style="display: none;"></canvas>
+
+                </div>
+                <div id="screenshot-selection">   
+                    <div>
+                        <label class="cool-label" for="screenshot-nameselect">Source Selection</label>
+                        <label id="screenshot-saved" class="screenshot-saved-label"></label>
+                    </div>                    
+                    <select class="cool-select select-medium" id="screenshot-nameselect">
+                        <!-- <option>Item 1</option> -->
+                        
+                    </select>
+                    <div>
+                        <button id="screenshot-snap" class="cool-button">Snap</button>
+                        <button id="screenshot-refresh" class="cool-button">Refresh Window List</button>
+                    </div>                    
+                </div>
+            </div>
+        </div>
+
+        <div class="component">
+            <div class="component-header">
+                <span class="component-title">Screen Record</span>
+                <button id="screenrecord-expand" class="toggle-button" data-action="expand">Expand</button>
+            </div>
+            <div id="screenrecord" class="component-content">
+                <div id="screenrecord-feed">
+                    <!-- Image goes here -->
+                    <video id="screenrecord-video" alt="screenrecord">
+
+                </div>
+                <div id="screenrecord-actions">
+                    <div class="screenrecord-selections">
+                        <div>
+                            <div>
+                                <label class="cool-label" for="screenrecord-nameselect">Screen Selection</label>
+                            </div>                    
+                            <select class="cool-select select-medium" id="screenrecord-nameselect">
+                                <!-- <option>Item 1</option> -->
+                                
+                            </select>
+                        </div>
+                        <div>
+                            <div>
+                                <label class="cool-label" for="screenrecord-audionameselect">Audio Sinks Selection</label>
+                            </div>                    
+                            <select class="cool-select select-medium" id="screenrecord-audionameselect">
+                                <!-- <option>Item 1</option> -->
+                                
+                            </select>
+                        </div>
+                    </div>                    
+                    <div class="screenrecord-buttons">
+                        <button id="screenrecord-record" class="cool-button" data-action="record">Record</button>
+                        <button id="screenrecord-pause" class="cool-button">Pause</button>
+                        <button id="screenrecord-cancel" class="cool-button">Cancel</button>
+                        <button id="screenrecord-save" class="cool-button">Save</button>
+                        <button id="screenrecord-refresh" class="cool-button">Refresh Lists</button>
+                        <label id="screenrecord-label" class="screenrecord-label"></label>
+                    </div>                    
+                </div>
+            </div>
+        </div>
+
+
+    
+    </div>
+    
+
+    <script type="module" src="./components/screenshot/screenshot.js"></script>
+    <script type="module" src="./components/screenrecord/screenrecord.js"></script>
+</body>
+</html>

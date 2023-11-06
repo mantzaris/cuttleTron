@@ -1,0 +1,61 @@
+.cool-button {
+  font-size: max(1.5vh, 12px); /* Adjust font size */
+  padding: 2px 2px; /* Add padding to increase button size */
+  margin-top: 2px; /* Space between button and screen selection */
+  cursor: pointer; /* Change cursor to hand on hover */
+  background-color: #3498db; /* Button color */
+  color: #fff; /* Text color */
+  border: none; /* Remove default border */
+  border-radius: 5px; /* Rounded corners */
+  transition: background-color 0.3s; /* Smooth color transition on hover */
+}
+
+.cool-button:hover {
+  background-color: #2980b9; /* Darker color on hover */
+}
+
+.cool-label {
+  display: inline-block; /* To allow padding and other block properties */
+  font-size: max(1.2vh, 12px); /* Adjust font size relative to viewport height with a minimum size */
+  padding: 5px 8px; /* Slightly less padding than the button */
+  background-color: #e7e7e7; /* Neutral background color */
+  color: #333; /* Darker text color for contrast */
+  border-radius: 3px; /* Slightly rounded corners */
+  border: 1px solid #ccc; /* Subtle border */
+  transition: background-color; /* Smooth color transition on hover */
+}
+
+.cool-select {
+  font-size: max(1.2vh, 12px); /* Adjust font size relative to viewport height with a minimum size */
+  padding: 8px 10px; /* Padding for comfort */
+  background-color: #f7f7f7; /* Light background color */
+  color: #333; /* Darker text color for contrast */
+  border-radius: 5px; /* Consistent with other design elements */
+  border: 1px solid #ccc; /* Subtle border */
+  appearance: none; /* Remove default appearance */
+  -webkit-appearance: none; /* For Safari */
+  -moz-appearance: none; /* For Firefox */
+  cursor: pointer; /* Hand cursor on hover */
+  transition: border-color 0.3s; /* Smooth border color transition on hover */
+}
+
+.cool-select:hover {
+  border-color: #b7b7b7; /* Darker border on hover for a subtle effect */
+}
+
+.cool-select:focus {
+  outline: none; /* Remove default focus outline */
+  border-color: #3498db; /* Highlight border color when focused */
+}
+
+.select-thin {
+  width: 20%; /* or whatever width you deem "thin" */
+}
+
+.select-medium {
+  width: 40%;
+}
+
+.select-wide {
+  width: 60%;
+}

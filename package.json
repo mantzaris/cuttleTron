@@ -1,0 +1,19 @@
+{
+  "name": "supersimplerec",
+  "version": "0.0.1",
+  "description": "",
+  "main": "main.cjs",
+  "type": "module",
+  "scripts": {
+    "start": "NODE_ENV=development electron main.cjs"
+  },
+  "keywords": ["fun","recording","screen"],
+  "author": "mantzaris",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^27.0.2"
+  },
+  "dependencies": {
+    "electron-reload": "^2.0.0-alpha.1"
+  }
+}

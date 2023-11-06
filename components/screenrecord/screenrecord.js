@@ -1,0 +1,350 @@
+const { ipcRenderer } = window.electron;
+const { joinPath, writeVideoSync, getDirname } = window.nodeModules;
+import { generateRandomString } from "../../utilities/utils.js";
+
+let currentDir; //set when the user expands the tool view
+let mediaRecorder;
+let recordedChunks = [];
+let isRecording = false;
+let isCancelled = false;
+let currentSavingPath_video = "";
+let currentSavingPath_audio = "";
+let currentSavingPath_final = "";
+let videoSaved = false;
+let audioSaved = false;
+
+function mergeVideoAudio() {
+  if (videoSaved && audioSaved) {
+    ipcRenderer.send("recordings-completed", {
+      videoPath: currentSavingPath_video,
+      audioPath: currentSavingPath_audio,
+      outputPath: currentSavingPath_final,
+    });
+
+    videoSaved = false;
+    audioSaved = false;
+    currentSavingPath_video = "";
+    currentSavingPath_audio = "";
+  }
+}
+
+async function setSavingFilePath() {
+  const randomString = generateRandomString(5);
+  currentSavingPath_video = await joinPath([currentDir, "..", "superSimpleRecFiles", `screenrecord_${randomString}.webm`]);
+  currentSavingPath_audio = await joinPath([currentDir, "..", "superSimpleRecFiles", `screenrecord_${randomString}.wav`]);
+  currentSavingPath_final = await joinPath([currentDir, "..", "superSimpleRecFiles", `screenrecord_${randomString}f.webm`]);
+}
+
+function writeMessageLabel(message, color) {
+  const saveMessageLabel = document.getElementById("screenrecord-label");
+  saveMessageLabel.textContent = message;
+  saveMessageLabel.style.color = color; // Color for an error message
+  saveMessageLabel.style.opacity = "1";
+
+  // Hide the message after 1 seconds
+  setTimeout(() => {
+    saveMessageLabel.style.opacity = "0";
+  }, 1000);
+}
+
+document.getElementById("screenrecord-expand").onclick = async () => {
+  const screenrecord = document.querySelector("#screenrecord");
+  const expand_button = document.getElementById("screenrecord-expand");
+
+  if (expand_button.getAttribute("data-action") === "expand") {
+    currentDir = await getDirname(); //set the __dirname each time through contextbridge
+    screenrecord.classList.add("expanded");
+    expand_button.textContent = "Hide";
+    expand_button.setAttribute("data-action", "hide");
+
+    populateScreenOptions();
+    populatAudioSinkOptions();
+  } else {
+    // does not stop the streaming/actions if active to reopen later as an option
+    screenrecord.classList.remove("expanded");
+    expand_button.textContent = "Expand";
+    expand_button.setAttribute("data-action", "expand");
+  }
+};
+
+document.getElementById("screenrecord-refresh").onclick = () => {
+  populateScreenOptions();
+  populatAudioSinkOptions();
+};
+
+//sinks are the speakers, headphones (audio endpoints) which we can grab that audio from to record
+//pulse audio (classic linux audio server) has monitors we can take audio from
+async function populatAudioSinkOptions() {
+  ipcRenderer.invoke("getSinks").then((sinks) => {
+    // returns the pactl commandline from the OS for sinks
+    let selection_sources = document.getElementById("screenrecord-audionameselect");
+    selection_sources.innerHTML = "";
+
+    const src = document.createElement("option");
+    src.innerHTML = "none";
+    src.value = "none";
+    selection_sources.appendChild(src);
+
+    for (const sink of sinks) {
+      const src = document.createElement("option");
+      src.innerHTML = sink.description;
+      src.value = sink.monitorSource;
+      selection_sources.appendChild(src);
+    }
+  });
+}
+
+// Fetch available screen capture sources and populate the dropdown
+function populateScreenOptions() {
+  ipcRenderer.invoke("getCaptureID").then((sources) => {
+    let selection_sources = document.getElementById("screenrecord-nameselect");
+    selection_sources.innerHTML = "";
+
+    const src = document.createElement("option");
+    src.innerHTML = "none";
+    src.value = "none";
+    selection_sources.appendChild(src);
+
+    for (const source of sources) {
+      const src = document.createElement("option");
+      src.innerHTML = source.name;
+      src.value = source.id;
+      selection_sources.appendChild(src);
+    }
+  });
+}
+
+function clearVideoAudio() {
+  const videoElement = document.querySelector("#screenrecord-feed video");
+  videoElement.srcObject = null; // Remove the media stream source
+  videoElement.pause(); // Pause the video playback
+
+  // Clear the selection in the dropdown(s)
+  const selectElement = document.getElementById("screenrecord-nameselect");
+  selectElement.value = "none";
+  const selectElementAudio = document.getElementById("screenrecord-audionameselect");
+  selectElementAudio.value = "none";
+}
+
+document.getElementById("screenrecord-nameselect").onchange = async () => {
+  const selectElement = document.getElementById("screenrecord-nameselect");
+  const screen_value = selectElement.value;
+
+  if (screen_value == "none") {
+    clearVideoAudio();
+    return;
+  }
+
+  let media_source;
+
+  const video_setup = {
+    mandatory: {
+      frameRate: { ideal: 16, max: 24 },
+      chromeMediaSource: "desktop",
+      chromeMediaSourceId: screen_value,
+    },
+  };
+
+  try {
+    media_source = await navigator.mediaDevices.getUserMedia({
+      video: video_setup,
+      audio: false,
+    });
+
+    // Assign the media stream to the video element to start streaming
+    const videoElement = document.querySelector("#screenrecord-feed video");
+    videoElement.srcObject = media_source;
+    videoElement.play(); // Start playing the video stream
+  } catch (error) {
+    alert("Error capturing screen:", error);
+  }
+};
+
+function startMediaRecorder() {
+  //get the screen data into the recordedChunks
+  mediaRecorder.ondataavailable = (event) => {
+    if (event.data.size > 0) {
+      recordedChunks.push(event.data);
+    }
+  };
+
+  mediaRecorder.onstop = async () => {
+    mediaRecorder = null;
+    isRecording = false;
+
+    if (isCancelled) {
+      isCancelled = false; // Reset the flag
+      recordedChunks = [];
+      return;
+    }
+
+    if (recordedChunks.length === 0) {
+      console.error("No recorded chunks available");
+      return;
+    }
+
+    const blob = new Blob(recordedChunks, { type: "video/webm" });
+    const data = await blobToArrayBuffer(blob);
+
+    try {
+      await writeVideoSync(currentSavingPath_video, data, "binary");
+      writeMessageLabel("Saved!", "green");
+      videoSaved = true;
+      mergeVideoAudio();
+    } catch (error) {
+      writeMessageLabel("Error saving recording", "red");
+      console.error("Error writing file:", error);
+    }
+
+    recordedChunks = [];
+  };
+}
+
+// select a screen to record
+document.getElementById("screenrecord-record").onclick = async () => {
+  if (mediaRecorder && mediaRecorder.state === "paused") {
+    mediaRecorder.resume();
+
+    //resume the audio recording
+    const chosenSinkMonitor = document.getElementById("screenrecord-audionameselect").value;
+    if (chosenSinkMonitor != "none") {
+      ipcRenderer.invoke("resumeAudioRecording", chosenSinkMonitor, currentSavingPath_audio);
+    }
+
+    isRecording = true;
+    writeMessageLabel("Recording", "red");
+    buttonsStateControl("screenrecord-record");
+    return;
+  }
+
+  const videoElement = document.querySelector("#screenrecord-feed video");
+  const selectElement = document.getElementById("screenrecord-nameselect");
+
+  if (videoElement.srcObject == null || selectElement.value == "none") {
+    writeMessageLabel("select screen", "gray");
+    return;
+  }
+
+  // new recording
+  const mediaStream = videoElement.srcObject;
+
+  if (mediaStream) {
+    if (!mediaRecorder) {
+      mediaRecorder = new MediaRecorder(mediaStream);
+
+      await setSavingFilePath();
+      startMediaRecorder();
+
+      mediaRecorder.start();
+      isRecording = true;
+
+      //start the audio recording
+      const chosenSinkMonitor = document.getElementById("screenrecord-audionameselect").value;
+      if (chosenSinkMonitor != "none") {
+        ipcRenderer.invoke("startAudioRecording", chosenSinkMonitor, currentSavingPath_audio);
+      }
+
+      buttonsStateControl("screenrecord-record");
+      writeMessageLabel("Recording", "red");
+    }
+  }
+};
+
+document.getElementById("screenrecord-pause").onclick = () => {
+  if (mediaRecorder && isRecording) {
+    mediaRecorder.pause();
+
+    //pause the audio recording
+    const chosenSinkMonitor = document.getElementById("screenrecord-audionameselect").value;
+    if (chosenSinkMonitor != "none") {
+      ipcRenderer.invoke("pauseAudioRecording");
+    }
+
+    isRecording = false;
+    buttonsStateControl("screenrecord-pause");
+    writeMessageLabel("Paused", "brown");
+  }
+};
+
+document.getElementById("screenrecord-cancel").onclick = () => {
+  if (mediaRecorder && (mediaRecorder.state === "recording" || mediaRecorder.state === "paused")) {
+    isCancelled = true;
+
+    mediaRecorder.stop();
+
+    //cancel the audio recording
+    const chosenSinkMonitor = document.getElementById("screenrecord-audionameselect").value;
+    if (chosenSinkMonitor != "none") {
+      ipcRenderer.invoke("cancelAudioRecording", currentSavingPath_audio);
+    }
+    currentSavingPath_audio = "";
+
+    buttonsStateControl("screenrecord-cancel");
+    writeMessageLabel("Canceled", "orange");
+  }
+};
+
+document.getElementById("screenrecord-save").onclick = async () => {
+  try {
+    if (mediaRecorder && (mediaRecorder.state === "recording" || mediaRecorder.state === "paused")) {
+      await mediaRecorder.stop();
+
+      //get the audio monitor selection value
+      const chosenSinkMonitor = document.getElementById("screenrecord-audionameselect").value;
+      if (chosenSinkMonitor != "none") {
+        await ipcRenderer.invoke("stopAudioRecording", mediaRecorder.state === "recording");
+      }
+
+      audioSaved = true;
+      mergeVideoAudio();
+
+      writeMessageLabel("Saved", "green");
+      buttonsStateControl("screenrecord-save");
+    }
+  } catch (error) {
+    console.error("Error while saving recording:", error);
+    writeMessageLabel("Error saving", "red");
+  }
+};
+
+function blobToArrayBuffer(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(blob);
+  });
+}
+
+function buttonsStateControl(buttonPressedId) {
+  const recordButton = document.getElementById("screenrecord-record");
+  const pauseButton = document.getElementById("screenrecord-pause");
+  const cancelButton = document.getElementById("screenrecord-cancel");
+  const saveButton = document.getElementById("screenrecord-save");
+
+  if (buttonPressedId == "screenrecord-record") {
+    recordButton.style.display = "none";
+    recordButton.innerText = "Record";
+    pauseButton.style.display = "block";
+    cancelButton.style.display = "block";
+    saveButton.style.display = "block";
+  } else if (buttonPressedId == "screenrecord-pause") {
+    recordButton.style.display = "block";
+    recordButton.innerText = "Resume";
+    pauseButton.style.display = "none";
+    cancelButton.style.display = "block";
+    saveButton.style.display = "block";
+  } else if (buttonPressedId == "screenrecord-cancel") {
+    recordButton.style.display = "block";
+    recordButton.innerText = "Record";
+    pauseButton.style.display = "none";
+    cancelButton.style.display = "none";
+    saveButton.style.display = "none";
+  } else if (buttonPressedId == "screenrecord-save") {
+    recordButton.style.display = "block";
+    recordButton.innerText = "Record";
+    pauseButton.style.display = "none";
+    cancelButton.style.display = "none";
+    saveButton.style.display = "none";
+  }
+}

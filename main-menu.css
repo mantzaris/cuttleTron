@@ -1,0 +1,11 @@
+.menu {
+  background-color: #2c3e50;
+  color: #ecf0f1;
+  padding: 10px;
+  text-align: center;
+  position: fixed; /* Fixed position to keep it at the top */
+  width: 100%; /* Full width */
+  top: 0; /* At the top */
+  z-index: 10; /* Ensure it's above other content */
+  height: 5vh; /* Explicitly set the height for clarity */
+}
