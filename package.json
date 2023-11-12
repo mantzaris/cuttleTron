@@ -2,10 +2,9 @@
   "name": "supersimplerec",
   "version": "0.0.1",
   "description": "",
-  "main": "main.cjs",
-  "type": "module",
+  "main": "main.js",
   "scripts": {
-    "start": "NODE_ENV=development electron main.cjs"
+    "start": "NODE_ENV=development electron main.js"
   },
   "keywords": ["fun","recording","screen"],
   "author": "mantzaris",
