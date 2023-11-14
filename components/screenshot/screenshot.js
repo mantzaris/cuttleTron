@@ -1,11 +1,12 @@
 const { ipcRenderer } = window.electron;
-const { joinPath, writeFileSync, bufferFrom, getDirname } = window.nodeModules;
+const { joinPath, writeFileSync, bufferFrom, getDirname, getTargetDir } = window.nodeModules;
 import { generateRandomString } from "../../utilities/utils.js";
 
 async function getSavingFilePath() {
-  const currentDir = await getDirname();
+  const targetDir = await getTargetDir();
+
   const randomString = generateRandomString(5);
-  return await joinPath([currentDir, "..", "superSimpleRecFiles", `screenshot__${randomString}.png`]);
+  return await joinPath([targetDir, `screenshot__${randomString}.png`]);
 }
 
 document.getElementById("screenshot-expand").onclick = () => {

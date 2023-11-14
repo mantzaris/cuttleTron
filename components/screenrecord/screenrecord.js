@@ -1,8 +1,8 @@
 const { ipcRenderer } = window.electron;
-const { joinPath, writeVideoSync, getDirname } = window.nodeModules;
+const { joinPath, writeFileSync, getDirname, getTargetDir } = window.nodeModules;
 import { generateRandomString } from "../../utilities/utils.js";
 
-let currentDir; //set when the user expands the tool view
+let targetDir;
 let mediaRecorder;
 let recordedChunks = [];
 let isRecording = false;
@@ -30,9 +30,9 @@ function mergeVideoAudio() {
 
 async function setSavingFilePath() {
   const randomString = generateRandomString(5);
-  currentSavingPath_video = await joinPath([currentDir, "..", "superSimpleRecFiles", `screenrecord_${randomString}.webm`]);
-  currentSavingPath_audio = await joinPath([currentDir, "..", "superSimpleRecFiles", `screenrecord_${randomString}.wav`]);
-  currentSavingPath_final = await joinPath([currentDir, "..", "superSimpleRecFiles", `screenrecord_${randomString}f.webm`]);
+  currentSavingPath_video = await joinPath([targetDir, `screenrecord_${randomString}.webm`]);
+  currentSavingPath_audio = await joinPath([targetDir, `screenrecord_${randomString}.wav`]);
+  currentSavingPath_final = await joinPath([targetDir, `screenrecord_${randomString}f.webm`]);
 }
 
 function writeMessageLabel(message, color) {
@@ -52,7 +52,7 @@ document.getElementById("screenrecord-expand").onclick = async () => {
   const expand_button = document.getElementById("screenrecord-expand");
 
   if (expand_button.getAttribute("data-action") === "expand") {
-    currentDir = await getDirname(); //set the __dirname each time through contextbridge
+    targetDir = await getTargetDir();
     screenrecord.classList.add("expanded");
     expand_button.textContent = "Hide";
     expand_button.setAttribute("data-action", "hide");
@@ -187,7 +187,7 @@ function startMediaRecorder() {
     const data = await blobToArrayBuffer(blob);
 
     try {
-      await writeVideoSync(currentSavingPath_video, data, "binary");
+      await writeFileSync({ filePath: currentSavingPath_video, buffer: data, encoding: "binary" });
       writeMessageLabel("Saved!", "green");
       videoSaved = true;
       mergeVideoAudio();

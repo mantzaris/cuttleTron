@@ -5,6 +5,13 @@ const { exec, spawn } = require("child_process");
 const util = require("util");
 const execAsync = util.promisify(exec);
 
+const { myWriteFileSync } = require("./main-fns/main-utilities.js");
+const { getSinkList } = require("./main-fns/audio-utilities.js");
+
+const packageJson = require("./package.json");
+const appName = packageJson.name;
+const TARGET_DIR = path.join(__dirname, "..", appName + "Files");
+
 // Enable hot-reloading for development
 if (process.env.NODE_ENV !== "production") {
   require("electron-reload")(__dirname, {
@@ -20,6 +27,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 800,
+    title: appName,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -28,6 +36,12 @@ function createWindow() {
   });
 
   mainWindow.loadFile("main.html");
+
+  if (process.env.NODE_ENV === "development") {
+    // Keep the default menu in development mode
+  } else {
+    mainWindow.setMenu(null); // remove the menu bar and deactivates devTools
+  }
 
   mainWindow.on("closed", function () {
     mainWindow = null;
@@ -49,8 +63,8 @@ app.on("activate", function () {
 });
 
 //make folders
-let main_folder_exists = fs.existsSync(path.join(__dirname, "..", "superSimpleRecFiles"));
-if (!main_folder_exists) fs.mkdirSync(path.join(__dirname, "..", "superSimpleRecFiles"));
+let main_folder_exists = fs.existsSync(TARGET_DIR);
+if (!main_folder_exists) fs.mkdirSync(TARGET_DIR);
 
 //due to nodeIntegration being false these node libraries come from here
 ipcMain.handle("getDirname", () => {
@@ -59,14 +73,11 @@ ipcMain.handle("getDirname", () => {
 ipcMain.handle("joinPath", (event, strArray) => {
   return path.join(...strArray);
 });
-ipcMain.handle("writeFileSync", (event, arg_obj) => {
-  // Ensure the data is a buffer
-  const dataBuffer = Buffer.from(arg_obj.buffer);
-  return fs.writeFileSync(arg_obj.filePath, dataBuffer);
+ipcMain.handle("getTargetDir", () => {
+  return TARGET_DIR;
 });
-ipcMain.handle("writeVideoSync", async (event, filePath, data, encoding) => {
-  const buffer = Buffer.from(data, encoding);
-  fs.writeFileSync(filePath, buffer);
+ipcMain.handle("writeFileSync", (event, arg_obj) => {
+  myWriteFileSync(event, arg_obj);
 });
 //ge the list of ids of screens or windows to record with the electron mediaRecorder (audio on linux no go)
 ipcMain.handle("getCaptureID", async (event) => {
@@ -77,32 +88,7 @@ ipcMain.handle("getCaptureID", async (event) => {
 //*trying to use any npm package to get the audio or even repos for pulse audio specifically like
 // https://github.com/mscdex/paclient worked within nodejs itself but totally failed in electronjs
 ipcMain.handle("getSinks", async (event) => {
-  try {
-    const result = await execAsync("pactl list sinks | grep -e 'Name:' -e 'Description:' -e 'Monitor Source:'");
-    const stdout = result.stdout;
-    // Parse the stdout to create a structured list of sinks
-    const lines = stdout.split("\n");
-    const sinks = [];
-    let currentSink = {};
-
-    lines.forEach((line) => {
-      const trimmedLine = line.trim();
-      if (trimmedLine.startsWith("Name:")) {
-        currentSink.name = trimmedLine.split("Name:")[1].trim();
-      } else if (trimmedLine.startsWith("Description:")) {
-        currentSink.description = trimmedLine.split("Description:")[1].trim();
-      } else if (trimmedLine.startsWith("Monitor Source:")) {
-        currentSink.monitorSource = trimmedLine.split("Monitor Source:")[1].trim();
-        sinks.push(currentSink);
-        currentSink = {};
-      }
-    });
-    //console.log(sinks);
-    return sinks;
-  } catch (error) {
-    console.error(`getSinks exec error: ${error}`);
-    throw error; // This will reject the promise returned by ipcMain.handle
-  }
+  return await getSinkList();
 });
 
 //record audio from sink monitor provided
