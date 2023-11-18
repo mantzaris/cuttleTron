@@ -14,6 +14,7 @@ let videoSaved = false;
 let audioSaved = false;
 
 function mergeVideoAudio() {
+  console.log("mergeVideoAudio", videoSaved, audioSaved);
   if (videoSaved && audioSaved) {
     ipcRenderer.send("recordings-completed", {
       videoPath: currentSavingPath_video,
@@ -163,6 +164,7 @@ document.getElementById("screenrecord-nameselect").onchange = async () => {
 function startMediaRecorder() {
   //get the screen data into the recordedChunks
   mediaRecorder.ondataavailable = (event) => {
+    console.log("ondataavailable", event.data.size);
     if (event.data.size > 0) {
       recordedChunks.push(event.data);
     }
@@ -183,11 +185,17 @@ function startMediaRecorder() {
       return;
     }
 
+    console.log("onstop", recordedChunks.length);
+
     const blob = new Blob(recordedChunks, { type: "video/webm" });
     const data = await blobToArrayBuffer(blob);
 
+    console.log("onstop", data.byteLength);
+
     try {
+      console.log("saving video to", currentSavingPath_video);
       await writeFileSync({ filePath: currentSavingPath_video, buffer: data, encoding: "binary" });
+
       writeMessageLabel("Saved!", "green");
       videoSaved = true;
       mergeVideoAudio();

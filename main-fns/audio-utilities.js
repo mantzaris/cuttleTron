@@ -97,48 +97,57 @@ async function recordingsCompleted(args) {
         console.error(stderr);
       }
     } catch {
-      console.log("cant kill the previous ffmpeg");
+      console.log("cant kill the previous ffmpeg in: recordingsCompleted");
     }
+  } else {
+    console.log("ffmpegProcess does not exist, in recordingsCompleted exiting");
   }
+
   const { videoPath, outputPath } = args;
-  const mergedAudioPath = path.join(path.dirname(videoPath), "merged_audio.wav");
+
   // Generate concat_list.txt
-  const concatList = audioSegments.map((segment) => `file '${segment}'`).join("\n");
-  const concatList_destination = path.join(path.dirname(videoPath), "concat_list.txt");
-  fs.writeFileSync(concatList_destination, concatList);
-  const merge_command = `ffmpeg -f concat -safe 0 -i ${concatList_destination} -c copy ${mergedAudioPath}`;
+  if (audioSegments.length > 0) {
+    const mergedAudioPath = path.join(path.dirname(videoPath), "merged_audio.wav");
+    const concatList = audioSegments.map((segment) => `file '${segment}'`).join("\n");
+    const concatList_destination = path.join(path.dirname(videoPath), "concat_list.txt");
+    fs.writeFileSync(concatList_destination, concatList);
+    const merge_command = `ffmpeg -f concat -safe 0 -i ${concatList_destination} -c copy ${mergedAudioPath}`;
 
-  const { stdout2, stderr2 } = await execAsync(merge_command);
-  if (stderr2) {
-    console.error(stderr2);
-  }
+    const { stdout2, stderr2 } = await execAsync(merge_command);
+    if (stderr2) {
+      console.error(stderr2);
+    }
 
-  // Merge video and concatenated audio
-  const ffmpegCombineAudVid = `ffmpeg -i ${videoPath} -i ${mergedAudioPath} -c:v copy -c:a libopus ${outputPath}`;
-  const { stdout3, stderr3 } = await execAsync(ffmpegCombineAudVid);
-  if (stderr3) {
-    console.error(stderr3);
-  }
+    // Merge video and concatenated audio
+    const ffmpegCombineAudVid = `ffmpeg -i ${videoPath} -i ${mergedAudioPath} -c:v copy -c:a libopus ${outputPath}`;
+    const { stdout3, stderr3 } = await execAsync(ffmpegCombineAudVid);
+    if (stderr3) {
+      console.error(stderr3);
+    }
 
-  // Remove the original video and merged audio after final merging
-  fs.unlink(videoPath, (err) => {
-    if (err) console.error(`Error deleting orig video file: ${err}`);
-  });
-
-  fs.unlink(mergedAudioPath, (err) => {
-    if (err) console.error(`Error deleting merged audio file: ${err}`);
-  });
-
-  // Optionally, delete the individual segment files after merging
-  audioSegments.forEach((segment) => {
-    fs.unlink(segment, (err) => {
-      if (err) console.error(`Error deleting segment file: ${err}`);
+    fs.unlink(mergedAudioPath, (err) => {
+      if (err) console.error(`Error deleting merged audio file: ${err}`);
     });
-  });
-  audioSegments = [];
-  fs.unlink(concatList_destination, (err) => {
-    if (err) console.error(`Error removing concatList text file: ${err}`);
-  });
+
+    // Optionally, delete the individual segment files after merging
+    audioSegments.forEach((segment) => {
+      fs.unlink(segment, (err) => {
+        if (err) console.error(`Error deleting segment file: ${err}`);
+      });
+    });
+    audioSegments = [];
+    fs.unlink(concatList_destination, (err) => {
+      if (err) console.error(`Error removing concatList text file: ${err}`);
+    });
+
+    // Remove the original video and merged audio after final merging
+    fs.unlink(videoPath, (err) => {
+      if (err) console.error(`Error deleting orig video file: ${err}`);
+    });
+  } else {
+    // No audio segments, original video and no audio
+    return;
+  }
 }
 
 module.exports = {
