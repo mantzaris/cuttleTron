@@ -13,8 +13,9 @@ let currentSavingPath_final = "";
 let videoSaved = false;
 let audioSaved = false;
 
+let status_str = "";
+
 function mergeVideoAudio() {
-  console.log("mergeVideoAudio", videoSaved, audioSaved);
   if (videoSaved && audioSaved) {
     ipcRenderer.send("recordings-completed", {
       videoPath: currentSavingPath_video,
@@ -26,6 +27,7 @@ function mergeVideoAudio() {
     audioSaved = false;
     currentSavingPath_video = "";
     currentSavingPath_audio = "";
+    status_str = "";
   }
 }
 
@@ -58,13 +60,29 @@ document.getElementById("screenrecord-expand").onclick = async () => {
     expand_button.textContent = "Hide";
     expand_button.setAttribute("data-action", "hide");
 
-    populateScreenOptions();
-    populatAudioSinkOptions();
+    if (status_str == "") {
+      populateScreenOptions();
+      populatAudioSinkOptions();
+    }
+
+    setRemoveHeader(false, "", false);
   } else {
     // does not stop the streaming/actions if active to reopen later as an option
     screenrecord.classList.remove("expanded");
     expand_button.textContent = "Expand";
     expand_button.setAttribute("data-action", "expand");
+
+    if (status_str == "") {
+      setRemoveHeader(false, status_str, false);
+      clearVideoAudio();
+      return;
+    }
+
+    if (status_str == "Recording" || status_str == "Paused") {
+      setRemoveHeader(true, status_str, true);
+    } else {
+      setRemoveHeader(true, status_str, false);
+    }
   }
 };
 
@@ -164,7 +182,6 @@ document.getElementById("screenrecord-nameselect").onchange = async () => {
 function startMediaRecorder() {
   //get the screen data into the recordedChunks
   mediaRecorder.ondataavailable = (event) => {
-    console.log("ondataavailable", event.data.size);
     if (event.data.size > 0) {
       recordedChunks.push(event.data);
     }
@@ -173,6 +190,7 @@ function startMediaRecorder() {
   mediaRecorder.onstop = async () => {
     mediaRecorder = null;
     isRecording = false;
+    status_str = "";
 
     if (isCancelled) {
       isCancelled = false; // Reset the flag
@@ -185,15 +203,10 @@ function startMediaRecorder() {
       return;
     }
 
-    console.log("onstop", recordedChunks.length);
-
     const blob = new Blob(recordedChunks, { type: "video/webm" });
     const data = await blobToArrayBuffer(blob);
 
-    console.log("onstop", data.byteLength);
-
     try {
-      console.log("saving video to", currentSavingPath_video);
       await writeFileSync({ filePath: currentSavingPath_video, buffer: data, encoding: "binary" });
 
       writeMessageLabel("Saved!", "green");
@@ -222,6 +235,7 @@ document.getElementById("screenrecord-record").onclick = async () => {
     isRecording = true;
     writeMessageLabel("Recording", "red");
     buttonsStateControl("screenrecord-record");
+    status_str = "Recording";
     return;
   }
 
@@ -230,6 +244,7 @@ document.getElementById("screenrecord-record").onclick = async () => {
 
   if (videoElement.srcObject == null || selectElement.value == "none") {
     writeMessageLabel("select screen", "gray");
+    status_str = "";
     return;
   }
 
@@ -254,6 +269,7 @@ document.getElementById("screenrecord-record").onclick = async () => {
 
       buttonsStateControl("screenrecord-record");
       writeMessageLabel("Recording", "red");
+      status_str = "Recording";
     }
   }
 };
@@ -271,6 +287,7 @@ document.getElementById("screenrecord-pause").onclick = () => {
     isRecording = false;
     buttonsStateControl("screenrecord-pause");
     writeMessageLabel("Paused", "brown");
+    status_str = "Paused";
   }
 };
 
@@ -289,6 +306,7 @@ document.getElementById("screenrecord-cancel").onclick = () => {
 
     buttonsStateControl("screenrecord-cancel");
     writeMessageLabel("Canceled", "orange");
+    status_str = "";
   }
 };
 
@@ -308,6 +326,7 @@ document.getElementById("screenrecord-save").onclick = async () => {
 
       writeMessageLabel("Saved", "green");
       buttonsStateControl("screenrecord-save");
+      status_str = "";
     }
   } catch (error) {
     console.error("Error while saving recording:", error);
@@ -355,4 +374,41 @@ function buttonsStateControl(buttonPressedId) {
     cancelButton.style.display = "none";
     saveButton.style.display = "none";
   }
+}
+
+function setRemoveHeader(add_message, message, flash_bool) {
+  console.log("setRemoveHeader", add_message, message, flash_bool);
+  const scroll_flash_text = "scroll-flash-text";
+  const scroll_text = "scroll-text";
+  const flash_text = "flash-text";
+
+  var container = document.getElementById("screenrecord-message");
+  var textElement = container.querySelector("div"); // Assuming the text is in a div inside the container
+
+  textElement.classList.remove(scroll_flash_text);
+  textElement.classList.remove(scroll_text);
+  textElement.classList.remove(flash_text);
+
+  if (!add_message) {
+    textElement.innerText = "";
+    return;
+  }
+
+  textElement.innerText = message;
+
+  if (textElement.scrollWidth > container.clientWidth) {
+    // Text is too long
+    if (flash_bool) {
+      textElement.classList.add(scroll_flash_text);
+    } else {
+      textElement.classList.add(scroll_text);
+    }
+  } else {
+    // Text fits in the container
+    if (flash_bool) {
+      textElement.classList.add(flash_text);
+    }
+  }
+
+  textElement.style.display = "block";
 }

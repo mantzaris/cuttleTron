@@ -1,0 +1,67 @@
+.flash-text {
+  /* animation properties */
+  -moz-animation: flash-text 3s linear infinite;
+  -webkit-animation: flash-text 3s linear infinite;
+  animation: flash-text 3s linear infinite;
+}
+
+.scroll-text {
+  /* animation properties */
+  -moz-transform: translateX(100%);
+  -webkit-transform: translateX(100%);
+  transform: translateX(100%);
+
+  -moz-animation: header-animation 15s linear infinite;
+  -webkit-animation: header-animation 15s linear infinite;
+  animation: header-animation 15s linear infinite;
+}
+
+.scroll-flash-text {
+  /* animation properties */
+  -moz-transform: translateX(100%);
+  -webkit-transform: translateX(100%);
+  transform: translateX(100%);
+
+  -moz-animation: header-animation 15s linear infinite;
+  -webkit-animation: header-animation 15s linear infinite;
+  animation: header-animation 15s linear infinite, flash-text 3s linear infinite;
+}
+
+/* for Firefox */
+@-moz-keyframes header-animation {
+  from {
+    -moz-transform: translateX(100%);
+  }
+  to {
+    -moz-transform: translateX(-100%);
+  }
+}
+
+/* for Chrome */
+@-webkit-keyframes header-animation {
+  from {
+    -webkit-transform: translateX(100%);
+  }
+  to {
+    -webkit-transform: translateX(-100%);
+  }
+}
+
+@keyframes header-animation {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes flash-text {
+  0%,
+  100% {
+    color: black;
+  }
+  50% {
+    color: red;
+  }
+}

@@ -1,3 +1,5 @@
+@import url("components/main-components/component-messages.css");
+
 body,
 html {
   margin: 0;
@@ -13,7 +15,7 @@ html {
   height: 100%;
   overflow-y: auto; /* Vertical scrolling */
   padding: 10px;
-  background-color: #93e1f5;
+  background-color: rgb(152, 152, 152);
   position: relative; /* Relative positioning to ensure it respects the fixed menu */
 }
 
@@ -35,7 +37,7 @@ html {
   justify-content: space-between;
   align-items: center;
   height: 20px;
-  background-color: #3591ce;
+  background-color: #5aade4;
   padding: 0 10px;
 }
 .component-title {
@@ -48,4 +50,14 @@ html {
   padding: 2px 8px;
   cursor: pointer;
   font-size: 12px;
+}
+
+.scroll-container {
+  width: 50%; /* Maximum width */
+  text-align: center; /* Center the text */
+  overflow: hidden; /* Allow horizontal scrolling */
+  white-space: nowrap; /* Keep the text in a single line */
+  background-color: inherit; /* Take on the background color of the parent */
+  margin: 0 auto; /* Center the div in the available space */
+  padding: 0 10px; /* Padding for aesthetics */
 }
