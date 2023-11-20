@@ -39,3 +39,9 @@
   opacity: 0; /* Start hidden */
   transition: opacity 0.5s; /* Smooth fade-in and fade-out */
 }
+
+.tooltip-inner .tooltip-image {
+  height: 100px;
+  width: 100px;
+  display: block; /* Ensures the image is not inline */
+}

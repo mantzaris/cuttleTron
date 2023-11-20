@@ -7,13 +7,18 @@
   "scripts": {
     "start": "NODE_ENV=development electron main.js"
   },
-  "keywords": ["fun","recording","screen"],
+  "keywords": [
+    "fun",
+    "recording",
+    "screen"
+  ],
   "author": "mantzaris",
   "license": "MIT",
   "devDependencies": {
     "electron": "^27.0.2"
   },
   "dependencies": {
+    "bootstrap": "^5.3.2",
     "electron-reload": "^2.0.0-alpha.1"
   }
 }

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';">
+    <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
+
     <link rel="stylesheet" href="main-ui.css">
     <link rel="stylesheet" href="components/main-components/main-menu.css">
     <link rel="stylesheet" href="widget-styles.css">
@@ -45,6 +47,10 @@
                     <div>
                         <button id="screenshot-snap" class="cool-button">Snap</button>
                         <button id="screenshot-refresh" class="cool-button">Refresh Window List</button>
+                        
+                        <button id="screenshot-refresh2" data-bs-toggle="tooltip" data-bs-html="true" title="<img src='test.png' alt='Test Image' class='tooltip-image'>">Button</button>
+
+                    
                     </div>                    
                 </div>
             </div>
@@ -105,5 +111,8 @@
 
     <script type="module" src="./components/screenshot/screenshot.js"></script>
     <script type="module" src="./components/screenrecord/screenrecord.js"></script>
+    <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+
 </body>
 </html>

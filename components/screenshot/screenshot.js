@@ -1,6 +1,13 @@
 const { ipcRenderer } = window.electron;
-const { joinPath, writeFileSync, bufferFrom, getDirname, getTargetDir } = window.nodeModules;
+const { joinPath, writeFileSync, bufferFrom, getTargetDir } = window.nodeModules;
 import { generateRandomString } from "../../utilities/utils.js";
+
+import { initializeTooltips, updateTooltipImage } from "../main-components/main-utilities.js";
+
+// Call this function on document ready or after dynamically adding tooltips
+initializeTooltips();
+
+updateTooltipImage("screenshot-refresh2", "test.png");
 
 async function getSavingFilePath() {
   const targetDir = await getTargetDir();
