@@ -377,7 +377,6 @@ function buttonsStateControl(buttonPressedId) {
 }
 
 function setRemoveHeader(add_message, message, flash_bool) {
-  console.log("setRemoveHeader", add_message, message, flash_bool);
   const scroll_flash_text = "scroll-flash-text";
   const scroll_text = "scroll-text";
   const flash_text = "flash-text";
