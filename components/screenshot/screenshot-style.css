@@ -24,11 +24,12 @@
 }
 
 #screenshot-selection {
+  width: 100%; /* Ensure full width */
   flex: 1; /* Take up the remaining space */
   display: flex;
   flex-direction: column; /* Stack the select and button vertically */
   align-items: flex-start; /* Center items horizontally */
-  justify-content: center; /* Center items vertically */
+  justify-content: flex-start; /* Center items vertically */
   gap: 2px; /* Space between select and button */
   margin-left: 10px;
 }
@@ -40,8 +41,35 @@
   transition: opacity 0.5s; /* Smooth fade-in and fade-out */
 }
 
+#screenshot-screen-dropdown-menu {
+  width: 50%;
+  max-height: 60px; /* Adjust this value as needed */
+  overflow-y: auto; /* Adds a vertical scrollbar */
+}
+
+/* for the screen shot selection of screen feed */
+#screenshot-screen-select-btn {
+  font-size: 12px; /* Set font size */
+  padding: 5px 10px; /* Reduce padding, adjust as needed */
+  width: 60%; /* Set width relative to parent */
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden; /* Hide overflow text */
+  text-overflow: ellipsis; /* Add ellipsis for overflow text */
+  text-align: left;
+  padding: 3px;
+}
+
 .tooltip-inner .tooltip-image {
   height: 100px;
   width: 100px;
-  display: block; /* Ensures the image is not inline */
+  display: block;
+}
+
+#screenshot-selectionUL {
+  /* width: 60%; */
+  font-size: 11px; /* Adjust the font size as needed */
+  white-space: nowrap; /* Prevent text from wrapping to the next line */
+  overflow: hidden; /* Hide overflow text */
+  text-overflow: ellipsis; /* Add ellipsis for overflow text */
+  padding: 0px 0px; /* Adjust padding to reduce space, modify as needed */
 }

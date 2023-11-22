@@ -1,5 +1,5 @@
-export function initializeTooltips() {
-  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+export function initializeTooltips(className) {
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll(className));
   tooltipTriggerList.map(function (tooltipTriggerEl) {
     return new bootstrap.Tooltip(tooltipTriggerEl, {
       html: true, // Ensure HTML content is allowed

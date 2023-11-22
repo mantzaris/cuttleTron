@@ -4,11 +4,6 @@ import { generateRandomString } from "../../utilities/utils.js";
 
 import { initializeTooltips, updateTooltipImage } from "../main-components/main-utilities.js";
 
-// Call this function on document ready or after dynamically adding tooltips
-initializeTooltips();
-
-updateTooltipImage("screenshot-refresh2", "test.png");
-
 async function getSavingFilePath() {
   const targetDir = await getTargetDir();
 
@@ -37,20 +32,48 @@ document.getElementById("screenshot-expand").onclick = () => {
 // Fetch available screen capture sources and populate the dropdown
 function populateScreenOptions() {
   ipcRenderer.invoke("getCaptureID").then((sources) => {
-    let selection_sources = document.getElementById("screenshot-nameselect");
-    selection_sources.innerHTML = "";
+    let dropdownMenu = document.getElementById("screenshot-selectionUL");
+    dropdownMenu.innerHTML = "";
 
-    const src = document.createElement("option");
-    src.innerHTML = "none";
-    src.value = "none";
-    selection_sources.appendChild(src);
+    // Add 'None' option
+    let noneItem = document.createElement("li");
+    let noneAnchor = document.createElement("a");
+    noneAnchor.classList.add("dropdown-item");
+    noneAnchor.href = "#";
+    noneAnchor.textContent = "none";
+    noneAnchor.addEventListener("click", function (event) {
+      event.preventDefault();
+      document.getElementById("screenshot-screen-select-btn").textContent = this.textContent;
+      // Add any additional actions for 'None' selection here
+    });
+    noneItem.appendChild(noneAnchor);
+    dropdownMenu.appendChild(noneItem);
 
-    for (const source of sources) {
-      const src = document.createElement("option");
-      src.innerHTML = source.name;
-      src.value = source.id;
-      selection_sources.appendChild(src);
-    }
+    sources.forEach((source) => {
+      let listItem = document.createElement("li");
+      let anchor = document.createElement("a");
+      anchor.classList.add("dropdown-item");
+      anchor.classList.add("class", "screenrecorder-screen-tooltip");
+      anchor.href = "#";
+      anchor.textContent = source.name;
+      anchor.setAttribute("data-bs-toggle", "tooltip");
+      anchor.setAttribute("title", `<img src='${source.thumbnail}' alt='Thumbnail'>`);
+      anchor.setAttribute("data-tooltip-init", "false"); // Custom attribute to control tooltip initialization
+
+      // Attach click event listener to each dropdown item
+      anchor.addEventListener("click", function (event) {
+        event.preventDefault();
+
+        // Update the button text to reflect the selected item
+        document.getElementById("screenshot-screen-select-btn").textContent = this.textContent;
+        // Perform any additional actions needed for the selection
+      });
+
+      listItem.appendChild(anchor);
+      dropdownMenu.appendChild(listItem);
+    });
+
+    initializeTooltips(".screenrecorder-screen-tooltip");
   });
 }
 
@@ -64,12 +87,12 @@ function clearVideo() {
   videoElement.pause(); // Pause the video playback
 
   // Clear the selection in the dropdown
-  const selectElement = document.getElementById("screenshot-nameselect");
+  const selectElement = document.getElementById("screenshot-screen-select-btn");
   selectElement.value = "none";
 }
 
-document.getElementById("screenshot-nameselect").onchange = async () => {
-  const selectElement = document.getElementById("screenshot-nameselect");
+document.getElementById("screenshot-screen-select-btn").onchange = async () => {
+  const selectElement = document.getElementById("screenshot-screen-select-btn");
   const screen_value = selectElement.value;
 
   if (screen_value == "none") {
@@ -105,7 +128,7 @@ document.getElementById("screenshot-nameselect").onchange = async () => {
 // select a screen to snap
 document.getElementById("screenshot-snap").onclick = async () => {
   const videoElement = document.querySelector("#screenshot-feed video");
-  const selectElement = document.getElementById("screenshot-nameselect");
+  const selectElement = document.getElementById("screenshot-screen-select-btn");
 
   if (videoElement.srcObject == null || selectElement.value == "none") {
     writeMessageLabel("select screen feed", "gray");

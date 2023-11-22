@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
     <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
 
     <link rel="stylesheet" href="main-ui.css">
@@ -39,18 +39,19 @@
                     <div>
                         <label class="cool-label" for="screenshot-nameselect">Source Selection</label>
                         <label id="screenshot-saved" class="screenshot-saved-label"></label>
-                    </div>                    
-                    <select class="cool-select select-medium" id="screenshot-nameselect">
-                        <!-- <option>Item 1</option> -->
-                        
-                    </select>
+                    </div>
+                    <div id="screenshot-screen-dropdown-menu">
+                        <button class="btn btn-secondary dropdown-toggle " type="button" id="screenshot-screen-select-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                            none
+                        </button>
+                        <ul id="screenshot-selectionUL" class="dropdown-menu " aria-labelledby="screenshot-screen-select-btn">
+                            <!-- <li><a class="dropdown-item" href="#">Action</a></li> -->
+                        </ul>
+                    </div>
+                    
                     <div>
                         <button id="screenshot-snap" class="cool-button">Snap</button>
-                        <button id="screenshot-refresh" class="cool-button">Refresh Window List</button>
-                        
-                        <button id="screenshot-refresh2" data-bs-toggle="tooltip" data-bs-html="true" title="<img src='test.png' alt='Test Image' class='tooltip-image'>">Button</button>
-
-                    
+                        <button id="screenshot-refresh" class="cool-button">Refresh Window List</button>                    
                     </div>                    
                 </div>
             </div>
