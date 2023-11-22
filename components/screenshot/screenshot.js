@@ -2,7 +2,7 @@ const { ipcRenderer } = window.electron;
 const { joinPath, writeFileSync, bufferFrom, getTargetDir } = window.nodeModules;
 import { generateRandomString } from "../../utilities/utils.js";
 
-import { initializeTooltips, updateTooltipImage } from "../main-components/main-utilities.js";
+import { initializeTooltips } from "../main-components/main-utilities.js";
 
 async function getSavingFilePath() {
   const targetDir = await getTargetDir();
@@ -44,7 +44,7 @@ function populateScreenOptions() {
     noneAnchor.addEventListener("click", function (event) {
       event.preventDefault();
       document.getElementById("screenshot-screen-select-btn").textContent = this.textContent;
-      screenshotSelection(none); // Call the handler function
+      screenshotSelection("none"); // Call the handler function
     });
     noneItem.appendChild(noneAnchor);
     dropdownMenu.appendChild(noneItem);
@@ -53,7 +53,7 @@ function populateScreenOptions() {
       let listItem = document.createElement("li");
       let anchor = document.createElement("a");
       anchor.classList.add("dropdown-item");
-      anchor.classList.add("class", "screenrecorder-screen-tooltip");
+      anchor.classList.add("class", "screenshot-screen-tooltip");
       anchor.href = "#";
       anchor.textContent = source.name;
       anchor.setAttribute("data-bs-toggle", "tooltip");
@@ -73,7 +73,7 @@ function populateScreenOptions() {
       dropdownMenu.appendChild(listItem);
     });
 
-    initializeTooltips(".screenrecorder-screen-tooltip");
+    initializeTooltips(".screenshot-screen-tooltip");
   });
 }
 
@@ -119,7 +119,7 @@ function clearVideo() {
 
   // Clear the selection in the dropdown
   const selectElement = document.getElementById("screenshot-screen-select-btn");
-  selectElement.value = "none";
+  selectElement.textContent = "none";
 }
 
 // select a screen to snap

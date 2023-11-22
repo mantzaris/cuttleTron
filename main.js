@@ -84,12 +84,15 @@ ipcMain.handle("writeFileSync", (event, arg_obj) => {
 });
 //ge the list of ids of screens or windows to record with the electron mediaRecorder (audio on linux no go)
 ipcMain.handle("getCaptureID", async (event) => {
-  const sources = await desktopCapturer.getSources({ types: ["window", "screen"] });
-  return sources.map((source) => ({
+  const screen_sources = await desktopCapturer.getSources({ types: ["window", "screen"] });
+
+  const mappedScreenSources = screen_sources.map((source) => ({
     id: source.id,
     name: source.name,
     thumbnail: source.thumbnail.toDataURL({ scaleFactor: 0.25 }),
   }));
+
+  return mappedScreenSources;
 });
 
 //*trying to use any npm package to get the audio or even repos for pulse audio specifically like

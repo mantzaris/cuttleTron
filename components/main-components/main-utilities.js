@@ -15,11 +15,23 @@ export function updateTooltipImage(elementId, newImagePath) {
   }
 
   // Set the new title with the image
-  element.setAttribute("data-bs-original-title", `<img src='${newImagePath}' alt='Tooltip Image' class='tooltip-image'>`);
+  element.setAttribute("data-bs-original-title", `<img src='${newImagePath}' alt='Tooltip Image' class='screenshot-tooltip-image'>`);
 
   // Update the tooltip if it's already shown
   const bootstrapTooltip = bootstrap.Tooltip.getInstance(element);
   if (bootstrapTooltip) {
     bootstrapTooltip.update();
   }
+}
+
+export async function getWebcamSources() {
+  const mediaDevices = await navigator.mediaDevices.enumerateDevices();
+  return mediaDevices
+    .filter((device) => device.kind === "videoinput")
+    .map((device) => ({
+      id: device.deviceId,
+      name: device.label,
+      thumbnail: "", // Webcams don't have thumbnails
+      type: "webcam",
+    }));
 }

@@ -59,14 +59,14 @@
   padding: 3px;
 }
 
-.tooltip-inner .tooltip-image {
+.screenshot-tooltip-inner .screenshot-tooltip-image {
   height: 100px;
   width: 100px;
   display: block;
 }
 
 #screenshot-selectionUL {
-  /* width: 60%; */
+  width: 30%;
   font-size: 11px; /* Adjust the font size as needed */
   white-space: nowrap; /* Prevent text from wrapping to the next line */
   overflow: hidden; /* Hide overflow text */

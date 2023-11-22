@@ -2,6 +2,8 @@ const { ipcRenderer } = window.electron;
 const { joinPath, writeFileSync, getDirname, getTargetDir } = window.nodeModules;
 import { generateRandomString } from "../../utilities/utils.js";
 
+import { initializeTooltips, getWebcamSources } from "../main-components/main-utilities.js";
+
 let targetDir;
 let mediaRecorder;
 let recordedChunks = [];
@@ -115,21 +117,59 @@ async function populatAudioSinkOptions() {
 
 // Fetch available screen capture sources and populate the dropdown
 function populateScreenOptions() {
-  ipcRenderer.invoke("getCaptureID").then((sources) => {
-    let selection_sources = document.getElementById("screenrecord-nameselect");
-    selection_sources.innerHTML = "";
+  ipcRenderer.invoke("getCaptureID").then(async (sources) => {
+    let dropdownMenu = document.getElementById("screenrecord-selectionUL");
+    dropdownMenu.innerHTML = "";
 
-    const src = document.createElement("option");
-    src.innerHTML = "none";
-    src.value = "none";
-    selection_sources.appendChild(src);
+    // Add 'None' option
+    let noneItem = document.createElement("li");
+    let noneAnchor = document.createElement("a");
+    noneAnchor.classList.add("dropdown-item");
+    noneAnchor.href = "#";
+    noneAnchor.textContent = "none";
+    noneAnchor.addEventListener("click", function (event) {
+      event.preventDefault();
+      document.getElementById("screenrecord-screen-select-btn").textContent = this.textContent;
+      screenrecordSelection("none"); // Call the handler function
+    });
+    noneItem.appendChild(noneAnchor);
+    dropdownMenu.appendChild(noneItem);
 
-    for (const source of sources) {
-      const src = document.createElement("option");
-      src.innerHTML = source.name;
-      src.value = source.id;
-      selection_sources.appendChild(src);
-    }
+    const webcamSources = await getWebcamSources();
+    const allSources = sources.concat(webcamSources);
+
+    allSources.forEach((source) => {
+      let listItem = document.createElement("li");
+      let anchor = document.createElement("a");
+      anchor.classList.add("dropdown-item");
+      anchor.classList.add("class", "screenrecorder-screen-tooltip");
+      anchor.href = "#";
+      anchor.textContent = source.name;
+      anchor.setAttribute("data-bs-toggle", "tooltip");
+
+      if ("type" in source && source.type == "webcam") {
+        console.log(source);
+        anchor.setAttribute("title", `no thumbnail for webcam`);
+      } else {
+        anchor.setAttribute("title", `<img src='${source.thumbnail}' alt='Thumbnail'>`);
+      }
+
+      anchor.setAttribute("data-tooltip-init", "false"); // Custom attribute to control tooltip initialization
+
+      // Attach click event listener to each dropdown item
+      anchor.addEventListener("click", function (event) {
+        event.preventDefault();
+
+        // Update the button text to reflect the selected item
+        document.getElementById("screenrecord-screen-select-btn").textContent = this.textContent;
+        screenrecordSelection(source.id); // Call the handler function
+      });
+
+      listItem.appendChild(anchor);
+      dropdownMenu.appendChild(listItem);
+    });
+
+    initializeTooltips(".screenrecorder-screen-tooltip");
   });
 }
 
@@ -139,37 +179,37 @@ function clearVideoAudio() {
   videoElement.pause(); // Pause the video playback
 
   // Clear the selection in the dropdown(s)
-  const selectElement = document.getElementById("screenrecord-nameselect");
-  selectElement.value = "none";
+  const selectElement = document.getElementById("screenrecord-screen-select-btn");
+  selectElement.textContent = "none";
   const selectElementAudio = document.getElementById("screenrecord-audionameselect");
   selectElementAudio.value = "none";
 }
 
-document.getElementById("screenrecord-nameselect").onchange = async () => {
-  const selectElement = document.getElementById("screenrecord-nameselect");
-  const screen_value = selectElement.value;
-  console.log("screen_value:", screen_value);
-  if (screen_value == "none") {
+//document.getElementById("screenrecord-nameselect").onchange = async () => {
+async function screenrecordSelection(screen_id) {
+  if (screen_id == "none") {
     clearVideoAudio();
     return;
   }
 
   let media_source;
 
+  // FIX FOR WEBCAM IT IS NOT THE SAME AS THE SCREEN CAPTURE
   const video_setup = {
     mandatory: {
       frameRate: { ideal: 16, max: 24 },
       chromeMediaSource: "desktop",
-      chromeMediaSourceId: screen_value,
+      chromeMediaSourceId: screen_id,
     },
   };
 
   try {
+    console.log(video_setup);
     media_source = await navigator.mediaDevices.getUserMedia({
       video: video_setup,
       audio: false,
     });
-
+    console.log("media_source", media_source);
     // Assign the media stream to the video element to start streaming
     const videoElement = document.querySelector("#screenrecord-feed video");
     videoElement.srcObject = media_source;
@@ -177,7 +217,7 @@ document.getElementById("screenrecord-nameselect").onchange = async () => {
   } catch (error) {
     alert("Error capturing screen:", error);
   }
-};
+}
 
 function startMediaRecorder() {
   //get the screen data into the recordedChunks
@@ -240,9 +280,9 @@ document.getElementById("screenrecord-record").onclick = async () => {
   }
 
   const videoElement = document.querySelector("#screenrecord-feed video");
-  const selectElement = document.getElementById("screenrecord-nameselect");
+  const selectElement = document.getElementById("screenrecord-screen-select-btn");
 
-  if (videoElement.srcObject == null || selectElement.value == "none") {
+  if (videoElement.srcObject == null || selectElement.textContent == "none") {
     writeMessageLabel("select screen", "gray");
     status_str = "";
     return;
