@@ -44,7 +44,7 @@ function populateScreenOptions() {
     noneAnchor.addEventListener("click", function (event) {
       event.preventDefault();
       document.getElementById("screenshot-screen-select-btn").textContent = this.textContent;
-      // Add any additional actions for 'None' selection here
+      screenshotSelection(none); // Call the handler function
     });
     noneItem.appendChild(noneAnchor);
     dropdownMenu.appendChild(noneItem);
@@ -66,7 +66,7 @@ function populateScreenOptions() {
 
         // Update the button text to reflect the selected item
         document.getElementById("screenshot-screen-select-btn").textContent = this.textContent;
-        // Perform any additional actions needed for the selection
+        screenshotSelection(source.id); // Call the handler function
       });
 
       listItem.appendChild(anchor);
@@ -81,21 +81,8 @@ document.getElementById("screenshot-refresh").onclick = () => {
   populateScreenOptions();
 };
 
-function clearVideo() {
-  const videoElement = document.querySelector("#screenshot-feed video");
-  videoElement.srcObject = null; // Remove the media stream source
-  videoElement.pause(); // Pause the video playback
-
-  // Clear the selection in the dropdown
-  const selectElement = document.getElementById("screenshot-screen-select-btn");
-  selectElement.value = "none";
-}
-
-document.getElementById("screenshot-screen-select-btn").onchange = async () => {
-  const selectElement = document.getElementById("screenshot-screen-select-btn");
-  const screen_value = selectElement.value;
-
-  if (screen_value == "none") {
+async function screenshotSelection(screen_id) {
+  if (screen_id == "none") {
     clearVideo();
     return;
   }
@@ -106,7 +93,7 @@ document.getElementById("screenshot-screen-select-btn").onchange = async () => {
     mandatory: {
       frameRate: { ideal: 16, max: 24 },
       chromeMediaSource: "desktop",
-      chromeMediaSourceId: screen_value,
+      chromeMediaSourceId: screen_id,
     },
   };
 
@@ -123,7 +110,17 @@ document.getElementById("screenshot-screen-select-btn").onchange = async () => {
   } catch (error) {
     alert("Error capturing screen:", error);
   }
-};
+}
+
+function clearVideo() {
+  const videoElement = document.querySelector("#screenshot-feed video");
+  videoElement.srcObject = null; // Remove the media stream source
+  videoElement.pause(); // Pause the video playback
+
+  // Clear the selection in the dropdown
+  const selectElement = document.getElementById("screenshot-screen-select-btn");
+  selectElement.value = "none";
+}
 
 // select a screen to snap
 document.getElementById("screenshot-snap").onclick = async () => {

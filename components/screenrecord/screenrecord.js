@@ -148,7 +148,7 @@ function clearVideoAudio() {
 document.getElementById("screenrecord-nameselect").onchange = async () => {
   const selectElement = document.getElementById("screenrecord-nameselect");
   const screen_value = selectElement.value;
-
+  console.log("screen_value:", screen_value);
   if (screen_value == "none") {
     clearVideoAudio();
     return;
