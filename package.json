@@ -5,7 +5,10 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "start": "NODE_ENV=development electron main.js"
+    "start": "concurrently \"npm run watch-ts\" \"npm run watch-electron\"",
+    "watch-ts": "nodemon",
+    "watch-electron": "NODE_ENV=development electron .",
+    "build": "tsc"
   },
   "keywords": [
     "fun",
@@ -15,7 +18,10 @@
   "author": "mantzaris",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^27.0.2"
+    "concurrently": "^8.2.2",
+    "electron": "^27.0.2",
+    "nodemon": "^3.0.1",
+    "typescript": "^5.3.2"
   },
   "dependencies": {
     "bootstrap": "^5.3.2",
