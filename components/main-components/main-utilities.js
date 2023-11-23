@@ -26,7 +26,7 @@ export function updateTooltipImage(elementId, newImagePath) {
 
 export async function getWebcamSources() {
   const mediaDevices = await navigator.mediaDevices.enumerateDevices();
-  console.log("mediaDevices: ", mediaDevices);
+
   return mediaDevices
     .filter((device) => device.kind === "videoinput")
     .map((device) => ({

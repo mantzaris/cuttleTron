@@ -2,7 +2,7 @@ const { ipcRenderer } = window.electron;
 const { joinPath, writeFileSync, bufferFrom, getTargetDir } = window.nodeModules;
 import { generateRandomString } from "../../utilities/utils.js";
 
-import { initializeTooltips } from "../main-components/main-utilities.js";
+import { initializeTooltips, getWebcamSources } from "../main-components/main-utilities.js";
 
 async function getSavingFilePath() {
   const targetDir = await getTargetDir();
@@ -31,7 +31,7 @@ document.getElementById("screenshot-expand").onclick = () => {
 
 // Fetch available screen capture sources and populate the dropdown
 function populateScreenOptions() {
-  ipcRenderer.invoke("getCaptureID").then((sources) => {
+  ipcRenderer.invoke("getCaptureID").then(async (sources) => {
     let dropdownMenu = document.getElementById("screenshot-selectionUL");
     dropdownMenu.innerHTML = "";
 
@@ -44,12 +44,15 @@ function populateScreenOptions() {
     noneAnchor.addEventListener("click", function (event) {
       event.preventDefault();
       document.getElementById("screenshot-screen-select-btn").textContent = this.textContent;
-      screenshotSelection("none"); // Call the handler function
+      screenshotSelection({ type: "none" }); // Call the handler function
     });
     noneItem.appendChild(noneAnchor);
     dropdownMenu.appendChild(noneItem);
 
-    sources.forEach((source) => {
+    const webcamSources = await getWebcamSources();
+    const allSources = sources.concat(webcamSources);
+
+    allSources.forEach((source) => {
       let listItem = document.createElement("li");
       let anchor = document.createElement("a");
       anchor.classList.add("dropdown-item");
@@ -57,7 +60,13 @@ function populateScreenOptions() {
       anchor.href = "#";
       anchor.textContent = source.name;
       anchor.setAttribute("data-bs-toggle", "tooltip");
-      anchor.setAttribute("title", `<img src='${source.thumbnail}' alt='Thumbnail'>`);
+
+      if ("type" in source && source.type == "webcam") {
+        anchor.setAttribute("title", `no thumbnail for webcam`);
+      } else {
+        anchor.setAttribute("title", `<img src='${source.thumbnail}' alt='Thumbnail'>`);
+      }
+
       anchor.setAttribute("data-tooltip-init", "false"); // Custom attribute to control tooltip initialization
 
       // Attach click event listener to each dropdown item
@@ -66,7 +75,7 @@ function populateScreenOptions() {
 
         // Update the button text to reflect the selected item
         document.getElementById("screenshot-screen-select-btn").textContent = this.textContent;
-        screenshotSelection(source.id); // Call the handler function
+        screenshotSelection(source); // Call the handler function
       });
 
       listItem.appendChild(anchor);
@@ -81,30 +90,39 @@ document.getElementById("screenshot-refresh").onclick = () => {
   populateScreenOptions();
 };
 
-async function screenshotSelection(screen_id) {
-  if (screen_id == "none") {
+async function screenshotSelection(source) {
+  if ("type" in source && source.type == "none") {
     clearVideo();
     return;
   }
 
-  let media_source;
+  let videoConstraints;
 
-  const video_setup = {
-    mandatory: {
+  if ("type" in source && source.type == "webcam") {
+    videoConstraints = {
+      deviceId: source.id, // Use the webcam's device ID
       frameRate: { ideal: 16, max: 24 },
-      chromeMediaSource: "desktop",
-      chromeMediaSourceId: screen_id,
-    },
-  };
+      // You can add more constraints here, like width, height, etc.
+    };
+  } else {
+    videoConstraints = {
+      mandatory: {
+        frameRate: { ideal: 16, max: 24 },
+        chromeMediaSource: "desktop",
+        chromeMediaSourceId: source.id,
+      },
+    };
+  }
 
   try {
+    let media_source;
+    const videoElement = document.querySelector("#screenshot-feed video");
+
     media_source = await navigator.mediaDevices.getUserMedia({
-      video: video_setup,
+      video: videoConstraints,
       audio: false,
     });
 
-    // Assign the media stream to the video element to start streaming
-    const videoElement = document.querySelector("#screenshot-feed video");
     videoElement.srcObject = media_source;
     videoElement.play(); // Start playing the video stream
   } catch (error) {
