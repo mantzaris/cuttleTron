@@ -10,14 +10,14 @@ let audioSegments = []; //holds the segments of audio from the pauses and resume
 
 async function getSinkList() {
   try {
-    const result = await execAsync("pactl list sinks | grep -e 'Name:' -e 'Description:' -e 'Monitor Source:'");
-    const stdout = result.stdout;
+    const result_sinks = await execAsync("pactl list sinks | grep -e 'Name:' -e 'Description:' -e 'Monitor Source:'");
+    const stdout_sinks = result_sinks.stdout;
     // Parse the stdout to create a structured list of sinks
-    const lines = stdout.split("\n");
+    const lines_sinks = stdout_sinks.split("\n");
     const sinks = [];
     let currentSink = {};
 
-    lines.forEach((line) => {
+    lines_sinks.forEach((line) => {
       const trimmedLine = line.trim();
       if (trimmedLine.startsWith("Name:")) {
         currentSink.name = trimmedLine.split("Name:")[1].trim();
@@ -29,8 +29,27 @@ async function getSinkList() {
         currentSink = {};
       }
     });
-    //console.log(sinks);
-    return sinks;
+
+    const result_sources = await execAsync("pactl list sources | grep -e 'Name:' -e 'Description:'");
+    const stdout_sources = result_sources.stdout;
+    // Parse the stdout to create a structured list of sinks
+    const lines_sources = stdout_sources.split("\n");
+    const sources = [];
+    let currentSource = {};
+
+    lines_sources.forEach((line) => {
+      const trimmedLine = line.trim();
+      if (trimmedLine.startsWith("Name:")) {
+        currentSource.name = trimmedLine.split("Name:")[1].trim();
+        currentSource.monitorSource = trimmedLine.split("Name:")[1].trim(); //no need for a monitor source on a source, the name is the source
+      } else if (trimmedLine.startsWith("Description:")) {
+        currentSource.description = trimmedLine.split("Description:")[1].trim();
+        sources.push(currentSource);
+        currentSource = {};
+      }
+    });
+
+    return [...sinks, ...sources];
   } catch (error) {
     console.error(`getSinks exec error: ${error}`);
     throw error; // This will reject the promise returned by ipcMain.handle

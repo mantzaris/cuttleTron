@@ -130,7 +130,7 @@ function populateScreenOptions() {
     noneAnchor.addEventListener("click", function (event) {
       event.preventDefault();
       document.getElementById("screenrecord-screen-select-btn").textContent = this.textContent;
-      screenrecordSelection("none"); // Call the handler function
+      screenrecordSelection({ type: "none" }); // Call the handler function
     });
     noneItem.appendChild(noneAnchor);
     dropdownMenu.appendChild(noneItem);
@@ -148,7 +148,6 @@ function populateScreenOptions() {
       anchor.setAttribute("data-bs-toggle", "tooltip");
 
       if ("type" in source && source.type == "webcam") {
-        console.log(source);
         anchor.setAttribute("title", `no thumbnail for webcam`);
       } else {
         anchor.setAttribute("title", `<img src='${source.thumbnail}' alt='Thumbnail'>`);
@@ -162,7 +161,7 @@ function populateScreenOptions() {
 
         // Update the button text to reflect the selected item
         document.getElementById("screenrecord-screen-select-btn").textContent = this.textContent;
-        screenrecordSelection(source.id); // Call the handler function
+        screenrecordSelection(source); // Call the handler function
       });
 
       listItem.appendChild(anchor);
@@ -185,33 +184,40 @@ function clearVideoAudio() {
   selectElementAudio.value = "none";
 }
 
-//document.getElementById("screenrecord-nameselect").onchange = async () => {
-async function screenrecordSelection(screen_id) {
-  if (screen_id == "none") {
+async function screenrecordSelection(source) {
+  if ("type" in source && source.type == "none") {
     clearVideoAudio();
     return;
   }
 
-  let media_source;
-
-  // FIX FOR WEBCAM IT IS NOT THE SAME AS THE SCREEN CAPTURE
-  const video_setup = {
-    mandatory: {
+  let videoConstraints;
+  if ("type" in source && source.type == "webcam") {
+    videoConstraints = {
+      deviceId: source.id, // Use the webcam's device ID
       frameRate: { ideal: 16, max: 24 },
-      chromeMediaSource: "desktop",
-      chromeMediaSourceId: screen_id,
-    },
-  };
+      // You can add more constraints here, like width, height, etc.
+    };
+  } else {
+    videoConstraints = {
+      mandatory: {
+        frameRate: { ideal: 16, max: 24 },
+        chromeMediaSource: "desktop",
+        chromeMediaSourceId: source.id,
+      },
+    };
+  }
 
   try {
-    console.log(video_setup);
-    media_source = await navigator.mediaDevices.getUserMedia({
-      video: video_setup,
-      audio: false,
-    });
-    console.log("media_source", media_source);
-    // Assign the media stream to the video element to start streaming
+    let media_source;
     const videoElement = document.querySelector("#screenrecord-feed video");
+
+    // Request access to the webcam
+    media_source = await navigator.mediaDevices.getUserMedia({
+      video: videoConstraints,
+      audio: false, // Set to true if you also want to capture audio
+    });
+    // Assign the media stream to the video element to start streaming
+
     videoElement.srcObject = media_source;
     videoElement.play(); // Start playing the video stream
   } catch (error) {
