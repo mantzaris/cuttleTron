@@ -1,0 +1,63 @@
+#audioeffects {
+  display: flex; /* Use flexbox for layout */
+  flex-direction: row;
+  height: 0; /* Start collapsed */
+  overflow: hidden;
+  padding: 0;
+}
+#audioeffects.expanded {
+  height: 25vh; /* Expand to 25% of viewport height */
+  padding: 10px;
+}
+
+#audioeffects-col1,
+#audioeffects-col2 {
+  flex: 1;
+  display: flex;
+  flex-direction: column; /* Stack the select and button vertically */
+  align-items: flex-start; /* Center items horizontally */
+  /* justify-content: center; */
+  gap: 2px; /* Space between select and button */
+  margin-left: 10px;
+}
+
+.audioeffects-selections {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  margin: auto 0;
+  gap: 10px; /* Adjust this value to your preference */
+}
+
+.audioeffects-selections > div {
+  margin: 0; /* Reset margin */
+  padding: 0; /* Reset padding */
+  flex: 1; /* Allow each child div to take up equal space */
+}
+
+.audioeffects-selection {
+  width: 100%; /* Ensure full width */
+  flex: 1; /* Take up the remaining space */
+  display: flex;
+  flex-direction: column; /* Stack the select and button vertically */
+  align-items: flex-start; /* Center items horizontally */
+  justify-content: flex-start; /* Center items vertically */
+  gap: 2px; /* Space between select and button */
+  margin-left: 10px;
+}
+
+.audioeffects-buttons {
+  /* margin: auto 0;  */
+  display: flex; /* This will make its children lay out in a row */
+  justify-content: center; /* This will center the items horizontally */
+  align-items: center; /* This will center the items vertically */
+  flex-wrap: nowrap; /* This will prevent the items from wrapping to the next line */
+  gap: 5px;
+}
+
+.audioeffects-status-label {
+  display: block;
+  color: orange; /* Color for a successful message */
+  margin-left: 10px; /* Spacing between the labels */
+}

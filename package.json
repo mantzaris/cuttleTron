@@ -18,6 +18,7 @@
   "author": "mantzaris",
   "license": "MIT",
   "devDependencies": {
+    "@types/electron": "^1.6.10",
     "concurrently": "^8.2.2",
     "electron-reload": "^2.0.0-alpha.1",
     "nodemon": "^3.0.1",
@@ -25,6 +26,7 @@
   },
   "dependencies": {
     "bootstrap": "^5.3.2",
-    "electron": "^27.1.2"
+    "electron": "^27.1.2",
+    "node-record-lpcm16": "^1.0.1"
   }
 }

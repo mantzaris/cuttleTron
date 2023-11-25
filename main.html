@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="widget-styles.css">
     <link rel="stylesheet" href="./components/screenshot/screenshot-style.css">
     <link rel="stylesheet" href="./components/screenrecord/screenrecord-style.css">
+    <link rel="stylesheet" href="./components/audioeffects/audioeffects.css">
 </head>
 <body>
     <div class="menu">
@@ -57,6 +58,7 @@
             </div>
         </div>
 
+        <!-- SCREEN RECORD -->
         <div class="component">
             <div class="component-header">
                 <span class="component-title">Screen Record</span>
@@ -77,7 +79,7 @@
                         <div>
                             <div>
                                 <label class="cool-label" for="screenrecord-nameselect">Screen Selection</label>
-                            </div>                    
+                            </div>
                             
                             <div id="screenrecord-screen-dropdown-menu">
                                 <button class="btn btn-secondary dropdown-toggle " type="button" id="screenrecord-screen-select-btn" data-bs-toggle="dropdown" aria-expanded="false">
@@ -91,14 +93,14 @@
                         </div>
                         <div>
                             <div>
-                                <label class="cool-label" for="screenrecord-audionameselect">Audio Sinks Selection</label>
-                            </div>                    
+                                <label class="cool-label" for="screenrecord-audionameselect">Audio Selection</label>
+                            </div>
                             <select class="cool-select select-medium" id="screenrecord-audionameselect">
                                 <!-- <option>Item 1</option> -->
                                 
                             </select>
                         </div>
-                    </div>                    
+                    </div>
                     <div class="screenrecord-buttons">
                         <button id="screenrecord-record" class="cool-button" data-action="record">Record</button>
                         <button id="screenrecord-pause" class="cool-button">Pause</button>
@@ -106,7 +108,50 @@
                         <button id="screenrecord-save" class="cool-button">Save</button>
                         <button id="screenrecord-refresh" class="cool-button">Refresh Lists</button>
                         <label id="screenrecord-label" class="screenrecord-label"></label>
-                    </div>                    
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audio Effects -->
+        <div class="component">
+            <div class="component-header">
+                <span class="component-title">Audio Effects</span>
+                <div id="audioeffects-message" class="scroll-container ">
+                    <div class="">
+                    </div>
+                </div>
+                <button id="audioeffects-expand" class="toggle-button" data-action="expand">Expand</button>
+            </div>
+            <div id="audioeffects" class="component-content">
+                <!-- flex direction row here onward -->
+                <div id="audioeffects-col1">
+                    <div class="audioeffects-selection">
+                            <div>
+                                <label class="cool-label" for="audioeffects-audionameselect">Audio Selection</label>
+                            </div>
+                            <select class="cool-select select-medium" id="audioeffects-audionameselect">
+                                <!-- <option>Item 1</option> -->
+                            </select>
+                    </div>
+                    <div class="audioeffects-buttons">
+                        <button id="audioeffects-stream" class="cool-button" data-action="record">Stream</button>
+                        <button id="audioeffects-refresh" class="cool-button">Refresh Lists</button>
+                        <label id="audioeffects-status-label" class="audioeffects-status-label"></label>
+                    </div>
+                </div>
+                <div id="audioeffects-col2">
+
+                    <div class="audioeffects-selection">
+                            <div>
+                                <label class="cool-label" for="audioeffects-audionameselect">Audio Effects</label>
+                            </div>
+                            <select class="cool-select select-medium" id="audioeffects-audionameselect">
+                                <!-- <option>Item 1</option> -->
+                            </select>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -119,7 +164,7 @@
 
     <script type="module" src="./components/screenshot/screenshot.js"></script>
     <script type="module" src="./components/screenrecord/screenrecord.js"></script>
-    <script type="module" src="./components/avatar/test.js"></script>
+    <script type="module" src="./components/audioeffects/audioeffects.js"></script>
 
 
 </body>

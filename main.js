@@ -1,3 +1,7 @@
+///////
+// requires ffmpeg to be installed on the system
+// requires ...SoX and sudo apt-get install sox libsox-fmt-all
+/////////
 const { app, BrowserWindow, ipcMain, desktopCapturer } = require("electron");
 const fs = require("fs");
 const path = require("path");
