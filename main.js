@@ -16,6 +16,7 @@ const {
   stopAudioRecording,
   recordingsCompleted,
 } = require("./main-fns/audio-utilities.js");
+const { audioEffectsStart, audioEffectsStop } = require("./main-fns/audio-effects.js");
 
 const packageJson = require("./package.json");
 const appName = packageJson.name;
@@ -132,4 +133,12 @@ ipcMain.handle("stopAudioRecording", (event, recording_bool) => {
 
 ipcMain.on("recordings-completed", async (event, args) => {
   recordingsCompleted(args);
+});
+
+// AUDIO EFFECTS
+ipcMain.handle("audioeffects-start", async (event, effects_params) => {
+  await audioEffectsStart(effects_params);
+});
+ipcMain.handle("audioeffects-stop", async (event) => {
+  await audioEffectsStop();
 });
