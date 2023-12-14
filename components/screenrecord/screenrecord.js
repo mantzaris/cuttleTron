@@ -96,7 +96,7 @@ document.getElementById("screenrecord-refresh").onclick = () => {
 //sinks are the speakers, headphones (audio endpoints) which we can grab that audio from to record
 //pulse audio (classic linux audio server) has monitors we can take audio from
 async function populatAudioSinkOptions() {
-  ipcRenderer.invoke("getSinks").then((sinks) => {
+  ipcRenderer.invoke("get-sinks-sources").then((sinks) => {
     // returns the pactl commandline from the OS for sinks
     let selection_sources = document.getElementById("screenrecord-audionameselect");
     selection_sources.innerHTML = "";

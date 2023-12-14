@@ -1,6 +1,6 @@
 const { ipcRenderer } = window.electron;
 
-const audio_effect_options = ["none", "distortion"];
+const audio_effect_options = ["none", "pitch"];
 
 let streaming = false;
 let status_str = "";
@@ -26,7 +26,7 @@ document.getElementById("audioeffects-expand").onclick = () => {
 };
 
 async function populateAudioSinkOptions() {
-  ipcRenderer.invoke("getSinks").then((sinks) => {
+  ipcRenderer.invoke("get-sinks-sources").then((sinks) => {
     // returns the pactl commandline from the OS for sinks
     let selection_sources = document.getElementById("audioeffects-audionameselect") as HTMLSelectElement;
     selection_sources.innerHTML = "";

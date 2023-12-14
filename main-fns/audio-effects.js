@@ -39,13 +39,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var child_process_1 = require("child_process");
 var util_1 = require("util");
 var execAsync = (0, util_1.promisify)(child_process_1.exec);
-var virtualSinkName = "VirtualMic";
-var virtualSinkDescription = "Virtual_Microphone";
-var ffmpegProcess = null; // holds the child process reference
+var virtualSinkName = "cuttletronVirtualMic";
+var virtualSinkDescription = "cuttletron_Virtual_Mic_Temp";
+var virtualSourceName = "CuttletronMicrophone";
+var virtualSourceDescription = "Cuttletron_Microphone";
+var gStreamerProcess = null; // holds the child process reference
 var virtualSinkModuleId = null;
 function audioEffectsStart(audioEffectsParams) {
     return __awaiter(this, void 0, void 0, function () {
-        var loadSinkCommand, source, type, sourceName, ffmpegArgs;
+        var loadSinkCommand, source, type, bufferTime, pitchValue, gStreamerArgs;
         return __generator(this, function (_a) {
             loadSinkCommand = "pactl load-module module-null-sink sink_name=".concat(virtualSinkName, " sink_properties=device.description=").concat(virtualSinkDescription);
             // Execute the command to create the virtual sink
@@ -70,42 +72,46 @@ function audioEffectsStart(audioEffectsParams) {
                         console.error("stderr: ".concat(stderr));
                         return;
                     }
-                    if (stdout.includes("VirtualMic")) {
+                    if (stdout.includes("".concat(virtualSinkName))) {
                         console.log("VirtualMic sink is available.");
                         // Continue with setting up FFmpeg
                     }
                     else {
-                        console.log("VirtualMic sink is not available.");
+                        console.log("".concat(virtualSinkName, " sink is not available."));
                     }
                 });
             });
             source = audioEffectsParams.source, type = audioEffectsParams.type;
-            sourceName = source;
-            ffmpegArgs = [
-                "-f",
-                "pulse",
-                "-i",
-                sourceName,
-                "-af",
-                "acompressor=threshold=0.02:ratio=4:attack=50:release=1000, asetrate=44100*0.8,aresample=44100", //"acompressor=threshold=0.02:ratio=4:attack=50:release=1000, asetrate=44100*0.8,aresample=44100, aecho=0.8:0.9:1000:0.3",
-                "-f",
-                "pulse",
-                virtualSinkName,
+            bufferTime = 100000;
+            pitchValue = 1.5;
+            gStreamerArgs = [
+                "pulsesrc",
+                "device=".concat(source),
+                "buffer-time=".concat(bufferTime),
+                "!",
+                "audioconvert",
+                "!",
+                "pitch",
+                "pitch=".concat(pitchValue),
+                "!",
+                "pulsesink",
+                "device=".concat(virtualSinkName),
             ];
-            ffmpegProcess = (0, child_process_1.spawn)("ffmpeg", ffmpegArgs);
+            gStreamerProcess = (0, child_process_1.spawn)("gst-launch-1.0", gStreamerArgs);
             if (type == "none") {
                 //
             }
-            else if (type == "distortion") {
+            else if (type == "pitch") {
                 //
             }
             return [2 /*return*/];
         });
     });
 }
+// also delete and remove other virtual sink created by this app
 function audioEffectsStop() {
-    if (ffmpegProcess) {
-        ffmpegProcess.kill("SIGTERM");
+    if (gStreamerProcess) {
+        gStreamerProcess.kill("SIGTERM");
     }
     if (virtualSinkModuleId) {
         (0, child_process_1.exec)("pactl unload-module ".concat(virtualSinkModuleId), function (error, stdout, stderr) {
@@ -122,4 +128,5 @@ function audioEffectsStop() {
     }
 }
 module.exports = { audioEffectsStart: audioEffectsStart, audioEffectsStop: audioEffectsStop };
+//const loadSinkCommandOLD = `pactl load-module module-null-sink sink_name=${virtualSinkName} sink_properties=device.description=${virtualSinkDescription}`;
 //# sourceMappingURL=audio-effects.js.map

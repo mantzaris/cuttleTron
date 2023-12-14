@@ -35,7 +35,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var ipcRenderer = window.electron.ipcRenderer;
-var audio_effect_options = ["none", "distortion"];
+var audio_effect_options = ["none", "pitch"];
 var streaming = false;
 var status_str = "";
 document.getElementById("audioeffects-expand").onclick = function () {
@@ -59,7 +59,7 @@ document.getElementById("audioeffects-expand").onclick = function () {
 function populateAudioSinkOptions() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
-            ipcRenderer.invoke("getSinks").then(function (sinks) {
+            ipcRenderer.invoke("get-sinks-sources").then(function (sinks) {
                 // returns the pactl commandline from the OS for sinks
                 var selection_sources = document.getElementById("audioeffects-audionameselect");
                 selection_sources.innerHTML = "";

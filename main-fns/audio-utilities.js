@@ -8,7 +8,7 @@ const execAsync = util.promisify(exec);
 let ffmpegProcess = null; // This will hold the child process instance
 let audioSegments = []; //holds the segments of audio from the pauses and resumes
 
-async function getSinkList() {
+async function getSinksAndSourcesList() {
   try {
     const result_sinks = await execAsync("pactl list sinks | grep -e 'Name:' -e 'Description:' -e 'Monitor Source:'");
     const stdout_sinks = result_sinks.stdout;
@@ -49,9 +49,11 @@ async function getSinkList() {
       }
     });
 
+    console.log("audio list");
+    console.log([...sinks, ...sources]);
     return [...sinks, ...sources];
   } catch (error) {
-    console.error(`getSinks exec error: ${error}`);
+    console.error(`get-sinks-sources exec error: ${error}`);
     throw error; // This will reject the promise returned by ipcMain.handle
   }
 }
@@ -170,7 +172,7 @@ async function recordingsCompleted(args) {
 }
 
 module.exports = {
-  getSinkList,
+  getSinksAndSourcesList,
   startAudioRecording,
   pauseAudioRecording,
   resumeAudioRecording,

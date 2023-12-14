@@ -2,9 +2,12 @@ import { exec, spawn } from "child_process";
 import { promisify } from "util";
 const execAsync = promisify(exec);
 
-const virtualSinkName = "VirtualMic";
-const virtualSinkDescription = "Virtual_Microphone";
-let ffmpegProcess = null; // holds the child process reference
+const virtualSinkName = "cuttletronVirtualMic";
+const virtualSinkDescription = "cuttletron_Virtual_Mic_Temp";
+const virtualSourceName = "CuttletronMicrophone";
+const virtualSourceDescription = "Cuttletron_Microphone";
+
+let gStreamerProcess = null; // holds the child process reference
 let virtualSinkModuleId: any = null;
 
 async function audioEffectsStart(audioEffectsParams: any) {
@@ -36,43 +39,49 @@ async function audioEffectsStart(audioEffectsParams: any) {
         return;
       }
 
-      if (stdout.includes("VirtualMic")) {
+      if (stdout.includes(`${virtualSinkName}`)) {
         console.log("VirtualMic sink is available.");
 
         // Continue with setting up FFmpeg
       } else {
-        console.log("VirtualMic sink is not available.");
+        console.log(`${virtualSinkName} sink is not available.`);
       }
     });
   });
 
   const { source, type } = audioEffectsParams;
+  //const source = "alsa_input.usb-Corsair_CORSAIR_VOID_ELITE_Wireless_Gaming_Dongle-00.mono-fallback";
 
-  const sourceName = source;
-  const ffmpegArgs = [
-    "-f",
-    "pulse",
-    "-i",
-    sourceName,
-    "-af",
-    "acompressor=threshold=0.02:ratio=4:attack=50:release=1000, asetrate=44100*0.8,aresample=44100", //"acompressor=threshold=0.02:ratio=4:attack=50:release=1000, asetrate=44100*0.8,aresample=44100, aecho=0.8:0.9:1000:0.3",
-    "-f",
-    "pulse",
-    virtualSinkName,
+  const bufferTime = 100000;
+  const pitchValue = 1.5;
+
+  const gStreamerArgs = [
+    "pulsesrc",
+    `device=${source}`,
+    `buffer-time=${bufferTime}`,
+    "!",
+    "audioconvert",
+    "!",
+    `pitch`,
+    `pitch=${pitchValue}`,
+    "!",
+    "pulsesink",
+    `device=${virtualSinkName}`,
   ];
 
-  ffmpegProcess = spawn("ffmpeg", ffmpegArgs);
+  gStreamerProcess = spawn("gst-launch-1.0", gStreamerArgs);
 
   if (type == "none") {
     //
-  } else if (type == "distortion") {
+  } else if (type == "pitch") {
     //
   }
 }
 
+// also delete and remove other virtual sink created by this app
 function audioEffectsStop() {
-  if (ffmpegProcess) {
-    ffmpegProcess.kill("SIGTERM");
+  if (gStreamerProcess) {
+    gStreamerProcess.kill("SIGTERM");
   }
 
   if (virtualSinkModuleId) {
@@ -92,3 +101,5 @@ function audioEffectsStop() {
 }
 
 module.exports = { audioEffectsStart, audioEffectsStop };
+
+//const loadSinkCommandOLD = `pactl load-module module-null-sink sink_name=${virtualSinkName} sink_properties=device.description=${virtualSinkDescription}`;

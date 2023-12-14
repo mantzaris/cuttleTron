@@ -8,7 +8,7 @@ const path = require("path");
 
 const { myWriteFileSync } = require("./main-fns/main-utilities.js");
 const {
-  getSinkList,
+  getSinksAndSourcesList,
   startAudioRecording,
   pauseAudioRecording,
   resumeAudioRecording,
@@ -102,8 +102,8 @@ ipcMain.handle("getCaptureID", async (event) => {
 
 //*trying to use any npm package to get the audio or even repos for pulse audio specifically like
 // https://github.com/mscdex/paclient worked within nodejs itself but totally failed in electronjs
-ipcMain.handle("getSinks", async (event) => {
-  return await getSinkList();
+ipcMain.handle("get-sinks-sources", async (event) => {
+  return await getSinksAndSourcesList();
 });
 
 //record audio from sink monitor provided
