@@ -45,11 +45,13 @@ var virtualSourceName = "CuttletronMicrophone";
 var virtualSourceDescription = "Cuttletron_Microphone";
 var gStreamerProcess = null; // holds the child process reference
 var virtualSinkModuleId = null;
+var virtualSourceModuleId = null;
 function audioEffectsStart(audioEffectsParams) {
     return __awaiter(this, void 0, void 0, function () {
-        var loadSinkCommand, source, type, bufferTime, pitchValue, gStreamerArgs;
+        var loadSinkCommand, loadRemapCommand, source, type, bufferTime, pitchValue, gStreamerArgs;
         return __generator(this, function (_a) {
             loadSinkCommand = "pactl load-module module-null-sink sink_name=".concat(virtualSinkName, " sink_properties=device.description=").concat(virtualSinkDescription);
+            loadRemapCommand = "pactl load-module module-remap-source master=".concat(virtualSinkName, ".monitor source_name=").concat(virtualSourceName, " source_properties=device.description=").concat(virtualSourceDescription);
             // Execute the command to create the virtual sink
             (0, child_process_1.exec)(loadSinkCommand, function (error, stdout, stderr) {
                 if (error) {
@@ -78,6 +80,37 @@ function audioEffectsStart(audioEffectsParams) {
                     }
                     else {
                         console.log("".concat(virtualSinkName, " sink is not available."));
+                    }
+                });
+            });
+            // Execute the command to remap the virtual sink to a source
+            (0, child_process_1.exec)(loadRemapCommand, function (error, stdout, stderr) {
+                if (error) {
+                    console.error("Error creating virtual sink remaping to source: ".concat(error));
+                    return;
+                }
+                if (stderr) {
+                    console.error("Error output: ".concat(stderr));
+                    return;
+                }
+                virtualSourceModuleId = stdout.trim();
+                console.log("Virtual source created successfully.");
+                // Check if 'VirtualMic' is in the list of sinks
+                (0, child_process_1.exec)("pactl list sources short", function (error, stdout, stderr) {
+                    if (error) {
+                        console.error("exec error: ".concat(error));
+                        return;
+                    }
+                    if (stderr) {
+                        console.error("stderr: ".concat(stderr));
+                        return;
+                    }
+                    if (stdout.includes("".concat(virtualSourceName))) {
+                        console.log("".concat(virtualSourceName, " source name is available."));
+                        // Continue with setting up FFmpeg
+                    }
+                    else {
+                        console.log("".concat(virtualSinkName, " source is not available."));
                     }
                 });
             });

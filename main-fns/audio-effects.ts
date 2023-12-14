@@ -9,9 +9,11 @@ const virtualSourceDescription = "Cuttletron_Microphone";
 
 let gStreamerProcess = null; // holds the child process reference
 let virtualSinkModuleId: any = null;
+let virtualSourceModuleId: any = null;
 
 async function audioEffectsStart(audioEffectsParams: any) {
   const loadSinkCommand = `pactl load-module module-null-sink sink_name=${virtualSinkName} sink_properties=device.description=${virtualSinkDescription}`;
+  const loadRemapCommand = `pactl load-module module-remap-source master=${virtualSinkName}.monitor source_name=${virtualSourceName} source_properties=device.description=${virtualSourceDescription}`;
 
   // Execute the command to create the virtual sink
   exec(loadSinkCommand, (error, stdout, stderr) => {
@@ -45,6 +47,42 @@ async function audioEffectsStart(audioEffectsParams: any) {
         // Continue with setting up FFmpeg
       } else {
         console.log(`${virtualSinkName} sink is not available.`);
+      }
+    });
+  });
+
+  // Execute the command to remap the virtual sink to a source
+  exec(loadRemapCommand, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error creating virtual sink remaping to source: ${error}`);
+      return;
+    }
+    if (stderr) {
+      console.error(`Error output: ${stderr}`);
+      return;
+    }
+
+    virtualSourceModuleId = stdout.trim();
+
+    console.log("Virtual source created successfully.");
+
+    // Check if 'VirtualMic' is in the list of sinks
+    exec("pactl list sources short", (error, stdout, stderr) => {
+      if (error) {
+        console.error(`exec error: ${error}`);
+        return;
+      }
+      if (stderr) {
+        console.error(`stderr: ${stderr}`);
+        return;
+      }
+
+      if (stdout.includes(`${virtualSourceName}`)) {
+        console.log(`${virtualSourceName} source name is available.`);
+
+        // Continue with setting up FFmpeg
+      } else {
+        console.log(`${virtualSinkName} source is not available.`);
       }
     });
   });
