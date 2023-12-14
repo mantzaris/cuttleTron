@@ -49,133 +49,142 @@ var virtualSinkModuleId = null;
 var virtualSourceModuleId = null;
 function audioEffectsStart(audioEffectsParams) {
     return __awaiter(this, void 0, void 0, function () {
-        var loadSinkCommand, loadRemapCommand, source, type, pitchValue, gStreamerArgs;
+        var loadSinkCommand, loadRemapCommand, sinkResult, sourceResult, error_1, source, type, pitchValue, gStreamerArgs;
         return __generator(this, function (_a) {
-            loadSinkCommand = "pactl load-module module-null-sink sink_name=".concat(virtualSinkName, " sink_properties=device.description=").concat(virtualSinkDescription);
-            loadRemapCommand = "pactl load-module module-remap-source master=".concat(virtualSinkName, ".monitor source_name=").concat(virtualSourceName, " source_properties=device.description=").concat(virtualSourceDescription);
-            console.log("foo");
-            // Execute the command to create the virtual sink
-            (0, child_process_1.exec)(loadSinkCommand, function (error, stdout, stderr) {
-                if (error) {
-                    console.error("Error creating virtual sink for audio effects: ".concat(error));
-                    return;
-                }
-                if (stderr) {
-                    console.error("Error output from trying to make audio effects: ".concat(stderr));
-                    return;
-                }
-                virtualSinkModuleId = stdout.trim();
-                console.log("Virtual sink: ".concat(virtualSinkName, ", created successfully for audio effects."));
-                // Check if VirtualMic is in the list of sinks after creation
-                (0, child_process_1.exec)("pactl list sinks short", function (error, stdout, stderr) {
-                    if (error) {
-                        console.error("exec error: ".concat(error));
-                        return;
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, cleanupAudioDevices()];
+                case 1:
+                    _a.sent();
+                    _a.label = 2;
+                case 2:
+                    _a.trys.push([2, 5, , 6]);
+                    loadSinkCommand = "pactl load-module module-null-sink sink_name=".concat(virtualSinkName, " sink_properties=device.description=").concat(virtualSinkDescription);
+                    loadRemapCommand = "pactl load-module module-remap-source master=".concat(virtualSinkName, ".monitor source_name=").concat(virtualSourceName, " source_properties=device.description=").concat(virtualSourceDescription);
+                    return [4 /*yield*/, execAsync(loadSinkCommand)];
+                case 3:
+                    sinkResult = _a.sent();
+                    virtualSinkModuleId = sinkResult.stdout.trim();
+                    console.log("Virtual sink: ".concat(virtualSinkName, ", created successfully for audio effects."));
+                    return [4 /*yield*/, execAsync(loadRemapCommand)];
+                case 4:
+                    sourceResult = _a.sent();
+                    virtualSourceModuleId = sourceResult.stdout.trim();
+                    console.log("Virtual source: ".concat(virtualSourceName, ", created successfully."));
+                    return [3 /*break*/, 6];
+                case 5:
+                    error_1 = _a.sent();
+                    console.error("Error in setting up audio effects: ".concat(error_1));
+                    return [3 /*break*/, 6];
+                case 6:
+                    source = audioEffectsParams.source, type = audioEffectsParams.type;
+                    pitchValue = 1.5;
+                    if (type == "none") {
+                        //
                     }
-                    if (stderr) {
-                        console.error("stderr: ".concat(stderr));
-                        return;
+                    else if (type == "pitch") {
+                        //
                     }
-                    if (stdout.includes("".concat(virtualSinkName))) {
-                        console.log("VirtualMic sink is available (checked).");
-                        // Continue with setting up FFmpeg
-                    }
-                    else {
-                        console.log("".concat(virtualSinkName, " sink is not available after check. !!!"));
-                    }
-                });
-            });
-            // Execute the command to remap the virtual sink to a source to be usable by Zoom as an input source
-            (0, child_process_1.exec)(loadRemapCommand, function (error, stdout, stderr) {
-                if (error) {
-                    console.error("Error in virtual sink remaping to a source: ".concat(error));
-                    return;
-                }
-                if (stderr) {
-                    console.error("Error output in tring to remap from sink to source: ".concat(stderr));
-                    return;
-                }
-                virtualSourceModuleId = stdout.trim();
-                console.log("Virtual source: ".concat(virtualSourceName, ", created successfully."));
-                // Check if remaped VirtualMic to source is in the list of sources
-                (0, child_process_1.exec)("pactl list sources short", function (error, stdout, stderr) {
-                    if (error) {
-                        console.error("exec error in trying to list sources: ".concat(error));
-                        return;
-                    }
-                    if (stderr) {
-                        console.error("stderr in trying to list sources: ".concat(stderr));
-                        return;
-                    }
-                    if (stdout.includes("".concat(virtualSourceName))) {
-                        console.log("".concat(virtualSourceName, " source name is available."));
-                    }
-                    else {
-                        console.log("".concat(virtualSourceName, " source is not available."));
-                    }
-                });
-            });
-            source = audioEffectsParams.source, type = audioEffectsParams.type;
-            pitchValue = 1.5;
-            if (type == "none") {
-                //
+                    gStreamerArgs = [
+                        "pulsesrc",
+                        "device=".concat(source),
+                        "buffer-time=".concat(bufferTime),
+                        "!",
+                        "audioconvert",
+                        "!",
+                        "pitch",
+                        "pitch=".concat(pitchValue),
+                        "!",
+                        "pulsesink",
+                        "device=".concat(virtualSinkName),
+                    ];
+                    gStreamerProcess = (0, child_process_1.spawn)("gst-launch-1.0", gStreamerArgs);
+                    return [2 /*return*/];
             }
-            else if (type == "pitch") {
-                //
-            }
-            gStreamerArgs = [
-                "pulsesrc",
-                "device=".concat(source),
-                "buffer-time=".concat(bufferTime),
-                "!",
-                "audioconvert",
-                "!",
-                "pitch",
-                "pitch=".concat(pitchValue),
-                "!",
-                "pulsesink",
-                "device=".concat(virtualSinkName),
-            ];
-            gStreamerProcess = (0, child_process_1.spawn)("gst-launch-1.0", gStreamerArgs);
-            return [2 /*return*/];
         });
     });
 }
 // also delete and remove other virtual sink created by this app
 function audioEffectsStop() {
-    if (gStreamerProcess) {
-        gStreamerProcess.kill("SIGTERM");
-    }
-    if (virtualSourceModuleId) {
-        (0, child_process_1.exec)("pactl unload-module ".concat(virtualSourceModuleId), function (error, stdout, stderr) {
-            if (error) {
-                console.error("Error unloading virtual source: ".concat(error));
-                return;
+    return __awaiter(this, void 0, void 0, function () {
+        var error_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (gStreamerProcess) {
+                        gStreamerProcess.kill("SIGTERM");
+                    }
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 6, , 7]);
+                    if (!virtualSourceModuleId) return [3 /*break*/, 3];
+                    return [4 /*yield*/, execAsync("pactl unload-module ".concat(virtualSourceModuleId))];
+                case 2:
+                    _a.sent();
+                    console.log("Virtual source with module ID ".concat(virtualSourceModuleId, " unloaded successfully."));
+                    virtualSourceModuleId = null;
+                    _a.label = 3;
+                case 3:
+                    if (!virtualSinkModuleId) return [3 /*break*/, 5];
+                    return [4 /*yield*/, execAsync("pactl unload-module ".concat(virtualSinkModuleId))];
+                case 4:
+                    _a.sent();
+                    console.log("Virtual sink with module ID ".concat(virtualSinkModuleId, " unloaded successfully."));
+                    virtualSinkModuleId = null;
+                    _a.label = 5;
+                case 5: return [3 /*break*/, 7];
+                case 6:
+                    error_2 = _a.sent();
+                    console.error("Error unloading virtual devices: ".concat(error_2));
+                    return [3 /*break*/, 7];
+                case 7: return [2 /*return*/];
             }
-            if (stderr) {
-                console.error("Error output: ".concat(stderr));
-                return;
-            }
-            console.log("Virtual source with module ID ".concat(virtualSourceModuleId, " unloaded successfully."));
         });
-        virtualSourceModuleId = null;
-    }
-    if (virtualSinkModuleId) {
-        (0, child_process_1.exec)("pactl unload-module ".concat(virtualSinkModuleId), function (error, stdout, stderr) {
-            if (error) {
-                console.error("Error unloading virtual sink: ".concat(error));
-                return;
-            }
-            if (stderr) {
-                console.error("Error output: ".concat(stderr));
-                return;
-            }
-            console.log("Virtual sink with module ID ".concat(virtualSinkModuleId, " unloaded successfully."));
-        });
-        virtualSinkModuleId = null;
-    }
+    });
 }
-module.exports = { audioEffectsStart: audioEffectsStart, audioEffectsStop: audioEffectsStop };
+function cleanupAudioDevices() {
+    return __awaiter(this, void 0, void 0, function () {
+        var sinksList, sourcesList, sinkPattern, match, sourcePattern, error_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 9, , 10]);
+                    return [4 /*yield*/, execAsync("pactl list short sinks")];
+                case 1:
+                    sinksList = (_a.sent()).stdout;
+                    return [4 /*yield*/, execAsync("pactl list short sources")];
+                case 2:
+                    sourcesList = (_a.sent()).stdout;
+                    sinkPattern = new RegExp("(\\d+)\\s+".concat(virtualSinkName), "g");
+                    match = void 0;
+                    _a.label = 3;
+                case 3:
+                    if (!((match = sinkPattern.exec(sinksList)) !== null)) return [3 /*break*/, 5];
+                    return [4 /*yield*/, execAsync("pactl unload-module ".concat(match[1]))];
+                case 4:
+                    _a.sent();
+                    console.log("Cleaned up lingering sink with ID: ".concat(match[1]));
+                    return [3 /*break*/, 3];
+                case 5:
+                    sourcePattern = new RegExp("(\\d+)\\s+".concat(virtualSourceName), "g");
+                    _a.label = 6;
+                case 6:
+                    if (!((match = sourcePattern.exec(sourcesList)) !== null)) return [3 /*break*/, 8];
+                    return [4 /*yield*/, execAsync("pactl unload-module ".concat(match[1]))];
+                case 7:
+                    _a.sent();
+                    console.log("Cleaned up lingering source with ID: ".concat(match[1]));
+                    return [3 /*break*/, 6];
+                case 8: return [3 /*break*/, 10];
+                case 9:
+                    error_3 = _a.sent();
+                    console.error("Error during cleanup: ".concat(error_3.message));
+                    return [3 /*break*/, 10];
+                case 10: return [2 /*return*/];
+            }
+        });
+    });
+}
+module.exports = { audioEffectsStart: audioEffectsStart, audioEffectsStop: audioEffectsStop, cleanupAudioDevices: cleanupAudioDevices };
 //const loadSinkCommandOLD = `pactl load-module module-null-sink sink_name=${virtualSinkName} sink_properties=device.description=${virtualSinkDescription}`;
 //pactl load-module module-null-sink sink_name=VirtualMic sink_properties=device.description=VirtualMic
 //gst-launch-1.0 pulsesrc device="alsa_input.usb-Corsair_CORSAIR_VOID_ELITE_Wireless_Gaming_Dongle-00.mono-fallback" buffer-time=100000 ! audioconvert ! pitch pitch=1.25 ! pulsesink device=VirtualMic

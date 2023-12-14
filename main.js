@@ -65,6 +65,7 @@ app.on("before-quit", async (event) => {
   // Call your function
   await audioEffectsStop();
 
+  await cleanupAudioDevices();
   // After your function's work is done, you can exit
   app.quit();
 });

@@ -14,78 +14,23 @@ let virtualSinkModuleId: any = null;
 let virtualSourceModuleId: any = null;
 
 async function audioEffectsStart(audioEffectsParams: any) {
-  const loadSinkCommand = `pactl load-module module-null-sink sink_name=${virtualSinkName} sink_properties=device.description=${virtualSinkDescription}`;
-  const loadRemapCommand = `pactl load-module module-remap-source master=${virtualSinkName}.monitor source_name=${virtualSourceName} source_properties=device.description=${virtualSourceDescription}`;
-  console.log("foo");
-  // Execute the command to create the virtual sink
-  exec(loadSinkCommand, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error creating virtual sink for audio effects: ${error}`);
-      return;
-    }
-    if (stderr) {
-      console.error(`Error output from trying to make audio effects: ${stderr}`);
-      return;
-    }
+  await cleanupAudioDevices();
 
-    virtualSinkModuleId = stdout.trim();
+  try {
+    const loadSinkCommand = `pactl load-module module-null-sink sink_name=${virtualSinkName} sink_properties=device.description=${virtualSinkDescription}`;
+    const loadRemapCommand = `pactl load-module module-remap-source master=${virtualSinkName}.monitor source_name=${virtualSourceName} source_properties=device.description=${virtualSourceDescription}`;
 
+    const sinkResult = await execAsync(loadSinkCommand);
+    virtualSinkModuleId = sinkResult.stdout.trim();
     console.log(`Virtual sink: ${virtualSinkName}, created successfully for audio effects.`);
 
-    // Check if VirtualMic is in the list of sinks after creation
-    exec("pactl list sinks short", (error, stdout, stderr) => {
-      if (error) {
-        console.error(`exec error: ${error}`);
-        return;
-      }
-      if (stderr) {
-        console.error(`stderr: ${stderr}`);
-        return;
-      }
-
-      if (stdout.includes(`${virtualSinkName}`)) {
-        console.log("VirtualMic sink is available (checked).");
-
-        // Continue with setting up FFmpeg
-      } else {
-        console.log(`${virtualSinkName} sink is not available after check. !!!`);
-      }
-    });
-  });
-
-  // Execute the command to remap the virtual sink to a source to be usable by Zoom as an input source
-  exec(loadRemapCommand, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error in virtual sink remaping to a source: ${error}`);
-      return;
-    }
-    if (stderr) {
-      console.error(`Error output in tring to remap from sink to source: ${stderr}`);
-      return;
-    }
-
-    virtualSourceModuleId = stdout.trim();
-
+    // Create the remapped source
+    const sourceResult = await execAsync(loadRemapCommand);
+    virtualSourceModuleId = sourceResult.stdout.trim();
     console.log(`Virtual source: ${virtualSourceName}, created successfully.`);
-
-    // Check if remaped VirtualMic to source is in the list of sources
-    exec("pactl list sources short", (error, stdout, stderr) => {
-      if (error) {
-        console.error(`exec error in trying to list sources: ${error}`);
-        return;
-      }
-      if (stderr) {
-        console.error(`stderr in trying to list sources: ${stderr}`);
-        return;
-      }
-
-      if (stdout.includes(`${virtualSourceName}`)) {
-        console.log(`${virtualSourceName} source name is available.`);
-      } else {
-        console.log(`${virtualSourceName} source is not available.`);
-      }
-    });
-  });
+  } catch (error) {
+    console.error(`Error in setting up audio effects: ${error}`);
+  }
 
   const { source, type } = audioEffectsParams;
   //const source = "alsa_input.usb-Corsair_CORSAIR_VOID_ELITE_Wireless_Gaming_Dongle-00.mono-fallback";
@@ -116,47 +61,54 @@ async function audioEffectsStart(audioEffectsParams: any) {
 }
 
 // also delete and remove other virtual sink created by this app
-function audioEffectsStop() {
+async function audioEffectsStop() {
   if (gStreamerProcess) {
     gStreamerProcess.kill("SIGTERM");
   }
 
-  if (virtualSourceModuleId) {
-    exec(`pactl unload-module ${virtualSourceModuleId}`, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error unloading virtual source: ${error}`);
-        return;
-      }
-      if (stderr) {
-        console.error(`Error output: ${stderr}`);
-        return;
-      }
-
+  try {
+    if (virtualSourceModuleId) {
+      await execAsync(`pactl unload-module ${virtualSourceModuleId}`);
       console.log(`Virtual source with module ID ${virtualSourceModuleId} unloaded successfully.`);
-    });
+      virtualSourceModuleId = null;
+    }
 
-    virtualSourceModuleId = null;
-  }
-
-  if (virtualSinkModuleId) {
-    exec(`pactl unload-module ${virtualSinkModuleId}`, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error unloading virtual sink: ${error}`);
-        return;
-      }
-      if (stderr) {
-        console.error(`Error output: ${stderr}`);
-        return;
-      }
-
+    if (virtualSinkModuleId) {
+      await execAsync(`pactl unload-module ${virtualSinkModuleId}`);
       console.log(`Virtual sink with module ID ${virtualSinkModuleId} unloaded successfully.`);
-    });
-
-    virtualSinkModuleId = null;
+      virtualSinkModuleId = null;
+    }
+  } catch (error) {
+    console.error(`Error unloading virtual devices: ${error}`);
   }
 }
 
-module.exports = { audioEffectsStart, audioEffectsStop };
+async function cleanupAudioDevices() {
+  try {
+    // List all sinks and sources
+    const { stdout: sinksList } = await execAsync("pactl list short sinks");
+    const { stdout: sourcesList } = await execAsync("pactl list short sources");
+
+    // Find and unload any lingering virtual sinks created by the app
+    const sinkPattern = new RegExp(`(\\d+)\\s+${virtualSinkName}`, "g");
+    let match: any;
+    while ((match = sinkPattern.exec(sinksList)) !== null) {
+      await execAsync(`pactl unload-module ${match[1]}`);
+      console.log(`Cleaned up lingering sink with ID: ${match[1]}`);
+    }
+
+    // Find and unload any lingering virtual sources created by the app
+    const sourcePattern = new RegExp(`(\\d+)\\s+${virtualSourceName}`, "g");
+    while ((match = sourcePattern.exec(sourcesList)) !== null) {
+      await execAsync(`pactl unload-module ${match[1]}`);
+      console.log(`Cleaned up lingering source with ID: ${match[1]}`);
+    }
+  } catch (error) {
+    console.error(`Error during cleanup: ${error.message}`);
+  }
+}
+
+module.exports = { audioEffectsStart, audioEffectsStop, cleanupAudioDevices };
 
 //const loadSinkCommandOLD = `pactl load-module module-null-sink sink_name=${virtualSinkName} sink_properties=device.description=${virtualSinkDescription}`;
 //pactl load-module module-null-sink sink_name=VirtualMic sink_properties=device.description=VirtualMic
