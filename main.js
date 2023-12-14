@@ -1,6 +1,6 @@
 ///////
 // requires ffmpeg to be installed on the system
-// requires ...SoX and sudo apt-get install sox libsox-fmt-all
+// requires ...sudo apt-get install gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly
 /////////
 const { app, BrowserWindow, ipcMain, desktopCapturer } = require("electron");
 const fs = require("fs");
@@ -58,10 +58,20 @@ function createWindow() {
 
 app.on("ready", createWindow);
 
-app.on("window-all-closed", function () {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+app.on("before-quit", async (event) => {
+  // Prevent the default behavior first if needed
+  event.preventDefault();
+
+  // Call your function
+  await audioEffectsStop();
+
+  // After your function's work is done, you can exit
+  app.quit();
+});
+
+app.on("window-all-closed", async function () {
+  //await audioEffectsStop();
+  //app.quit();
 });
 
 app.on("activate", function () {

@@ -39,7 +39,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var child_process_1 = require("child_process");
 var util_1 = require("util");
 var execAsync = (0, util_1.promisify)(child_process_1.exec);
-var virtualSinkName = "cuttletronVirtualMic";
+var bufferTime = 100000;
+var virtualSinkName = "cuttletronVirtualMicTemp";
 var virtualSinkDescription = "cuttletron_Virtual_Mic_Temp";
 var virtualSourceName = "CuttletronMicrophone";
 var virtualSourceDescription = "Cuttletron_Microphone";
@@ -48,23 +49,24 @@ var virtualSinkModuleId = null;
 var virtualSourceModuleId = null;
 function audioEffectsStart(audioEffectsParams) {
     return __awaiter(this, void 0, void 0, function () {
-        var loadSinkCommand, loadRemapCommand, source, type, bufferTime, pitchValue, gStreamerArgs;
+        var loadSinkCommand, loadRemapCommand, source, type, pitchValue, gStreamerArgs;
         return __generator(this, function (_a) {
             loadSinkCommand = "pactl load-module module-null-sink sink_name=".concat(virtualSinkName, " sink_properties=device.description=").concat(virtualSinkDescription);
             loadRemapCommand = "pactl load-module module-remap-source master=".concat(virtualSinkName, ".monitor source_name=").concat(virtualSourceName, " source_properties=device.description=").concat(virtualSourceDescription);
+            console.log("foo");
             // Execute the command to create the virtual sink
             (0, child_process_1.exec)(loadSinkCommand, function (error, stdout, stderr) {
                 if (error) {
-                    console.error("Error creating virtual sink: ".concat(error));
+                    console.error("Error creating virtual sink for audio effects: ".concat(error));
                     return;
                 }
                 if (stderr) {
-                    console.error("Error output: ".concat(stderr));
+                    console.error("Error output from trying to make audio effects: ".concat(stderr));
                     return;
                 }
                 virtualSinkModuleId = stdout.trim();
-                console.log("Virtual sink created successfully.");
-                // Check if 'VirtualMic' is in the list of sinks
+                console.log("Virtual sink: ".concat(virtualSinkName, ", created successfully for audio effects."));
+                // Check if VirtualMic is in the list of sinks after creation
                 (0, child_process_1.exec)("pactl list sinks short", function (error, stdout, stderr) {
                     if (error) {
                         console.error("exec error: ".concat(error));
@@ -75,48 +77,52 @@ function audioEffectsStart(audioEffectsParams) {
                         return;
                     }
                     if (stdout.includes("".concat(virtualSinkName))) {
-                        console.log("VirtualMic sink is available.");
+                        console.log("VirtualMic sink is available (checked).");
                         // Continue with setting up FFmpeg
                     }
                     else {
-                        console.log("".concat(virtualSinkName, " sink is not available."));
+                        console.log("".concat(virtualSinkName, " sink is not available after check. !!!"));
                     }
                 });
             });
-            // Execute the command to remap the virtual sink to a source
+            // Execute the command to remap the virtual sink to a source to be usable by Zoom as an input source
             (0, child_process_1.exec)(loadRemapCommand, function (error, stdout, stderr) {
                 if (error) {
-                    console.error("Error creating virtual sink remaping to source: ".concat(error));
+                    console.error("Error in virtual sink remaping to a source: ".concat(error));
                     return;
                 }
                 if (stderr) {
-                    console.error("Error output: ".concat(stderr));
+                    console.error("Error output in tring to remap from sink to source: ".concat(stderr));
                     return;
                 }
                 virtualSourceModuleId = stdout.trim();
-                console.log("Virtual source created successfully.");
-                // Check if 'VirtualMic' is in the list of sinks
+                console.log("Virtual source: ".concat(virtualSourceName, ", created successfully."));
+                // Check if remaped VirtualMic to source is in the list of sources
                 (0, child_process_1.exec)("pactl list sources short", function (error, stdout, stderr) {
                     if (error) {
-                        console.error("exec error: ".concat(error));
+                        console.error("exec error in trying to list sources: ".concat(error));
                         return;
                     }
                     if (stderr) {
-                        console.error("stderr: ".concat(stderr));
+                        console.error("stderr in trying to list sources: ".concat(stderr));
                         return;
                     }
                     if (stdout.includes("".concat(virtualSourceName))) {
                         console.log("".concat(virtualSourceName, " source name is available."));
-                        // Continue with setting up FFmpeg
                     }
                     else {
-                        console.log("".concat(virtualSinkName, " source is not available."));
+                        console.log("".concat(virtualSourceName, " source is not available."));
                     }
                 });
             });
             source = audioEffectsParams.source, type = audioEffectsParams.type;
-            bufferTime = 100000;
             pitchValue = 1.5;
+            if (type == "none") {
+                //
+            }
+            else if (type == "pitch") {
+                //
+            }
             gStreamerArgs = [
                 "pulsesrc",
                 "device=".concat(source),
@@ -131,12 +137,6 @@ function audioEffectsStart(audioEffectsParams) {
                 "device=".concat(virtualSinkName),
             ];
             gStreamerProcess = (0, child_process_1.spawn)("gst-launch-1.0", gStreamerArgs);
-            if (type == "none") {
-                //
-            }
-            else if (type == "pitch") {
-                //
-            }
             return [2 /*return*/];
         });
     });
@@ -145,6 +145,20 @@ function audioEffectsStart(audioEffectsParams) {
 function audioEffectsStop() {
     if (gStreamerProcess) {
         gStreamerProcess.kill("SIGTERM");
+    }
+    if (virtualSourceModuleId) {
+        (0, child_process_1.exec)("pactl unload-module ".concat(virtualSourceModuleId), function (error, stdout, stderr) {
+            if (error) {
+                console.error("Error unloading virtual source: ".concat(error));
+                return;
+            }
+            if (stderr) {
+                console.error("Error output: ".concat(stderr));
+                return;
+            }
+            console.log("Virtual source with module ID ".concat(virtualSourceModuleId, " unloaded successfully."));
+        });
+        virtualSourceModuleId = null;
     }
     if (virtualSinkModuleId) {
         (0, child_process_1.exec)("pactl unload-module ".concat(virtualSinkModuleId), function (error, stdout, stderr) {
@@ -158,8 +172,12 @@ function audioEffectsStop() {
             }
             console.log("Virtual sink with module ID ".concat(virtualSinkModuleId, " unloaded successfully."));
         });
+        virtualSinkModuleId = null;
     }
 }
 module.exports = { audioEffectsStart: audioEffectsStart, audioEffectsStop: audioEffectsStop };
 //const loadSinkCommandOLD = `pactl load-module module-null-sink sink_name=${virtualSinkName} sink_properties=device.description=${virtualSinkDescription}`;
+//pactl load-module module-null-sink sink_name=VirtualMic sink_properties=device.description=VirtualMic
+//gst-launch-1.0 pulsesrc device="alsa_input.usb-Corsair_CORSAIR_VOID_ELITE_Wireless_Gaming_Dongle-00.mono-fallback" buffer-time=100000 ! audioconvert ! pitch pitch=1.25 ! pulsesink device=VirtualMic
+//pactl load-module module-remap-source master=VirtualMic.monitor source_name=VirtualMicSource source_properties=device.description=VirtualMicSource
 //# sourceMappingURL=audio-effects.js.map
