@@ -1,24 +1,28 @@
 #audioeffects {
-  display: flex; /* Use flexbox for layout */
-  flex-direction: row;
-  height: 0; /* Start collapsed */
+  display: grid;
+  grid-template-columns: 2fr 2fr 6fr;
+  grid-template-rows: 3fr 1fr;
+  gap: 10px; /* Adjust the gap as needed */
   overflow: hidden;
-  padding: 0;
+  height: 0; /* Start collapsed */
+  padding: 0; /* No padding initially */
+  background-color: aqua;
 }
 #audioeffects.expanded {
   height: 25vh; /* Expand to 25% of viewport height */
   padding: 10px;
+  overflow: visible;
+}
+#audioeffects-col1 {
+  grid-column: 1; /* Place in the first column */
+  grid-row: 1; /* Place in the first row */
+  background-color: red;
 }
 
-#audioeffects-col1,
 #audioeffects-col2 {
-  flex: 1;
-  display: flex;
-  flex-direction: column; /* Stack the select and button vertically */
-  align-items: flex-start; /* Center items horizontally */
-  /* justify-content: center; */
-  gap: 2px; /* Space between select and button */
-  margin-left: 10px;
+  grid-column: 2; /* Place in the second column */
+  grid-row: 1; /* Place in the first row */
+  background-color: yellow;
 }
 
 .audioeffects-selections {
@@ -48,16 +52,25 @@
 }
 
 .audioeffects-buttons {
-  /* margin: auto 0;  */
-  display: flex; /* This will make its children lay out in a row */
-  justify-content: center; /* This will center the items horizontally */
-  align-items: center; /* This will center the items vertically */
-  flex-wrap: nowrap; /* This will prevent the items from wrapping to the next line */
+  grid-column: 1 / span 2; /* Span across both columns */
+  grid-row: 2; /* Place in the second row */
+  display: flex;
+  align-items: flex-end; /* Align items to the bottom */
+  justify-content: flex-start; /* Align items to the left */
   gap: 5px;
+  background-color: tan;
 }
 
 .audioeffects-status-label {
   display: block;
-  color: orange; /* Color for a successful message */
+  color: rgb(22, 18, 11); /* Color for a successful message */
   margin-left: 10px; /* Spacing between the labels */
+}
+
+#audioeffects-controls {
+  grid-column: 3; /* Place in the second column */
+  grid-row: 1 / span 2; /* Span across both rows */
+  width: 100%; /* Take up full width of the column */
+  height: 100%; /* Take up full height */
+  background-color: brown;
 }

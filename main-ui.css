@@ -10,9 +10,10 @@ html {
 }
 
 .content {
-  margin-top: 5vh; /* Start below the menu */
+  margin-top: 7vh; /* Start below the menu */
   margin-bottom: 10px;
-  height: 100%;
+  /* height: 100%; */
+  height: calc(100vh - 7vh);
   overflow-y: auto; /* Vertical scrolling */
   padding: 10px;
 
