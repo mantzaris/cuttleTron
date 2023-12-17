@@ -72,5 +72,5 @@
   grid-row: 1 / span 2; /* Span across both rows */
   width: 100%; /* Take up full width of the column */
   height: 100%; /* Take up full height */
-  background-color: brown;
+  background-color: rgb(221, 78, 78);
 }

@@ -1,3 +1,4 @@
-export function test1() {
-  console.log("YAY!");
+export function populateEffectArea() {
+  let divArea = document.getElementById("audioeffects-controls");
+  divArea.innerHTML = "From Pitch Effects";
 }

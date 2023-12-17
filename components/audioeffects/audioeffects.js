@@ -36,10 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 var ipcRenderer = window.electron.ipcRenderer;
 var audio_effect_options = ["none", "pitch"];
-console.log("foo");
-import { test1 } from "./pitch/pitcheffect.js";
-test1();
-console.log("bar");
+import { populateEffectArea } from "./pitch/pitcheffect.js";
 var streaming = false;
 var status_str = "";
 document.getElementById("audioeffects-expand").onclick = function () {
@@ -126,5 +123,14 @@ document.getElementById("audioeffects-stop").onclick = function () {
     status_str = "";
     ipcRenderer.invoke("audioeffects-stop");
     console.log("stopping stream");
+};
+document.getElementById("audioeffects-audioeffectselect").onchange = function () {
+    var chosen_effect = document.getElementById("audioeffects-audioeffectselect").value;
+    if (chosen_effect == "none") {
+        document.getElementById("audioeffects-controls").innerHTML = "";
+    }
+    else if (chosen_effect == "pitch") {
+        populateEffectArea();
+    }
 };
 //# sourceMappingURL=audioeffects.js.map

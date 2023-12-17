@@ -2,11 +2,7 @@ const { ipcRenderer } = window.electron;
 
 const audio_effect_options = ["none", "pitch"];
 
-console.log("foo");
-
-import { test1 } from "./pitch/pitcheffect.js";
-test1();
-console.log("bar");
+import { populateEffectArea } from "./pitch/pitcheffect.js";
 
 let streaming = false;
 let status_str = "";
@@ -94,4 +90,13 @@ document.getElementById("audioeffects-stop").onclick = () => {
   status_str = "";
   ipcRenderer.invoke("audioeffects-stop");
   console.log("stopping stream");
+};
+
+document.getElementById("audioeffects-audioeffectselect").onchange = () => {
+  const chosen_effect = (document.getElementById("audioeffects-audioeffectselect") as HTMLSelectElement).value;
+  if (chosen_effect == "none") {
+    document.getElementById("audioeffects-controls").innerHTML = "";
+  } else if (chosen_effect == "pitch") {
+    populateEffectArea();
+  }
 };
