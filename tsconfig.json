@@ -1,8 +1,18 @@
 {
     "compilerOptions": {
         "sourceMap": true,
+        "module": "ES6",
+        "moduleResolution": "node"
         // other options...
     },
-    "include": ["**/*.ts","**/*.d.ts"],
+    "include": ["**/*.ts","**/*.d.ts", "main-fns/audio-effects.cjs"],
     "exclude": ["node_modules", "**/*.spec.ts"]
 }
+
+
+// {
+//     "compilerOptions": {
+//       "module": "CommonJS",
+//       // other options...
+//     }
+//   }

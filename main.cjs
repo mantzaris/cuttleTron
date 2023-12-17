@@ -6,7 +6,7 @@ const { app, BrowserWindow, ipcMain, desktopCapturer } = require("electron");
 const fs = require("fs");
 const path = require("path");
 
-const { myWriteFileSync } = require("./main-fns/main-utilities.js");
+const { myWriteFileSync } = require("./main-fns/main-utilities.cjs");
 const {
   getSinksAndSourcesList,
   startAudioRecording,
@@ -15,8 +15,8 @@ const {
   cancelAudioRecording,
   stopAudioRecording,
   recordingsCompleted,
-} = require("./main-fns/audio-utilities.js");
-const { audioEffectsStart, audioEffectsStop } = require("./main-fns/audio-effects.js");
+} = require("./main-fns/audio-utilities.cjs");
+const { audioEffectsStart, audioEffectsStop } = require("./main-fns/audio-effects.cjs");
 
 const packageJson = require("./package.json");
 const appName = packageJson.name;
@@ -39,7 +39,7 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.cjs"),
     },
   });
 

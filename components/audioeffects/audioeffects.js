@@ -36,6 +36,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 var ipcRenderer = window.electron.ipcRenderer;
 var audio_effect_options = ["none", "pitch"];
+console.log("foo");
+import { test1 } from "./pitch/pitcheffect.js";
+test1();
+console.log("bar");
 var streaming = false;
 var status_str = "";
 document.getElementById("audioeffects-expand").onclick = function () {

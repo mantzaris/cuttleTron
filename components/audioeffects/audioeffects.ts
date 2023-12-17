@@ -2,6 +2,12 @@ const { ipcRenderer } = window.electron;
 
 const audio_effect_options = ["none", "pitch"];
 
+console.log("foo");
+
+import { test1 } from "./pitch/pitcheffect.js";
+test1();
+console.log("bar");
+
 let streaming = false;
 let status_str = "";
 

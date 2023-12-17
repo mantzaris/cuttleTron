@@ -1,5 +1,6 @@
-import { exec, spawn } from "child_process";
-import { promisify } from "util";
+const { exec, spawn } = require("child_process");
+const { promisify } = require("util");
+
 const execAsync = promisify(exec);
 
 const bufferTime = 100000;
@@ -10,10 +11,10 @@ const virtualSourceName = "CuttletronMicrophone";
 const virtualSourceDescription = "Cuttletron_Microphone";
 
 let gStreamerProcess = null; // holds the child process reference
-let virtualSinkModuleId: any = null;
-let virtualSourceModuleId: any = null;
+let virtualSinkModuleId = null;
+let virtualSourceModuleId = null;
 
-async function audioEffectsStart(audioEffectsParams: any) {
+async function audioEffectsStart(audioEffectsParams) {
   await cleanupAudioDevices();
 
   try {
@@ -91,7 +92,7 @@ async function cleanupAudioDevices() {
 
     // Find and unload any lingering virtual sinks created by the app
     const sinkPattern = new RegExp(`(\\d+)\\s+${virtualSinkName}`, "g");
-    let match: any;
+    let match;
     while ((match = sinkPattern.exec(sinksList)) !== null) {
       await execAsync(`pactl unload-module ${match[1]}`);
       console.log(`Cleaned up lingering sink with ID: ${match[1]}`);
