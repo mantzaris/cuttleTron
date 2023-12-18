@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 var ipcRenderer = window.electron.ipcRenderer;
 var audio_effect_options = ["none", "pitch"];
-import { populateEffectArea } from "./pitch/pitcheffect.js";
+import { populateEffectArea, pitchValue } from "./pitch/pitcheffect.js";
 var streaming = false;
 var status_str = "";
 document.getElementById("audioeffects-expand").onclick = function () {
@@ -112,6 +112,9 @@ document.getElementById("audioeffects-stream").onclick = function () {
     var audio_effects_params = {
         source: chosen_sink_monitor,
         type: chosen_effect,
+        params: {
+            pitchValue: pitchValue,
+        },
     };
     if (chosen_sink_monitor != "none") {
         ipcRenderer.invoke("audioeffects-start", audio_effects_params);

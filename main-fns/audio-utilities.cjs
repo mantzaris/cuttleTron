@@ -49,8 +49,8 @@ async function getSinksAndSourcesList() {
       }
     });
 
-    console.log("audio list");
-    console.log([...sinks, ...sources]);
+    //console.log("audio list");
+    //console.log([...sinks, ...sources]);
     return [...sinks, ...sources];
   } catch (error) {
     console.error(`get-sinks-sources exec error: ${error}`);

@@ -2,7 +2,7 @@ const { ipcRenderer } = window.electron;
 
 const audio_effect_options = ["none", "pitch"];
 
-import { populateEffectArea } from "./pitch/pitcheffect.js";
+import { populateEffectArea, pitchValue } from "./pitch/pitcheffect.js";
 
 let streaming = false;
 let status_str = "";
@@ -77,6 +77,9 @@ document.getElementById("audioeffects-stream").onclick = () => {
   const audio_effects_params = {
     source: chosen_sink_monitor,
     type: chosen_effect,
+    params: {
+      pitchValue,
+    },
   };
 
   if (chosen_sink_monitor != "none") {
