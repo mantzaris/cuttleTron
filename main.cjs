@@ -148,7 +148,14 @@ ipcMain.on("recordings-completed", async (event, args) => {
 
 // AUDIO EFFECTS
 ipcMain.handle("audioeffects-start", async (event, effects_params) => {
-  await audioEffectsStart(effects_params);
+  try {
+    const status = await audioEffectsStart(effects_params);
+    return status; // Return the status string to the renderer
+  } catch (error) {
+    // Handle any errors
+    console.error("Error in trying to engage audioEffectsStart:", error);
+    return "Error starting audio effects"; // Return error message
+  }
 });
 ipcMain.handle("audioeffects-stop", async (event) => {
   await audioEffectsStop();

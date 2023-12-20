@@ -17,6 +17,17 @@ let virtualSourceModuleId = null;
 async function audioEffectsStart(audioEffectsParams) {
   await cleanupAudioDevices();
 
+  const { type, source, params } = audioEffectsParams;
+
+  if (type == "none") {
+    // return null
+  } else if (type == "pitch") {
+    //
+  }
+
+  const pitchValue = params.pitchValue;
+  //const source = "alsa_input.usb-Corsair_CORSAIR_VOID_ELITE_Wireless_Gaming_Dongle-00.mono-fallback";
+
   try {
     const loadSinkCommand = `pactl load-module module-null-sink sink_name=${virtualSinkName} sink_properties=device.description=${virtualSinkDescription}`;
     const loadRemapCommand = `pactl load-module module-remap-source master=${virtualSinkName}.monitor source_name=${virtualSourceName} source_properties=device.description=${virtualSourceDescription}`;
@@ -31,17 +42,6 @@ async function audioEffectsStart(audioEffectsParams) {
     console.log(`Virtual source: ${virtualSourceName}, created successfully.`);
   } catch (error) {
     console.error(`Error in setting up audio effects: ${error}`);
-  }
-
-  const { source, type } = audioEffectsParams;
-  //const source = "alsa_input.usb-Corsair_CORSAIR_VOID_ELITE_Wireless_Gaming_Dongle-00.mono-fallback";
-
-  const pitchValue = 1.5;
-
-  if (type == "none") {
-    //
-  } else if (type == "pitch") {
-    //
   }
 
   const gStreamerArgs = [
@@ -59,6 +59,8 @@ async function audioEffectsStart(audioEffectsParams) {
   ];
 
   gStreamerProcess = spawn("gst-launch-1.0", gStreamerArgs);
+
+  return `streaming to: ${virtualSourceName}`;
 }
 
 // also delete and remove other virtual sink created by this app

@@ -5,15 +5,16 @@
   grid-template-columns: 2fr 2fr 6fr;
   grid-template-rows: 3fr 1fr;
   gap: 10px; /* Adjust the gap as needed */
-  overflow: hidden;
   height: 0; /* Start collapsed */
   padding: 0; /* No padding initially */
   background-color: aqua;
+  overflow: hidden;
 }
 #audioeffects.expanded {
   height: 25vh; /* Expand to 25% of viewport height */
   padding: 10px;
-  overflow: visible;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 #audioeffects-col1 {
   grid-column: 1; /* Place in the first column */
@@ -67,6 +68,7 @@
   display: block;
   color: rgb(22, 18, 11); /* Color for a successful message */
   margin-left: 10px; /* Spacing between the labels */
+  font-size: 0.8em;
 }
 
 #audioeffects-controls {
@@ -74,5 +76,6 @@
   grid-row: 1 / span 2; /* Span across both rows */
   width: 100%; /* Take up full width of the column */
   height: 100%; /* Take up full height */
+
   /* background-color: rgb(221, 78, 78); */
 }

@@ -35,7 +35,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var ipcRenderer = window.electron.ipcRenderer;
-var audio_effect_options = ["none", "pitch"];
+var audioEffectOptions = ["none", "pitch"];
 import { populateEffectArea, pitchValue } from "./pitch/pitcheffect.js";
 var streaming = false;
 var status_str = "";
@@ -49,6 +49,12 @@ document.getElementById("audioeffects-expand").onclick = function () {
         if (!streaming) {
             populateAudioSinkOptions();
             populateAudeioEffectOptions();
+            document.getElementById("audioeffects-start").style.display = "block";
+            document.getElementById("audioeffects-stop").style.display = "none";
+        }
+        else {
+            document.getElementById("audioeffects-start").style.display = "none";
+            document.getElementById("audioeffects-stop").style.display = "block";
         }
     }
     else {
@@ -83,12 +89,12 @@ function populateAudioSinkOptions() {
 }
 function populateAudeioEffectOptions() {
     return __awaiter(this, void 0, void 0, function () {
-        var selection_sources, _i, audio_effect_options_1, effect, src;
+        var selection_sources, _i, audioEffectOptions_1, effect, src;
         return __generator(this, function (_a) {
             selection_sources = document.getElementById("audioeffects-audioeffectselect");
             selection_sources.innerHTML = "";
-            for (_i = 0, audio_effect_options_1 = audio_effect_options; _i < audio_effect_options_1.length; _i++) {
-                effect = audio_effect_options_1[_i];
+            for (_i = 0, audioEffectOptions_1 = audioEffectOptions; _i < audioEffectOptions_1.length; _i++) {
+                effect = audioEffectOptions_1[_i];
                 src = document.createElement("option");
                 src.innerHTML = effect;
                 src.value = effect;
@@ -104,27 +110,59 @@ document.getElementById("audioeffects-refresh").onclick = function () {
         populateAudeioEffectOptions();
     }
 };
-document.getElementById("audioeffects-stream").onclick = function () {
-    streaming = true;
-    status_str = "streaming audio effects";
-    var chosen_sink_monitor = document.getElementById("audioeffects-audionameselect").value;
-    var chosen_effect = document.getElementById("audioeffects-audioeffectselect").value;
-    var audio_effects_params = {
-        source: chosen_sink_monitor,
-        type: chosen_effect,
-        params: {
-            pitchValue: pitchValue,
-        },
-    };
-    if (chosen_sink_monitor != "none") {
-        ipcRenderer.invoke("audioeffects-start", audio_effects_params);
-        console.log("streaming audio");
-    }
-};
+document.getElementById("audioeffects-start").onclick = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var chosen_sink_monitor, chosenEffectElement, chosenEffectValue, chosenEffect, audio_effects_params, status_1, error_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                chosen_sink_monitor = document.getElementById("audioeffects-audionameselect").value;
+                chosenEffectElement = document.getElementById("audioeffects-audioeffectselect");
+                chosenEffectValue = chosenEffectElement.value;
+                chosenEffect = audioEffectOptions.includes(chosenEffectValue) ? chosenEffectValue : "none";
+                audio_effects_params = {
+                    source: chosen_sink_monitor,
+                    type: chosenEffect,
+                };
+                if (chosenEffect === "none") {
+                    console.error("Invalid audio effect option selected or defaulted to 'none'.");
+                    // Handle the error or default case as needed
+                }
+                else if (chosenEffect == "pitch") {
+                    audio_effects_params["params"] = {
+                        pitchValue: pitchValue,
+                    };
+                }
+                if (!(chosen_sink_monitor != "none")) return [3 /*break*/, 4];
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 3, , 4]);
+                return [4 /*yield*/, ipcRenderer.invoke("audioeffects-start", audio_effects_params)];
+            case 2:
+                status_1 = _a.sent();
+                document.getElementById("audioeffects-status-label").innerText = status_1;
+                console.log("Status:", status_1); // Log the status string returned from the main process
+                document.getElementById("audioeffects-start").style.display = "none";
+                document.getElementById("audioeffects-stop").style.display = "block";
+                streaming = true;
+                status_str = "streaming audio effects";
+                setRemoveHeader(true, status_str, true);
+                return [2 /*return*/];
+            case 3:
+                error_1 = _a.sent();
+                console.error("Error:", error_1);
+                return [3 /*break*/, 4];
+            case 4: return [2 /*return*/];
+        }
+    });
+}); };
 document.getElementById("audioeffects-stop").onclick = function () {
     streaming = false;
     status_str = "";
     ipcRenderer.invoke("audioeffects-stop");
+    document.getElementById("audioeffects-status-label").innerText = "";
+    setRemoveHeader(false, status_str, false);
+    document.getElementById("audioeffects-start").style.display = "block";
+    document.getElementById("audioeffects-stop").style.display = "none";
     console.log("stopping stream");
 };
 document.getElementById("audioeffects-audioeffectselect").onchange = function () {
@@ -136,4 +174,35 @@ document.getElementById("audioeffects-audioeffectselect").onchange = function ()
         populateEffectArea();
     }
 };
+function setRemoveHeader(add_message, message, flash_bool) {
+    var scroll_flash_text = "scroll-flash-text";
+    var scroll_text = "scroll-text";
+    var flash_text = "flash-text";
+    var container = document.getElementById("audioeffects-message");
+    var textElement = container.querySelector("div"); // Assuming the text is in a div inside the container
+    textElement.classList.remove(scroll_flash_text);
+    textElement.classList.remove(scroll_text);
+    textElement.classList.remove(flash_text);
+    if (!add_message) {
+        textElement.innerText = "";
+        return;
+    }
+    textElement.innerText = message;
+    if (textElement.scrollWidth > container.clientWidth) {
+        // Text is too long
+        if (flash_bool) {
+            textElement.classList.add(scroll_flash_text);
+        }
+        else {
+            textElement.classList.add(scroll_text);
+        }
+    }
+    else {
+        // Text fits in the container
+        if (flash_bool) {
+            textElement.classList.add(flash_text);
+        }
+    }
+    textElement.style.display = "block";
+}
 //# sourceMappingURL=audioeffects.js.map
