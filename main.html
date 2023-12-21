@@ -16,7 +16,7 @@
 <body>
     <div class="menu">
         <!-- Menu content goes here -->
-        <p>Menu: (install) pulseaudio and pulseaudio-utils sudo apt-get install gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly
+        <p>Menu: (install) pulseaudio and pulseaudio-utils 
         </p>
     </div>
     <div class="content">
@@ -130,7 +130,6 @@
                     <div class="audioeffects-selection">
                         <div>
                             <label class="cool-label" for="audioeffects-audionameselect">Audio Selection</label>
-                            <div id="errorTooltip-audionameselect" class="hidden-tooltip"></div>
                         </div>
                         <select class="cool-select select-medium" id="audioeffects-audionameselect">
                             <!-- <option>Item 1</option> -->
@@ -141,7 +140,6 @@
                     <div class="audioeffects-selection">
                         <div>
                             <label class="cool-label" for="audioeffects-audionameselect">Audio Effects</label>
-                            <div id="errorTooltip-audioeffectselect" class="hidden-tooltip"></div>
                         </div>
                         <select class="cool-select select-medium" id="audioeffects-audioeffectselect">
                             <!-- <option>Item 1</option> -->
@@ -158,6 +156,13 @@
                 <!-- controls for the audio effect like setting the pitch -->
                 <div id="audioeffects-controls">
                     
+                </div>
+
+                <div id="audioeffects-modal" class="modal-overlay hidden">
+                    <div class="modal-content">
+                        <p id="audioeffects-model-message"></p>
+                        <button id="audioeffects-close-modal"></button>
+                    </div>
                 </div>
             </div>
             

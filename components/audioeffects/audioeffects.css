@@ -1,13 +1,14 @@
 @import url("./pitch/pitcheffect.css");
 
 #audioeffects {
+  position: relative;
   display: grid;
   grid-template-columns: 2fr 2fr 6fr;
   grid-template-rows: 3fr 1fr;
   gap: 10px; /* Adjust the gap as needed */
   height: 0; /* Start collapsed */
   padding: 0; /* No padding initially */
-  background-color: aqua;
+  /* background-color: aqua; */
   overflow: hidden;
 }
 #audioeffects.expanded {
@@ -19,13 +20,13 @@
 #audioeffects-col1 {
   grid-column: 1; /* Place in the first column */
   grid-row: 1; /* Place in the first row */
-  background-color: red;
+  /* background-color: red; */
 }
 
 #audioeffects-col2 {
   grid-column: 2; /* Place in the second column */
   grid-row: 1; /* Place in the first row */
-  background-color: yellow;
+  /* background-color: yellow; */
 }
 
 .audioeffects-selections {
@@ -61,7 +62,7 @@
   align-items: flex-end; /* Align items to the bottom */
   justify-content: flex-start; /* Align items to the left */
   gap: 5px;
-  background-color: tan;
+  /* background-color: tan; */
 }
 
 .audioeffects-status-label {
@@ -78,4 +79,28 @@
   height: 100%; /* Take up full height */
 
   /* background-color: rgb(221, 78, 78); */
+}
+
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0; /* Added to ensure it stretches to the full width */
+  bottom: 0; /* Added to ensure it stretches to the full height */
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10; /* Ensure it's above other elements */
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.hidden {
+  display: none;
 }

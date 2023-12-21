@@ -16,7 +16,7 @@ const {
   stopAudioRecording,
   recordingsCompleted,
 } = require("./main-fns/audio-utilities.cjs");
-const { audioEffectsStart, audioEffectsStop } = require("./main-fns/audio-effects.cjs");
+const { audioEffectsStart, audioEffectsStop, checkGStreamerPackages } = require("./main-fns/audio-effects.cjs");
 
 const packageJson = require("./package.json");
 const appName = packageJson.name;
@@ -150,13 +150,25 @@ ipcMain.on("recordings-completed", async (event, args) => {
 ipcMain.handle("audioeffects-start", async (event, effects_params) => {
   try {
     const status = await audioEffectsStart(effects_params);
-    return status; // Return the status string to the renderer
+    return status;
   } catch (error) {
     // Handle any errors
     console.error("Error in trying to engage audioEffectsStart:", error);
-    return "Error starting audio effects"; // Return error message
+    return { success: false, message: error.message };
   }
 });
+
 ipcMain.handle("audioeffects-stop", async (event) => {
   await audioEffectsStop();
 });
+
+// ipcMain.handle("check-GStreamer", async (event, args) => {
+//   try {
+//     // Call the function to check for the packages
+//     const check = await checkGStreamerPackages();
+//     return check; // Return the result (true/false) to the renderer
+//   } catch (error) {
+//     console.error("Error in checking GStreamer Audio packages:", error);
+//     return false; // Return false in case of error
+//   }
+// });

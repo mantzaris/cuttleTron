@@ -19,13 +19,14 @@ async function audioEffectsStart(audioEffectsParams) {
 
   const { type, source, params } = audioEffectsParams;
 
+  let pitchValue;
+
   if (type == "none") {
     // return null
   } else if (type == "pitch") {
-    //
+    pitchValue = params.pitchValue;
   }
 
-  const pitchValue = params.pitchValue;
   //const source = "alsa_input.usb-Corsair_CORSAIR_VOID_ELITE_Wireless_Gaming_Dongle-00.mono-fallback";
 
   try {
@@ -42,6 +43,7 @@ async function audioEffectsStart(audioEffectsParams) {
     console.log(`Virtual source: ${virtualSourceName}, created successfully.`);
   } catch (error) {
     console.error(`Error in setting up audio effects: ${error}`);
+    return { success: false, message: error.message };
   }
 
   const gStreamerArgs = [
@@ -60,7 +62,7 @@ async function audioEffectsStart(audioEffectsParams) {
 
   gStreamerProcess = spawn("gst-launch-1.0", gStreamerArgs);
 
-  return `streaming to: ${virtualSourceName}`;
+  return { success: false, message: `streaming to: ${virtualSourceName}` };
 }
 
 // also delete and remove other virtual sink created by this app
@@ -110,6 +112,26 @@ async function cleanupAudioDevices() {
     console.error(`Error during cleanup: ${error.message}`);
   }
 }
+
+// check for the packages neccessary only on Debian Flavours
+// async function checkGStreamerPackages() {
+//   // List of packages to check
+//   const packages = ["gstreamer1.0-tools", "gstreamer1.0-plugins-base", "gstreamer1.0-plugins-good", "gstreamer1.0-plugins-bad", "gstreamer1.0-plugins-ugly"];
+
+//   // Construct the command to check for packages
+//   const command = `dpkg -l ${packages.join(" ")} | grep '^ii'`;
+
+//   try {
+//     const { stdout } = await execAsync(command);
+
+//     // Check if all packages are listed in the output
+//     const allInstalled = packages.every((pkg) => stdout.includes(pkg));
+//     return allInstalled;
+//   } catch (error) {
+//     console.error(`Error checking packages: ${error}`);
+//     return false;
+//   }
+// }
 
 module.exports = { audioEffectsStart, audioEffectsStop, cleanupAudioDevices };
 

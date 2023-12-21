@@ -111,7 +111,16 @@ document.getElementById("audioeffects-start").onclick = async () => {
 
   try {
     const status = await ipcRenderer.invoke("audioeffects-start", audio_effects_params);
-    document.getElementById("audioeffects-status-label").innerText = status;
+
+    if (status.success != false) {
+      showModal(
+        status.message +
+          `\n Remember to Install: ["gstreamer1.0-tools", "gstreamer1.0-plugins-base", "gstreamer1.0-plugins-good", "gstreamer1.0-plugins-bad", "gstreamer1.0-plugins-ugly"]`
+      );
+      await ipcRenderer.invoke("audioeffects-stop");
+      return;
+    }
+    document.getElementById("audioeffects-status-label").innerText = status.message;
     console.log("Status:", status); // Log the status string returned from the main process
 
     document.getElementById("audioeffects-start").style.display = "none";
@@ -183,3 +192,20 @@ function setRemoveHeader(add_message: boolean, message: string, flash_bool: bool
 
   textElement.style.display = "block";
 }
+
+//notify the user if the neccessary GStreamer packages are found
+function showModal(message: string) {
+  document.getElementById("audioeffects-model-message").innerText = message; // Set the message
+  document.getElementById("audioeffects-close-modal").innerText = "close";
+
+  const modal = document.getElementById("audioeffects-modal");
+  modal.classList.remove("hidden");
+
+  document.getElementById("audioeffects-close-modal").onclick = () => {
+    const modal = document.getElementById("audioeffects-modal");
+    modal.classList.add("hidden");
+  };
+}
+
+// const gstreamerCheck = await ipcRenderer.invoke("check-GStreamer");
+//     console.log(`result the GStreamer package check: ${gstreamerCheck}`);

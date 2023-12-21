@@ -147,11 +147,19 @@ document.getElementById("audioeffects-start").onclick = function () { return __a
                 }
                 _a.label = 1;
             case 1:
-                _a.trys.push([1, 3, , 4]);
+                _a.trys.push([1, 5, , 6]);
                 return [4 /*yield*/, ipcRenderer.invoke("audioeffects-start", audio_effects_params)];
             case 2:
                 status_1 = _a.sent();
-                document.getElementById("audioeffects-status-label").innerText = status_1;
+                if (!(status_1.success != false)) return [3 /*break*/, 4];
+                showModal(status_1.message +
+                    "\n Remember to Install: [\"gstreamer1.0-tools\", \"gstreamer1.0-plugins-base\", \"gstreamer1.0-plugins-good\", \"gstreamer1.0-plugins-bad\", \"gstreamer1.0-plugins-ugly\"]");
+                return [4 /*yield*/, ipcRenderer.invoke("audioeffects-stop")];
+            case 3:
+                _a.sent();
+                return [2 /*return*/];
+            case 4:
+                document.getElementById("audioeffects-status-label").innerText = status_1.message;
                 console.log("Status:", status_1); // Log the status string returned from the main process
                 document.getElementById("audioeffects-start").style.display = "none";
                 document.getElementById("audioeffects-stop").style.display = "block";
@@ -160,11 +168,11 @@ document.getElementById("audioeffects-start").onclick = function () { return __a
                 status_str = "streaming audio effects";
                 setRemoveHeader(true, status_str, true);
                 return [2 /*return*/];
-            case 3:
+            case 5:
                 error_1 = _a.sent();
                 console.error("Error:", error_1);
-                return [3 /*break*/, 4];
-            case 4: return [2 /*return*/];
+                return [3 /*break*/, 6];
+            case 6: return [2 /*return*/];
         }
     });
 }); };
@@ -219,4 +227,17 @@ function setRemoveHeader(add_message, message, flash_bool) {
     }
     textElement.style.display = "block";
 }
+//notify the user if the neccessary GStreamer packages are found
+function showModal(message) {
+    document.getElementById("audioeffects-model-message").innerText = message; // Set the message
+    document.getElementById("audioeffects-close-modal").innerText = "close";
+    var modal = document.getElementById("audioeffects-modal");
+    modal.classList.remove("hidden");
+    document.getElementById("audioeffects-close-modal").onclick = function () {
+        var modal = document.getElementById("audioeffects-modal");
+        modal.classList.add("hidden");
+    };
+}
+// const gstreamerCheck = await ipcRenderer.invoke("check-GStreamer");
+//     console.log(`result the GStreamer package check: ${gstreamerCheck}`);
 //# sourceMappingURL=audioeffects.js.map
