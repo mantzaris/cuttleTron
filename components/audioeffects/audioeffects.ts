@@ -86,31 +86,44 @@ document.getElementById("audioeffects-start").onclick = async () => {
     type: chosenEffect,
   };
 
-  if (chosenEffect === "none") {
-    console.error("Invalid audio effect option selected or defaulted to 'none'.");
-    // Handle the error or default case as needed
+  if (chosenEffect === "none" || chosen_sink_monitor == "none") {
+    let message_tmp = "Select: ";
+
+    if (chosenEffect == "none" && chosen_sink_monitor == "none") {
+      message_tmp += "audio source & effect";
+    } else if (chosenEffect == "none" && !(chosen_sink_monitor == "none")) {
+      message_tmp += "audio effect";
+    } else if (!(chosenEffect == "none") && chosen_sink_monitor == "none") {
+      message_tmp += "audio source";
+    }
+
+    document.getElementById("audioeffects-status-label").innerText = message_tmp;
+    setTimeout(() => {
+      document.getElementById("audioeffects-status-label").innerText = "";
+    }, 1200);
+
+    return;
   } else if (chosenEffect == "pitch") {
     audio_effects_params["params"] = {
       pitchValue,
     };
   }
 
-  if (chosen_sink_monitor != "none") {
-    try {
-      const status = await ipcRenderer.invoke("audioeffects-start", audio_effects_params);
-      document.getElementById("audioeffects-status-label").innerText = status;
-      console.log("Status:", status); // Log the status string returned from the main process
+  try {
+    const status = await ipcRenderer.invoke("audioeffects-start", audio_effects_params);
+    document.getElementById("audioeffects-status-label").innerText = status;
+    console.log("Status:", status); // Log the status string returned from the main process
 
-      document.getElementById("audioeffects-start").style.display = "none";
-      document.getElementById("audioeffects-stop").style.display = "block";
-      streaming = true;
+    document.getElementById("audioeffects-start").style.display = "none";
+    document.getElementById("audioeffects-stop").style.display = "block";
+    document.getElementById("audioeffects-refresh").style.display = "none";
+    streaming = true;
 
-      status_str = "streaming audio effects";
-      setRemoveHeader(true, status_str, true);
-      return;
-    } catch (error) {
-      console.error("Error:", error);
-    }
+    status_str = "streaming audio effects";
+    setRemoveHeader(true, status_str, true);
+    return;
+  } catch (error) {
+    console.error("Error:", error);
   }
 };
 
@@ -122,6 +135,7 @@ document.getElementById("audioeffects-stop").onclick = () => {
   setRemoveHeader(false, status_str, false);
   document.getElementById("audioeffects-start").style.display = "block";
   document.getElementById("audioeffects-stop").style.display = "none";
+  document.getElementById("audioeffects-refresh").style.display = "block";
   console.log("stopping stream");
 };
 

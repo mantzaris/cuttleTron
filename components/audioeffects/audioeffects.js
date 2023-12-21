@@ -111,7 +111,7 @@ document.getElementById("audioeffects-refresh").onclick = function () {
     }
 };
 document.getElementById("audioeffects-start").onclick = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var chosen_sink_monitor, chosenEffectElement, chosenEffectValue, chosenEffect, audio_effects_params, status_1, error_1;
+    var chosen_sink_monitor, chosenEffectElement, chosenEffectValue, chosenEffect, audio_effects_params, message_tmp, status_1, error_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -123,16 +123,28 @@ document.getElementById("audioeffects-start").onclick = function () { return __a
                     source: chosen_sink_monitor,
                     type: chosenEffect,
                 };
-                if (chosenEffect === "none") {
-                    console.error("Invalid audio effect option selected or defaulted to 'none'.");
-                    // Handle the error or default case as needed
+                if (chosenEffect === "none" || chosen_sink_monitor == "none") {
+                    message_tmp = "Select: ";
+                    if (chosenEffect == "none" && chosen_sink_monitor == "none") {
+                        message_tmp += "audio source & effect";
+                    }
+                    else if (chosenEffect == "none" && !(chosen_sink_monitor == "none")) {
+                        message_tmp += "audio effect";
+                    }
+                    else if (!(chosenEffect == "none") && chosen_sink_monitor == "none") {
+                        message_tmp += "audio source";
+                    }
+                    document.getElementById("audioeffects-status-label").innerText = message_tmp;
+                    setTimeout(function () {
+                        document.getElementById("audioeffects-status-label").innerText = "";
+                    }, 1200);
+                    return [2 /*return*/];
                 }
                 else if (chosenEffect == "pitch") {
                     audio_effects_params["params"] = {
                         pitchValue: pitchValue,
                     };
                 }
-                if (!(chosen_sink_monitor != "none")) return [3 /*break*/, 4];
                 _a.label = 1;
             case 1:
                 _a.trys.push([1, 3, , 4]);
@@ -143,6 +155,7 @@ document.getElementById("audioeffects-start").onclick = function () { return __a
                 console.log("Status:", status_1); // Log the status string returned from the main process
                 document.getElementById("audioeffects-start").style.display = "none";
                 document.getElementById("audioeffects-stop").style.display = "block";
+                document.getElementById("audioeffects-refresh").style.display = "none";
                 streaming = true;
                 status_str = "streaming audio effects";
                 setRemoveHeader(true, status_str, true);
@@ -163,6 +176,7 @@ document.getElementById("audioeffects-stop").onclick = function () {
     setRemoveHeader(false, status_str, false);
     document.getElementById("audioeffects-start").style.display = "block";
     document.getElementById("audioeffects-stop").style.display = "none";
+    document.getElementById("audioeffects-refresh").style.display = "block";
     console.log("stopping stream");
 };
 document.getElementById("audioeffects-audioeffectselect").onchange = function () {
