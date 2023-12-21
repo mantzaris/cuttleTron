@@ -151,7 +151,7 @@ document.getElementById("audioeffects-start").onclick = function () { return __a
                 return [4 /*yield*/, ipcRenderer.invoke("audioeffects-start", audio_effects_params)];
             case 2:
                 status_1 = _a.sent();
-                if (!(status_1.success != false)) return [3 /*break*/, 4];
+                if (!(status_1.success == false)) return [3 /*break*/, 4];
                 showModal(status_1.message +
                     "\n Remember to Install: [\"gstreamer1.0-tools\", \"gstreamer1.0-plugins-base\", \"gstreamer1.0-plugins-good\", \"gstreamer1.0-plugins-bad\", \"gstreamer1.0-plugins-ugly\"]");
                 return [4 /*yield*/, ipcRenderer.invoke("audioeffects-stop")];

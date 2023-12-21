@@ -112,7 +112,7 @@ document.getElementById("audioeffects-start").onclick = async () => {
   try {
     const status = await ipcRenderer.invoke("audioeffects-start", audio_effects_params);
 
-    if (status.success != false) {
+    if (status.success == false) {
       showModal(
         status.message +
           `\n Remember to Install: ["gstreamer1.0-tools", "gstreamer1.0-plugins-base", "gstreamer1.0-plugins-good", "gstreamer1.0-plugins-bad", "gstreamer1.0-plugins-ugly"]`

@@ -62,7 +62,7 @@ async function audioEffectsStart(audioEffectsParams) {
 
   gStreamerProcess = spawn("gst-launch-1.0", gStreamerArgs);
 
-  return { success: false, message: `streaming to: ${virtualSourceName}` };
+  return { success: true, message: `streaming to: ${virtualSourceName}` };
 }
 
 // also delete and remove other virtual sink created by this app
