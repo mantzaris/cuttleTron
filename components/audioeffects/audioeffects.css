@@ -1,4 +1,4 @@
-@import url("./pitch/pitcheffect.css");
+/* @import url("./pitch/pitcheffect.css"); */
 
 #audioeffects {
   position: relative;
@@ -103,4 +103,41 @@
 
 .hidden {
   display: none;
+}
+
+/* generic css for the effects like sliders etc */
+#sliderContainer {
+  text-align: center;
+  margin: 20px;
+  overflow-y: auto;
+  height: 80%;
+}
+
+.sliderWithValues {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sliderWithValues input[type="range"] {
+  width: 80%; /* Adjust as needed */
+}
+
+.minValue,
+.maxValue {
+  position: absolute;
+}
+
+.minValue {
+  left: 0;
+}
+
+.maxValue {
+  right: 0;
+}
+
+label {
+  display: block;
+  margin-bottom: 10px;
 }

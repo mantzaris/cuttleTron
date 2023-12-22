@@ -30,6 +30,9 @@ async function audioEffectsStart(audioEffectsParams) {
   } else if (type == "pitch") {
     pitchValue = params.pitchValue;
     gs_effectArgs.push(`pitch`, `pitch=${pitchValue}`);
+  } else if (type == 'flanger') {
+    //     if (userSelections.flanger.enabled) {effectArgs.push("flanger", `depth=${userSelections.flanger.depth}`, `feedback=${userSelections.flanger.feedback}`, `speed=${userSelections.flanger.speed}`);
+    }
   }
 
   let gStreamerArgs = gs_sourceArgs.concat(gs_effectArgs, gs_sinkArgs);

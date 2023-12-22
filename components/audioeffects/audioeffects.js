@@ -35,8 +35,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var ipcRenderer = window.electron.ipcRenderer;
-var audioEffectOptions = ["none", "pitch"];
-import { populateEffectArea, pitchValue } from "./pitch/pitcheffect.js";
+var audioEffectOptions = ["none", "pitch", "flanger"];
+import { populateEffectArea_Pitch, pitchValue } from "./pitch/pitcheffect.js";
+import { populateEffectArea_Flanger } from "./flanger/flangereffect.js";
 var initialCleaningDone = false;
 var streaming = false;
 var status_str = "";
@@ -204,7 +205,10 @@ document.getElementById("audioeffects-audioeffectselect").onchange = function ()
         document.getElementById("audioeffects-controls").innerHTML = "";
     }
     else if (chosen_effect == "pitch") {
-        populateEffectArea();
+        populateEffectArea_Pitch();
+    }
+    else if (chosen_effect == "flanger") {
+        populateEffectArea_Flanger();
     }
 };
 function setRemoveHeader(add_message, message, flash_bool) {

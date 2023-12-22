@@ -1,9 +1,10 @@
 const { ipcRenderer } = window.electron;
 
-type AudioEffectOption = "none" | "pitch";
-const audioEffectOptions: AudioEffectOption[] = ["none", "pitch"];
+type AudioEffectOption = "none" | "pitch" | "flanger";
+const audioEffectOptions: AudioEffectOption[] = ["none", "pitch", "flanger"];
 
-import { populateEffectArea, pitchValue } from "./pitch/pitcheffect.js";
+import { populateEffectArea_Pitch, pitchValue } from "./pitch/pitcheffect.js";
+import { populateEffectArea_Flanger, depthValue, feedbackValue, speedValue } from "./flanger/flangereffect.js";
 
 let initialCleaningDone = false;
 let streaming = false;
@@ -165,7 +166,9 @@ document.getElementById("audioeffects-audioeffectselect").onchange = () => {
   if (chosen_effect == "none") {
     document.getElementById("audioeffects-controls").innerHTML = "";
   } else if (chosen_effect == "pitch") {
-    populateEffectArea();
+    populateEffectArea_Pitch();
+  } else if (chosen_effect == "flanger") {
+    populateEffectArea_Flanger();
   }
 };
 
