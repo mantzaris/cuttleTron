@@ -30,9 +30,11 @@ document.getElementById("audioeffects-expand").onclick = () => {
       populateAudeioEffectOptions();
       document.getElementById("audioeffects-start").style.display = "block";
       document.getElementById("audioeffects-stop").style.display = "none";
+      toggleDivFreeze(false);
     } else {
       document.getElementById("audioeffects-start").style.display = "none";
       document.getElementById("audioeffects-stop").style.display = "block";
+      toggleDivFreeze(true);
     }
   } else {
     audioeffects.classList.remove("expanded");
@@ -134,6 +136,7 @@ document.getElementById("audioeffects-start").onclick = async () => {
     document.getElementById("audioeffects-start").style.display = "none";
     document.getElementById("audioeffects-stop").style.display = "block";
     document.getElementById("audioeffects-refresh").style.display = "none";
+    toggleDivFreeze(true);
     streaming = true;
 
     status_str = "streaming audio effects";
@@ -153,6 +156,7 @@ document.getElementById("audioeffects-stop").onclick = () => {
   document.getElementById("audioeffects-start").style.display = "block";
   document.getElementById("audioeffects-stop").style.display = "none";
   document.getElementById("audioeffects-refresh").style.display = "block";
+  toggleDivFreeze(false);
   console.log("stopping stream");
 };
 
@@ -213,6 +217,22 @@ function showModal(message: string) {
     const modal = document.getElementById("audioeffects-modal");
     modal.classList.add("hidden");
   };
+}
+
+//deactivate the divs which are for user input when streaming
+function toggleDivFreeze(freeze: boolean) {
+  const divIds = ["audioeffects-col1", "audioeffects-col2", "audioeffects-controls"];
+
+  divIds.forEach((divId) => {
+    const div = document.getElementById(divId);
+    if (div) {
+      if (freeze) {
+        div.classList.add("disabled-div");
+      } else {
+        div.classList.remove("disabled-div");
+      }
+    }
+  });
 }
 
 // const gstreamerCheck = await ipcRenderer.invoke("check-GStreamer");

@@ -58,10 +58,12 @@ document.getElementById("audioeffects-expand").onclick = function () {
             populateAudeioEffectOptions();
             document.getElementById("audioeffects-start").style.display = "block";
             document.getElementById("audioeffects-stop").style.display = "none";
+            toggleDivFreeze(false);
         }
         else {
             document.getElementById("audioeffects-start").style.display = "none";
             document.getElementById("audioeffects-stop").style.display = "block";
+            toggleDivFreeze(true);
         }
     }
     else {
@@ -171,6 +173,7 @@ document.getElementById("audioeffects-start").onclick = function () { return __a
                 document.getElementById("audioeffects-start").style.display = "none";
                 document.getElementById("audioeffects-stop").style.display = "block";
                 document.getElementById("audioeffects-refresh").style.display = "none";
+                toggleDivFreeze(true);
                 streaming = true;
                 status_str = "streaming audio effects";
                 setRemoveHeader(true, status_str, true);
@@ -192,6 +195,7 @@ document.getElementById("audioeffects-stop").onclick = function () {
     document.getElementById("audioeffects-start").style.display = "block";
     document.getElementById("audioeffects-stop").style.display = "none";
     document.getElementById("audioeffects-refresh").style.display = "block";
+    toggleDivFreeze(false);
     console.log("stopping stream");
 };
 document.getElementById("audioeffects-audioeffectselect").onchange = function () {
@@ -244,6 +248,21 @@ function showModal(message) {
         var modal = document.getElementById("audioeffects-modal");
         modal.classList.add("hidden");
     };
+}
+//deactivate the divs which are for user input when streaming
+function toggleDivFreeze(freeze) {
+    var divIds = ["audioeffects-col1", "audioeffects-col2", "audioeffects-controls"];
+    divIds.forEach(function (divId) {
+        var div = document.getElementById(divId);
+        if (div) {
+            if (freeze) {
+                div.classList.add("disabled-div");
+            }
+            else {
+                div.classList.remove("disabled-div");
+            }
+        }
+    });
 }
 // const gstreamerCheck = await ipcRenderer.invoke("check-GStreamer");
 //     console.log(`result the GStreamer package check: ${gstreamerCheck}`);

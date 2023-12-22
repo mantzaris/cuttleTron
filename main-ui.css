@@ -65,3 +65,8 @@ html {
   margin: 0 auto; /* Center the div in the available space */
   padding: 0 10px; /* Padding for aesthetics */
 }
+
+.disabled-div {
+  pointer-events: none; /* Disables click events */
+  opacity: 0.5; /* Makes the div look faded or disabled */
+}

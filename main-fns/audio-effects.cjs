@@ -51,20 +51,6 @@ async function audioEffectsStart(audioEffectsParams) {
     return { success: false, message: error.message };
   }
 
-  // gStreamerArgs = [
-  //   "pulsesrc",
-  //   `device=${source}`,
-  //   `buffer-time=${bufferTime}`,
-  //   "!",
-  //   "audioconvert",
-  //   "!",
-  //   `pitch`,
-  //   `pitch=${pitchValue}`,
-  //   "!",
-  //   "pulsesink",
-  //   `device=${virtualSinkName}`,
-  // ];
-
   gStreamerProcess = spawn("gst-launch-1.0", gStreamerArgs);
 
   return { success: true, message: `streaming to: ${virtualSourceName}` };
