@@ -37,8 +37,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 var ipcRenderer = window.electron.ipcRenderer;
 var audioEffectOptions = ["none", "pitch"];
 import { populateEffectArea, pitchValue } from "./pitch/pitcheffect.js";
+var initialCleaningDone = false;
 var streaming = false;
 var status_str = "";
+function initialCleaning() {
+    if (!initialCleaningDone) {
+        ipcRenderer.invoke("audioeffects-cleanup");
+    }
+}
+initialCleaning();
 document.getElementById("audioeffects-expand").onclick = function () {
     var audioeffects = document.querySelector("#audioeffects");
     var expand_button = document.getElementById("audioeffects-expand");

@@ -5,8 +5,16 @@ const audioEffectOptions: AudioEffectOption[] = ["none", "pitch"];
 
 import { populateEffectArea, pitchValue } from "./pitch/pitcheffect.js";
 
+let initialCleaningDone = false;
 let streaming = false;
 let status_str = "";
+
+function initialCleaning() {
+  if (!initialCleaningDone) {
+    ipcRenderer.invoke("audioeffects-cleanup");
+  }
+}
+initialCleaning();
 
 document.getElementById("audioeffects-expand").onclick = () => {
   const audioeffects = document.querySelector("#audioeffects");

@@ -19,15 +19,20 @@ async function audioEffectsStart(audioEffectsParams) {
 
   const { type, source, params } = audioEffectsParams;
 
+  const gs_sourceArgs = ["pulsesrc", `device=${source}`, `buffer-time=${bufferTime}`, "!", "audioconvert", "!"];
+  const gs_sinkArgs = ["!", "pulsesink", `device=${virtualSinkName}`];
+  let gs_effectArgs = [];
+
   let pitchValue;
 
   if (type == "none") {
     // return null
   } else if (type == "pitch") {
     pitchValue = params.pitchValue;
+    gs_effectArgs.push(`pitch`, `pitch=${pitchValue}`);
   }
 
-  //const source = "alsa_input.usb-Corsair_CORSAIR_VOID_ELITE_Wireless_Gaming_Dongle-00.mono-fallback";
+  let gStreamerArgs = gs_sourceArgs.concat(gs_effectArgs, gs_sinkArgs);
 
   try {
     const loadSinkCommand = `pactl load-module module-null-sink sink_name=${virtualSinkName} sink_properties=device.description=${virtualSinkDescription}`;
@@ -46,19 +51,19 @@ async function audioEffectsStart(audioEffectsParams) {
     return { success: false, message: error.message };
   }
 
-  const gStreamerArgs = [
-    "pulsesrc",
-    `device=${source}`,
-    `buffer-time=${bufferTime}`,
-    "!",
-    "audioconvert",
-    "!",
-    `pitch`,
-    `pitch=${pitchValue}`,
-    "!",
-    "pulsesink",
-    `device=${virtualSinkName}`,
-  ];
+  // gStreamerArgs = [
+  //   "pulsesrc",
+  //   `device=${source}`,
+  //   `buffer-time=${bufferTime}`,
+  //   "!",
+  //   "audioconvert",
+  //   "!",
+  //   `pitch`,
+  //   `pitch=${pitchValue}`,
+  //   "!",
+  //   "pulsesink",
+  //   `device=${virtualSinkName}`,
+  // ];
 
   gStreamerProcess = spawn("gst-launch-1.0", gStreamerArgs);
 
@@ -90,28 +95,62 @@ async function audioEffectsStop() {
 
 async function cleanupAudioDevices() {
   try {
-    // List all sinks and sources
-    const { stdout: sinksList } = await execAsync("pactl list short sinks");
-    const { stdout: sourcesList } = await execAsync("pactl list short sources");
+    // List all modules
+    const { stdout: modulesList } = await execAsync("pactl list short modules");
 
-    // Find and unload any lingering virtual sinks created by the app
-    const sinkPattern = new RegExp(`(\\d+)\\s+${virtualSinkName}`, "g");
-    let match;
-    while ((match = sinkPattern.exec(sinksList)) !== null) {
-      await execAsync(`pactl unload-module ${match[1]}`);
-      console.log(`Cleaned up lingering sink with ID: ${match[1]}`);
+    // Function to unload modules
+    async function unloadModule(moduleId) {
+      try {
+        await execAsync(`pactl unload-module ${moduleId}`);
+        console.log(`Successfully unloaded module with ID: ${moduleId}`);
+      } catch (unloadError) {
+        console.error(`Error unloading module ${moduleId}: ${unloadError.message}`);
+      }
     }
 
-    // Find and unload any lingering virtual sources created by the app
-    const sourcePattern = new RegExp(`(\\d+)\\s+${virtualSourceName}`, "g");
-    while ((match = sourcePattern.exec(sourcesList)) !== null) {
-      await execAsync(`pactl unload-module ${match[1]}`);
-      console.log(`Cleaned up lingering source with ID: ${match[1]}`);
+    // Unload virtual sinks (module-null-sink)
+    const nullSinkPattern = new RegExp(`(\\d+)\\s+module-null-sink\\s+sink_name=${virtualSinkName}`, "g");
+    let match;
+    while ((match = nullSinkPattern.exec(modulesList)) !== null) {
+      await unloadModule(match[1]);
+    }
+
+    // Unload virtual sources (module-remap-source)
+    const remapSourcePattern = new RegExp(`(\\d+)\\s+module-remap-source\\s+.*?source_name=${virtualSourceName}`, "g");
+    while ((match = remapSourcePattern.exec(modulesList)) !== null) {
+      await unloadModule(match[1]);
     }
   } catch (error) {
     console.error(`Error during cleanup: ${error.message}`);
   }
 }
+
+module.exports = { audioEffectsStart, audioEffectsStop, cleanupAudioDevices };
+
+// async function cleanupAudioDevices() {
+//   try {
+//     // List all sinks and sources
+//     const { stdout: sinksList } = await execAsync("pactl list short sinks");
+//     const { stdout: sourcesList } = await execAsync("pactl list short sources");
+
+//     // Find and unload any lingering virtual sinks created by the app
+//     const sinkPattern = new RegExp(`(\\d+)\\s+${virtualSinkName}`, "g");
+//     let match;
+//     while ((match = sinkPattern.exec(sinksList)) !== null) {
+//       await execAsync(`pactl unload-module ${match[1]}`);
+//       console.log(`Cleaned up lingering sink with ID: ${match[1]}`);
+//     }
+
+//     // Find and unload any lingering virtual sources created by the app
+//     const sourcePattern = new RegExp(`(\\d+)\\s+${virtualSourceName}`, "g");
+//     while ((match = sourcePattern.exec(sourcesList)) !== null) {
+//       await execAsync(`pactl unload-module ${match[1]}`);
+//       console.log(`Cleaned up lingering source with ID: ${match[1]}`);
+//     }
+//   } catch (error) {
+//     console.error(`Error during cleanup: ${error.message}`);
+//   }
+// }
 
 // check for the packages neccessary only on Debian Flavours
 // async function checkGStreamerPackages() {
@@ -132,8 +171,6 @@ async function cleanupAudioDevices() {
 //     return false;
 //   }
 // }
-
-module.exports = { audioEffectsStart, audioEffectsStop, cleanupAudioDevices };
 
 //const loadSinkCommandOLD = `pactl load-module module-null-sink sink_name=${virtualSinkName} sink_properties=device.description=${virtualSinkDescription}`;
 //pactl load-module module-null-sink sink_name=VirtualMic sink_properties=device.description=VirtualMic

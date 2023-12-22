@@ -16,7 +16,7 @@ const {
   stopAudioRecording,
   recordingsCompleted,
 } = require("./main-fns/audio-utilities.cjs");
-const { audioEffectsStart, audioEffectsStop, checkGStreamerPackages } = require("./main-fns/audio-effects.cjs");
+const { audioEffectsStart, audioEffectsStop, cleanupAudioDevices } = require("./main-fns/audio-effects.cjs");
 
 const packageJson = require("./package.json");
 const appName = packageJson.name;
@@ -62,17 +62,30 @@ app.on("before-quit", async (event) => {
   // Prevent the default behavior first if needed
   event.preventDefault();
 
-  // Call your function
   await audioEffectsStop();
-
   await cleanupAudioDevices();
-  // After your function's work is done, you can exit
+
   app.quit();
 });
 
 app.on("window-all-closed", async function () {
   //await audioEffectsStop();
   //app.quit();
+});
+
+app.on("will-quit", async (event) => {
+  // Prevent the default quit process to perform cleanup
+  event.preventDefault();
+
+  try {
+    await audioEffectsStop();
+    await cleanupAudioDevices();
+  } catch (error) {
+    console.error("Error during cleanup:", error);
+  }
+
+  // Now allow the app to quit
+  app.quit();
 });
 
 app.on("activate", function () {
@@ -162,6 +175,9 @@ ipcMain.handle("audioeffects-stop", async (event) => {
   await audioEffectsStop();
 });
 
+ipcMain.handle("audioeffects-cleanup", async (event) => {
+  await cleanupAudioDevices();
+});
 // ipcMain.handle("check-GStreamer", async (event, args) => {
 //   try {
 //     // Call the function to check for the packages
