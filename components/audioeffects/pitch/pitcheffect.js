@@ -1,6 +1,6 @@
 var labelText = "Select Pitch Value";
 var divArea = document.getElementById("audioeffects-controls");
-export var pitchValue = 1.0;
+export var pitchValue = 0.8;
 var minPitch = 0.1;
 var maxPitch = 3;
 export function populateEffectArea_Pitch() {

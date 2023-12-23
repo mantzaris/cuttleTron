@@ -1,10 +1,10 @@
 const { ipcRenderer } = window.electron;
 
-type AudioEffectOption = "none" | "pitch" | "flanger";
-const audioEffectOptions: AudioEffectOption[] = ["none", "pitch", "flanger"];
+type AudioEffectOption = "none" | "pitch" | "echo";
+const audioEffectOptions: AudioEffectOption[] = ["none", "pitch", "echo"];
 
 import { populateEffectArea_Pitch, pitchValue } from "./pitch/pitcheffect.js";
-import { populateEffectArea_Flanger, depthValue, feedbackValue, speedValue } from "./flanger/flangereffect.js";
+import { populateEffectArea_Echo, delay, intensity, feedback } from "./echo/echoeffect.js";
 
 let initialCleaningDone = false;
 let streaming = false;
@@ -118,6 +118,12 @@ document.getElementById("audioeffects-start").onclick = async () => {
     audio_effects_params["params"] = {
       pitchValue,
     };
+  } else if (chosenEffect == "echo") {
+    audio_effects_params["params"] = {
+      delay,
+      intensity,
+      feedback,
+    };
   }
 
   try {
@@ -167,8 +173,8 @@ document.getElementById("audioeffects-audioeffectselect").onchange = () => {
     document.getElementById("audioeffects-controls").innerHTML = "";
   } else if (chosen_effect == "pitch") {
     populateEffectArea_Pitch();
-  } else if (chosen_effect == "flanger") {
-    populateEffectArea_Flanger();
+  } else if (chosen_effect == "echo") {
+    populateEffectArea_Echo();
   }
 };
 

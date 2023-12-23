@@ -1,6 +1,6 @@
 const labelText = "Select Pitch Value";
 let divArea = document.getElementById("audioeffects-controls");
-export let pitchValue: number = 1.0;
+export let pitchValue: number = 0.8;
 const minPitch = 0.1;
 const maxPitch = 3;
 

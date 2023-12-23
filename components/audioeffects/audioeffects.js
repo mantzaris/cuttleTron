@@ -35,9 +35,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var ipcRenderer = window.electron.ipcRenderer;
-var audioEffectOptions = ["none", "pitch", "flanger"];
+var audioEffectOptions = ["none", "pitch", "echo"];
 import { populateEffectArea_Pitch, pitchValue } from "./pitch/pitcheffect.js";
-import { populateEffectArea_Flanger } from "./flanger/flangereffect.js";
+import { populateEffectArea_Echo, delay, intensity, feedback } from "./echo/echoeffect.js";
 var initialCleaningDone = false;
 var streaming = false;
 var status_str = "";
@@ -155,6 +155,13 @@ document.getElementById("audioeffects-start").onclick = function () { return __a
                         pitchValue: pitchValue,
                     };
                 }
+                else if (chosenEffect == "echo") {
+                    audio_effects_params["params"] = {
+                        delay: delay,
+                        intensity: intensity,
+                        feedback: feedback,
+                    };
+                }
                 _a.label = 1;
             case 1:
                 _a.trys.push([1, 5, , 6]);
@@ -207,8 +214,8 @@ document.getElementById("audioeffects-audioeffectselect").onchange = function ()
     else if (chosen_effect == "pitch") {
         populateEffectArea_Pitch();
     }
-    else if (chosen_effect == "flanger") {
-        populateEffectArea_Flanger();
+    else if (chosen_effect == "echo") {
+        populateEffectArea_Echo();
     }
 };
 function setRemoveHeader(add_message, message, flash_bool) {

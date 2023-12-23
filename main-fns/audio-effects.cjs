@@ -18,24 +18,27 @@ async function audioEffectsStart(audioEffectsParams) {
   await cleanupAudioDevices();
 
   const { type, source, params } = audioEffectsParams;
+  console.log(audioEffectsParams);
 
   const gs_sourceArgs = ["pulsesrc", `device=${source}`, `buffer-time=${bufferTime}`, "!", "audioconvert", "!"];
   const gs_sinkArgs = ["!", "pulsesink", `device=${virtualSinkName}`];
   let gs_effectArgs = [];
 
-  let pitchValue;
-
   if (type == "none") {
     // return null
   } else if (type == "pitch") {
-    pitchValue = params.pitchValue;
+    const pitchValue = params.pitchValue;
     gs_effectArgs.push(`pitch`, `pitch=${pitchValue}`);
-  } else if (type == 'flanger') {
-    //     if (userSelections.flanger.enabled) {effectArgs.push("flanger", `depth=${userSelections.flanger.depth}`, `feedback=${userSelections.flanger.feedback}`, `speed=${userSelections.flanger.speed}`);
-    }
+  } else if (type == "echo") {
+    const delay = params["delay"];
+    const intensity = params["intensity"];
+    const feedback = params["feedback"];
+    gs_effectArgs.push(`audioecho`, `delay=${delay}`, `intensity=${intensity}`, `feedback=${feedback}`);
   }
 
   let gStreamerArgs = gs_sourceArgs.concat(gs_effectArgs, gs_sinkArgs);
+
+  console.log(gStreamerArgs);
 
   try {
     const loadSinkCommand = `pactl load-module module-null-sink sink_name=${virtualSinkName} sink_properties=device.description=${virtualSinkDescription}`;
