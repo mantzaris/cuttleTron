@@ -21,26 +21,32 @@ export function populateEffectArea_Echo() {
                           
                         <label id="echoSliderLabel" for="">delay=${delay_shown}, intensity=${intensity}, feedback=${feedback}</label>
                           
-                        <label for="">delay</label>
+                        <div class="sliderGroup">
+                        <label for="echoSlider-delay">delay</label>
                           <div class="sliderWithValues">
                               <span class="minValue">${minDelay}</span>
                               <input type="range" id="echoSlider-delay" min="${minDelay}" max="${maxDelay}" step="0.1" value="${delay_shown}">
                               <span class="maxValue">${maxDelay}</span>
                           </div>
+                        </div>
 
-                          <label for="">intensity</label>
+                        <div class="sliderGroup">
+                          <label for="echoSlider-intensity">intensity</label>
                           <div class="sliderWithValues">
                               <span class="minValue">${minIntensity}</span>
                               <input type="range" id="echoSlider-intensity" min="${minIntensity}" max="${maxIntensity}" step="0.1" value="${intensity}">
                               <span class="maxValue">${maxIntensity}</span>
                           </div>
+                        </div>
 
-                          <label for="">feedback</label>
+                        <div class="sliderGroup">
+                          <label for="echoSlider-feedback">feedback</label>
                           <div class="sliderWithValues">
                               <span class="minValue">${minFeedback}</span>
                               <input type="range" id="echoSlider-feedback" min="${minFeedback}" max="${maxFeedback}" step="0.1" value="${feedback}">
                               <span class="maxValue">${maxFeedback}</span>
                           </div>
+                        </div>
 
                       </div>
                         `;
