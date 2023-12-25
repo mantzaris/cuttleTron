@@ -116,7 +116,7 @@
 }
 
 .sliderGroup label {
-  width: 15%; /* Fixed width for the label */
+  width: 20%; /* Fixed width for the label */
   margin-right: 10px; /* Space between label and slider */
   white-space: nowrap; /* Prevents label from wrapping */
   text-align: right; /* Optional: Aligns text to the right of the label */
@@ -126,13 +126,28 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 85%; /* Adjusted to fill the remaining 85% of the container */
+  width: 80%; /* Adjusted to fill the remaining 85% of the container */
   flex-grow: 1; /* Allows the slider section to grow */
 }
 
 .sliderWithValues input[type="range"] {
   flex-grow: 1;
   margin: 0 10px;
+}
+
+input[type="range"] {
+  /* Thumb styling for Webkit browsers */
+  -webkit-appearance: none; /* Required to style the thumb */
+  appearance: none;
+  height: 10px; /* Adjust as needed */
+  background: var(--thumb-color, black); /* Default color */
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px; /* Adjust as needed */
+  height: 20px; /* Adjust as needed */
+  background: var(--thumb-color, black); /* Default color */
 }
 
 .minValue,
