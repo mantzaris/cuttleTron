@@ -37,7 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 var ipcRenderer = window.electron.ipcRenderer;
 var audioEffectOptions = ["none", "pitch", "echo"];
 import { populateEffectArea_Pitch, pitchValue } from "./pitch/pitcheffect.js";
-import { populateEffectArea_Echo, delay, intensity, feedback } from "./echo/echoeffect.js";
+import { populateEffectArea_Echo, echo_delay, echo_intensity, echo_feedback } from "./echo/echoeffect.js";
 var initialCleaningDone = false;
 var streaming = false;
 var status_str = "";
@@ -157,9 +157,9 @@ document.getElementById("audioeffects-start").onclick = function () { return __a
                 }
                 else if (chosenEffect == "echo") {
                     audio_effects_params["params"] = {
-                        delay: delay,
-                        intensity: intensity,
-                        feedback: feedback,
+                        echo_delay: echo_delay,
+                        echo_intensity: echo_intensity,
+                        echo_feedback: echo_feedback,
                     };
                 }
                 _a.label = 1;

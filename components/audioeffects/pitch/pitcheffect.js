@@ -17,12 +17,10 @@ export function populateEffectArea_Pitch() {
 }
 function updateSlider(slider, value) {
     var color = sliderColor(value);
-    console.log(color);
     slider.style.setProperty("--thumb-color", color);
 }
 function sliderColor(value) {
     if (value === 1.0) {
-        console.log("blck");
         return "black";
     }
     else if (value >= 0.7 && value <= 1.5) {

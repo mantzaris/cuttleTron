@@ -30,9 +30,9 @@ async function audioEffectsStart(audioEffectsParams) {
     const pitchValue = params.pitchValue;
     gs_effectArgs.push(`pitch`, `pitch=${pitchValue}`);
   } else if (type == "echo") {
-    const delay = params["delay"];
-    const intensity = params["intensity"];
-    const feedback = params["feedback"];
+    const delay = params["echo_delay"];
+    const intensity = params["echo_intensity"];
+    const feedback = params["echo_feedback"];
     gs_effectArgs.push(`audioecho`, `delay=${delay}`, `intensity=${intensity}`, `feedback=${feedback}`);
   }
 

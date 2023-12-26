@@ -4,7 +4,7 @@ type AudioEffectOption = "none" | "pitch" | "echo";
 const audioEffectOptions: AudioEffectOption[] = ["none", "pitch", "echo"];
 
 import { populateEffectArea_Pitch, pitchValue } from "./pitch/pitcheffect.js";
-import { populateEffectArea_Echo, delay, intensity, feedback } from "./echo/echoeffect.js";
+import { populateEffectArea_Echo, echo_delay, echo_intensity, echo_feedback } from "./echo/echoeffect.js";
 
 let initialCleaningDone = false;
 let streaming = false;
@@ -120,9 +120,9 @@ document.getElementById("audioeffects-start").onclick = async () => {
     };
   } else if (chosenEffect == "echo") {
     audio_effects_params["params"] = {
-      delay,
-      intensity,
-      feedback,
+      echo_delay,
+      echo_intensity,
+      echo_feedback,
     };
   }
 
