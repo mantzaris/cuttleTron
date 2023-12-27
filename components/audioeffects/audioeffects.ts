@@ -118,46 +118,42 @@ document.getElementById("audioeffects-added").addEventListener("click", function
 });
 //Audio Effect List END
 
+function getEffectParams(effectName: string) {
+  switch (effectName) {
+    case "pitch":
+      return { pitchValue };
+    case "echo":
+      return { echo_delay, echo_intensity, echo_feedback };
+    default:
+      return {};
+  }
+}
+
 document.getElementById("audioeffects-start").onclick = async () => {
   const chosen_sink_monitor = (document.getElementById("audioeffects-audionameselect") as HTMLSelectElement).value;
-  const chosenEffectElement = document.getElementById("audioeffects-audioeffectselect") as HTMLSelectElement;
-  const chosenEffectValue = chosenEffectElement.value;
 
-  const chosenEffect: AudioEffectOption = audioEffectOptions.includes(chosenEffectValue as AudioEffectOption) ? (chosenEffectValue as AudioEffectOption) : "none";
+  const current_effects = Array.from(document.querySelectorAll("#audioeffects-added .list-group-item"))
+    .map((item) => item.getAttribute("data-effect-name"))
+    .filter((effect) => effect && audioEffectOptions.includes(effect as AudioEffectOption));
+
+  if (current_effects.length === 0 || chosen_sink_monitor === "none") {
+    const statusLabel = document.getElementById("audioeffects-status-label");
+    statusLabel.innerText = "configure audio selection & effect";
+    setTimeout(() => {
+      statusLabel.innerText = "";
+    }, 1200);
+    return;
+  }
 
   const audio_effects_params = {
     source: chosen_sink_monitor,
-    type: chosenEffect,
+    effects: current_effects.map((effectName) => ({
+      type: effectName,
+      params: getEffectParams(effectName),
+    })),
   };
 
-  if (chosenEffect === "none" || chosen_sink_monitor == "none") {
-    let message_tmp = "Select: ";
-
-    if (chosenEffect == "none" && chosen_sink_monitor == "none") {
-      message_tmp += "audio source & effect";
-    } else if (chosenEffect == "none" && !(chosen_sink_monitor == "none")) {
-      message_tmp += "audio effect";
-    } else if (!(chosenEffect == "none") && chosen_sink_monitor == "none") {
-      message_tmp += "audio source";
-    }
-
-    document.getElementById("audioeffects-status-label").innerText = message_tmp;
-    setTimeout(() => {
-      document.getElementById("audioeffects-status-label").innerText = "";
-    }, 1200);
-
-    return;
-  } else if (chosenEffect == "pitch") {
-    audio_effects_params["params"] = {
-      pitchValue,
-    };
-  } else if (chosenEffect == "echo") {
-    audio_effects_params["params"] = {
-      echo_delay,
-      echo_intensity,
-      echo_feedback,
-    };
-  }
+  //console.log(audio_effects_params);
 
   try {
     const status = await ipcRenderer.invoke("audioeffects-start", audio_effects_params);
@@ -263,7 +259,7 @@ function showModal(message: string) {
 
 //deactivate the divs which are for user input when streaming
 function toggleDivFreeze(freeze: boolean) {
-  const divIds = ["audioeffects-col1", "audioeffects-col2", "audioeffects-controls"];
+  const divIds = ["audioeffects-col1", "audioeffects-col2", "audioeffects-controls", "audioeffects-added"];
 
   divIds.forEach((divId) => {
     const div = document.getElementById(divId);

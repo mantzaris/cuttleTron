@@ -141,48 +141,40 @@ document.getElementById("audioeffects-added").addEventListener("click", function
     }
 });
 //Audio Effect List END
+function getEffectParams(effectName) {
+    switch (effectName) {
+        case "pitch":
+            return { pitchValue: pitchValue };
+        case "echo":
+            return { echo_delay: echo_delay, echo_intensity: echo_intensity, echo_feedback: echo_feedback };
+        default:
+            return {};
+    }
+}
 document.getElementById("audioeffects-start").onclick = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var chosen_sink_monitor, chosenEffectElement, chosenEffectValue, chosenEffect, audio_effects_params, message_tmp, status_1, error_1;
+    var chosen_sink_monitor, current_effects, statusLabel_1, audio_effects_params, status_1, error_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 chosen_sink_monitor = document.getElementById("audioeffects-audionameselect").value;
-                chosenEffectElement = document.getElementById("audioeffects-audioeffectselect");
-                chosenEffectValue = chosenEffectElement.value;
-                chosenEffect = audioEffectOptions.includes(chosenEffectValue) ? chosenEffectValue : "none";
-                audio_effects_params = {
-                    source: chosen_sink_monitor,
-                    type: chosenEffect,
-                };
-                if (chosenEffect === "none" || chosen_sink_monitor == "none") {
-                    message_tmp = "Select: ";
-                    if (chosenEffect == "none" && chosen_sink_monitor == "none") {
-                        message_tmp += "audio source & effect";
-                    }
-                    else if (chosenEffect == "none" && !(chosen_sink_monitor == "none")) {
-                        message_tmp += "audio effect";
-                    }
-                    else if (!(chosenEffect == "none") && chosen_sink_monitor == "none") {
-                        message_tmp += "audio source";
-                    }
-                    document.getElementById("audioeffects-status-label").innerText = message_tmp;
+                current_effects = Array.from(document.querySelectorAll("#audioeffects-added .list-group-item"))
+                    .map(function (item) { return item.getAttribute("data-effect-name"); })
+                    .filter(function (effect) { return effect && audioEffectOptions.includes(effect); });
+                if (current_effects.length === 0 || chosen_sink_monitor === "none") {
+                    statusLabel_1 = document.getElementById("audioeffects-status-label");
+                    statusLabel_1.innerText = "configure audio selection & effect";
                     setTimeout(function () {
-                        document.getElementById("audioeffects-status-label").innerText = "";
+                        statusLabel_1.innerText = "";
                     }, 1200);
                     return [2 /*return*/];
                 }
-                else if (chosenEffect == "pitch") {
-                    audio_effects_params["params"] = {
-                        pitchValue: pitchValue,
-                    };
-                }
-                else if (chosenEffect == "echo") {
-                    audio_effects_params["params"] = {
-                        echo_delay: echo_delay,
-                        echo_intensity: echo_intensity,
-                        echo_feedback: echo_feedback,
-                    };
-                }
+                audio_effects_params = {
+                    source: chosen_sink_monitor,
+                    effects: current_effects.map(function (effectName) { return ({
+                        type: effectName,
+                        params: getEffectParams(effectName),
+                    }); }),
+                };
                 _a.label = 1;
             case 1:
                 _a.trys.push([1, 5, , 6]);
@@ -283,7 +275,7 @@ function showModal(message) {
 }
 //deactivate the divs which are for user input when streaming
 function toggleDivFreeze(freeze) {
-    var divIds = ["audioeffects-col1", "audioeffects-col2", "audioeffects-controls"];
+    var divIds = ["audioeffects-col1", "audioeffects-col2", "audioeffects-controls", "audioeffects-added"];
     divIds.forEach(function (divId) {
         var div = document.getElementById(divId);
         if (div) {

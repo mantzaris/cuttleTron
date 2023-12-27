@@ -17,23 +17,34 @@ let virtualSourceModuleId = null;
 async function audioEffectsStart(audioEffectsParams) {
   await cleanupAudioDevices();
 
-  const { type, source, params } = audioEffectsParams;
+  const { source, effects } = audioEffectsParams;
   console.log(audioEffectsParams);
 
-  const gs_sourceArgs = ["pulsesrc", `device=${source}`, `buffer-time=${bufferTime}`, "!", "audioconvert", "!"];
+  const gs_sourceArgs = ["pulsesrc", `device=${source}`, `buffer-time=${bufferTime}`, "!", "audioconvert"];
   const gs_sinkArgs = ["!", "pulsesink", `device=${virtualSinkName}`];
   let gs_effectArgs = [];
 
-  if (type == "none") {
-    // return null
-  } else if (type == "pitch") {
-    const pitchValue = params.pitchValue;
-    gs_effectArgs.push(`pitch`, `pitch=${pitchValue}`);
-  } else if (type == "echo") {
-    const delay = params["echo_delay"];
-    const intensity = params["echo_intensity"];
-    const feedback = params["echo_feedback"];
-    gs_effectArgs.push(`audioecho`, `delay=${delay}`, `intensity=${intensity}`, `feedback=${feedback}`);
+  for (const effect of effects) {
+    const { type, params } = effect;
+
+    switch (type) {
+      case "pitch":
+        const pitchValue = params.pitchValue;
+        gs_effectArgs.push("!", `pitch`, `pitch=${pitchValue}`);
+        break;
+      case "echo":
+        const delay = params.echo_delay;
+        const intensity = params.echo_intensity;
+        const feedback = params.echo_feedback;
+        gs_effectArgs.push("!", `audioecho`, `delay=${delay}`, `intensity=${intensity}`, `feedback=${feedback}`);
+        break;
+      // more cases for other effects
+    }
+  }
+
+  if (gs_effectArgs.length === 0) {
+    // Handle case where no effects are selected or all are 'none'
+    return;
   }
 
   let gStreamerArgs = gs_sourceArgs.concat(gs_effectArgs, gs_sinkArgs);
