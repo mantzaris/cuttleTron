@@ -120,6 +120,27 @@ document.getElementById("audioeffects-refresh").onclick = function () {
         populateAudeioEffectOptions();
     }
 };
+//Audio Effect List START
+document.getElementById("audioeffects-controls").addEventListener("change", function (event) {
+    var chosen_effect = document.getElementById("audioeffects-audioeffectselect").value;
+    var current_effects = [];
+    document.querySelectorAll("#audioeffects-added .list-group-item").forEach(function (item) {
+        current_effects.push(item.getAttribute("data-effect-name"));
+    });
+    if (current_effects.includes(chosen_effect)) {
+        return;
+    }
+    var effect_entry = "\n                        <li class=\"list-group-item list-group-item-compact d-flex justify-content-between align-items-center\" data-effect-name=\"".concat(chosen_effect, "\">\n                          <span>").concat(chosen_effect, "</span>\n                          <button class=\"btn btn-danger btn-sm btn-compact remove-effect\" id=\"remove-").concat(chosen_effect, "\">Remove</button>\n                        </li>  \n                        ");
+    document.getElementById("audioeffects-ul").innerHTML += effect_entry;
+});
+document.getElementById("audioeffects-added").addEventListener("click", function (event) {
+    var target = event.target;
+    if (target.classList.contains("remove-effect")) {
+        var listItem = target.closest("li");
+        listItem.remove();
+    }
+});
+//Audio Effect List END
 document.getElementById("audioeffects-start").onclick = function () { return __awaiter(void 0, void 0, void 0, function () {
     var chosen_sink_monitor, chosenEffectElement, chosenEffectValue, chosenEffect, audio_effects_params, message_tmp, status_1, error_1;
     return __generator(this, function (_a) {

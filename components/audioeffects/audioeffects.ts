@@ -85,6 +85,39 @@ document.getElementById("audioeffects-refresh").onclick = () => {
   }
 };
 
+//Audio Effect List START
+document.getElementById("audioeffects-controls").addEventListener("change", function (event) {
+  const chosen_effect = (document.getElementById("audioeffects-audioeffectselect") as HTMLSelectElement).value;
+  const current_effects = [];
+
+  document.querySelectorAll("#audioeffects-added .list-group-item").forEach((item) => {
+    current_effects.push(item.getAttribute("data-effect-name"));
+  });
+
+  if (current_effects.includes(chosen_effect)) {
+    return;
+  }
+
+  const effect_entry = `
+                        <li class="list-group-item list-group-item-compact d-flex justify-content-between align-items-center" data-effect-name="${chosen_effect}">
+                          <span>${chosen_effect}</span>
+                          <button class="btn btn-danger btn-sm btn-compact remove-effect" id="remove-${chosen_effect}">Remove</button>
+                        </li>  
+                        `;
+
+  document.getElementById("audioeffects-ul").innerHTML += effect_entry;
+});
+
+document.getElementById("audioeffects-added").addEventListener("click", function (event) {
+  const target = event.target as Element;
+
+  if (target.classList.contains("remove-effect")) {
+    const listItem = target.closest("li");
+    listItem.remove();
+  }
+});
+//Audio Effect List END
+
 document.getElementById("audioeffects-start").onclick = async () => {
   const chosen_sink_monitor = (document.getElementById("audioeffects-audionameselect") as HTMLSelectElement).value;
   const chosenEffectElement = document.getElementById("audioeffects-audioeffectselect") as HTMLSelectElement;
