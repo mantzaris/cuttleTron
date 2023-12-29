@@ -35,9 +35,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var ipcRenderer = window.electron.ipcRenderer;
-var audioEffectOptions = ["none", "pitch", "echo"];
+var audioEffectOptions = ["none", "pitch", "echo", "reverb"];
 import { populateEffectArea_Pitch, pitchValue } from "./pitch/pitcheffect.js";
 import { populateEffectArea_Echo, echo_delay, echo_intensity, echo_feedback } from "./echo/echoeffect.js";
+import { populateEffectArea_Reverb, reverb_roomsize, reverb_damping, reverb_level, reverb_width } from "./reverb/reverbeffect.js";
 var initialCleaningDone = false;
 var streaming = false;
 var status_str = "";
@@ -147,6 +148,8 @@ function getEffectParams(effectName) {
             return { pitchValue: pitchValue };
         case "echo":
             return { echo_delay: echo_delay, echo_intensity: echo_intensity, echo_feedback: echo_feedback };
+        case "reverb":
+            return { reverb_roomsize: reverb_roomsize, reverb_damping: reverb_damping, reverb_level: reverb_level, reverb_width: reverb_width };
         default:
             return {};
     }
@@ -220,15 +223,25 @@ document.getElementById("audioeffects-stop").onclick = function () {
     console.log("stopping stream");
 };
 document.getElementById("audioeffects-audioeffectselect").onchange = function () {
-    var chosen_effect = document.getElementById("audioeffects-audioeffectselect").value;
-    if (chosen_effect == "none") {
-        document.getElementById("audioeffects-controls").innerHTML = "";
-    }
-    else if (chosen_effect == "pitch") {
-        populateEffectArea_Pitch();
-    }
-    else if (chosen_effect == "echo") {
-        populateEffectArea_Echo();
+    var chosenEffectElement = document.getElementById("audioeffects-audioeffectselect");
+    var chosenEffect = chosenEffectElement.value;
+    switch (chosenEffect) {
+        case "pitch":
+            populateEffectArea_Pitch();
+            break;
+        case "echo":
+            populateEffectArea_Echo();
+            break;
+        case "reverb":
+            populateEffectArea_Reverb();
+            break;
+        case "none":
+            document.getElementById("audioeffects-controls").innerHTML = "";
+            break;
+        default:
+            console.error("Unknown effect: ".concat(chosenEffect));
+            // Handle unknown effect case, maybe reset to default state
+            break;
     }
 };
 function setRemoveHeader(add_message, message, flash_bool) {

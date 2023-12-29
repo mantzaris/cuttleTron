@@ -38,7 +38,13 @@ async function audioEffectsStart(audioEffectsParams) {
         const feedback = params.echo_feedback;
         gs_effectArgs.push("!", `audioecho`, `delay=${delay}`, `intensity=${intensity}`, `feedback=${feedback}`);
         break;
-      // more cases for other effects
+      case "reverb":
+        const roomsize = params.reverb_roomsize;
+        const damping = params.reverb_damping;
+        const level = params.reverb_level;
+        const width = params.reverb_width;
+        gs_effectArgs.push("!", `freeverb`, `room-size=${roomsize}`, `damping=${damping}`, `level=${level}`, `width=${width}`);
+        break;
     }
   }
 

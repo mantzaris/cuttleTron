@@ -1,10 +1,11 @@
 const { ipcRenderer } = window.electron;
 
-type AudioEffectOption = "none" | "pitch" | "echo";
-const audioEffectOptions: AudioEffectOption[] = ["none", "pitch", "echo"];
+type AudioEffectOption = "none" | "pitch" | "echo" | "reverb";
+const audioEffectOptions: AudioEffectOption[] = ["none", "pitch", "echo", "reverb"];
 
 import { populateEffectArea_Pitch, pitchValue } from "./pitch/pitcheffect.js";
 import { populateEffectArea_Echo, echo_delay, echo_intensity, echo_feedback } from "./echo/echoeffect.js";
+import { populateEffectArea_Reverb, reverb_roomsize, reverb_damping, reverb_level, reverb_width } from "./reverb/reverbeffect.js";
 
 let initialCleaningDone = false;
 let streaming = false;
@@ -118,12 +119,14 @@ document.getElementById("audioeffects-added").addEventListener("click", function
 });
 //Audio Effect List END
 
-function getEffectParams(effectName: string) {
+function getEffectParams(effectName: AudioEffectOption) {
   switch (effectName) {
     case "pitch":
       return { pitchValue };
     case "echo":
       return { echo_delay, echo_intensity, echo_feedback };
+    case "reverb":
+      return { reverb_roomsize, reverb_damping, reverb_level, reverb_width };
     default:
       return {};
   }
@@ -149,7 +152,7 @@ document.getElementById("audioeffects-start").onclick = async () => {
     source: chosen_sink_monitor,
     effects: current_effects.map((effectName) => ({
       type: effectName,
-      params: getEffectParams(effectName),
+      params: getEffectParams(effectName as AudioEffectOption),
     })),
   };
 
@@ -197,13 +200,26 @@ document.getElementById("audioeffects-stop").onclick = () => {
 };
 
 document.getElementById("audioeffects-audioeffectselect").onchange = () => {
-  const chosen_effect = (document.getElementById("audioeffects-audioeffectselect") as HTMLSelectElement).value;
-  if (chosen_effect == "none") {
-    document.getElementById("audioeffects-controls").innerHTML = "";
-  } else if (chosen_effect == "pitch") {
-    populateEffectArea_Pitch();
-  } else if (chosen_effect == "echo") {
-    populateEffectArea_Echo();
+  const chosenEffectElement = document.getElementById("audioeffects-audioeffectselect") as HTMLSelectElement;
+  const chosenEffect = chosenEffectElement.value as AudioEffectOption;
+
+  switch (chosenEffect) {
+    case "pitch":
+      populateEffectArea_Pitch();
+      break;
+    case "echo":
+      populateEffectArea_Echo();
+      break;
+    case "reverb":
+      populateEffectArea_Reverb();
+      break;
+    case "none":
+      document.getElementById("audioeffects-controls").innerHTML = "";
+      break;
+    default:
+      console.error(`Unknown effect: ${chosenEffect}`);
+      // Handle unknown effect case, maybe reset to default state
+      break;
   }
 };
 
