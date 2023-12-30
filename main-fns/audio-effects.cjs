@@ -45,6 +45,25 @@ async function audioEffectsStart(audioEffectsParams) {
         const width = params.reverb_width;
         gs_effectArgs.push("!", `freeverb`, `room-size=${roomsize}`, `damping=${damping}`, `level=${level}`, `width=${width}`);
         break;
+      case "bandFilter":
+        const lower_frequency = params.band_lower;
+        const upper_frequency = params.band_upper;
+        const mode = params.band_mode;
+        const poles = params.band_poles;
+        const ripple = params.band_ripple;
+        const type = params.band_type;
+
+        gs_effectArgs.push(
+          "!",
+          `audiochebband`,
+          `lower-frequency=${lower_frequency}`,
+          `upper-frequency=${upper_frequency}`,
+          `mode=${mode}`,
+          `poles=${poles}`,
+          `ripple=${ripple}`,
+          `type=${type}`
+        );
+        break;
     }
   }
 

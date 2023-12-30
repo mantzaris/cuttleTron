@@ -1,11 +1,12 @@
 const { ipcRenderer } = window.electron;
 
-type AudioEffectOption = "none" | "pitch" | "echo" | "reverb";
-const audioEffectOptions: AudioEffectOption[] = ["none", "pitch", "echo", "reverb"];
+type AudioEffectOption = "none" | "pitch" | "echo" | "reverb" | "bandFilter";
+const audioEffectOptions: AudioEffectOption[] = ["none", "pitch", "echo", "reverb", "bandFilter"];
 
 import { populateEffectArea_Pitch, pitchValue } from "./pitch/pitcheffect.js";
 import { populateEffectArea_Echo, echo_delay, echo_intensity, echo_feedback } from "./echo/echoeffect.js";
 import { populateEffectArea_Reverb, reverb_roomsize, reverb_damping, reverb_level, reverb_width } from "./reverb/reverbeffect.js";
+import { populateEffectArea_BandFilter, band_lower, band_upper, band_mode, band_poles, band_ripple, band_type } from "./bandfilter/bandfilter.js";
 
 let initialCleaningDone = false;
 let streaming = false;
@@ -123,10 +124,16 @@ function getEffectParams(effectName: AudioEffectOption) {
   switch (effectName) {
     case "pitch":
       return { pitchValue };
+
     case "echo":
       return { echo_delay, echo_intensity, echo_feedback };
+
     case "reverb":
       return { reverb_roomsize, reverb_damping, reverb_level, reverb_width };
+
+    case "bandFilter":
+      return { band_lower, band_upper, band_mode, band_poles, band_ripple, band_type };
+
     default:
       return {};
   }
@@ -212,6 +219,9 @@ document.getElementById("audioeffects-audioeffectselect").onchange = () => {
       break;
     case "reverb":
       populateEffectArea_Reverb();
+      break;
+    case "bandFilter":
+      populateEffectArea_BandFilter();
       break;
     case "none":
       document.getElementById("audioeffects-controls").innerHTML = "";
