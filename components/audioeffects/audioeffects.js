@@ -46,6 +46,7 @@ var status_str = "";
 function initialCleaning() {
     if (!initialCleaningDone) {
         ipcRenderer.invoke("audioeffects-cleanup");
+        initialCleaningDone = true;
     }
 }
 initialCleaning();
@@ -61,10 +62,12 @@ document.getElementById("audioeffects-expand").onclick = function () {
             populateAudeioEffectOptions();
             document.getElementById("audioeffects-start").style.display = "block";
             document.getElementById("audioeffects-stop").style.display = "none";
+            document.getElementById("audioeffects-update").style.display = "none";
             toggleDivFreeze(false);
         }
         else {
             document.getElementById("audioeffects-start").style.display = "none";
+            document.getElementById("audioeffects-stop").style.display = "block";
             document.getElementById("audioeffects-stop").style.display = "block";
             toggleDivFreeze(true);
         }
@@ -158,29 +161,15 @@ function getEffectParams(effectName) {
     }
 }
 document.getElementById("audioeffects-start").onclick = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var chosen_sink_monitor, current_effects, statusLabel_1, audio_effects_params, status_1, error_1;
+    var audio_effects_params, status_1, error_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                chosen_sink_monitor = document.getElementById("audioeffects-audionameselect").value;
-                current_effects = Array.from(document.querySelectorAll("#audioeffects-added .list-group-item"))
-                    .map(function (item) { return item.getAttribute("data-effect-name"); })
-                    .filter(function (effect) { return effect && audioEffectOptions.includes(effect); });
-                if (current_effects.length === 0 || chosen_sink_monitor === "none") {
-                    statusLabel_1 = document.getElementById("audioeffects-status-label");
-                    statusLabel_1.innerText = "configure audio selection & effect";
-                    setTimeout(function () {
-                        statusLabel_1.innerText = "";
-                    }, 1200);
+                audio_effects_params = getAudioEffectParams();
+                if (audio_effects_params == undefined) {
                     return [2 /*return*/];
                 }
-                audio_effects_params = {
-                    source: chosen_sink_monitor,
-                    effects: current_effects.map(function (effectName) { return ({
-                        type: effectName,
-                        params: getEffectParams(effectName),
-                    }); }),
-                };
+                console.log(audio_effects_params);
                 _a.label = 1;
             case 1:
                 _a.trys.push([1, 5, , 6]);
@@ -195,15 +184,8 @@ document.getElementById("audioeffects-start").onclick = function () { return __a
                 _a.sent();
                 return [2 /*return*/];
             case 4:
-                document.getElementById("audioeffects-status-label").innerText = status_1.message;
                 console.log("Status:", status_1); // Log the status string returned from the main process
-                document.getElementById("audioeffects-start").style.display = "none";
-                document.getElementById("audioeffects-stop").style.display = "block";
-                document.getElementById("audioeffects-refresh").style.display = "none";
-                toggleDivFreeze(true);
-                streaming = true;
-                status_str = "streaming audio effects";
-                setRemoveHeader(true, status_str, true);
+                innerDisplayState("streaming", status_1.message);
                 return [2 /*return*/];
             case 5:
                 error_1 = _a.sent();
@@ -214,17 +196,25 @@ document.getElementById("audioeffects-start").onclick = function () { return __a
     });
 }); };
 document.getElementById("audioeffects-stop").onclick = function () {
-    streaming = false;
-    status_str = "";
     ipcRenderer.invoke("audioeffects-stop");
-    document.getElementById("audioeffects-status-label").innerText = "";
-    setRemoveHeader(false, status_str, false);
-    document.getElementById("audioeffects-start").style.display = "block";
-    document.getElementById("audioeffects-stop").style.display = "none";
-    document.getElementById("audioeffects-refresh").style.display = "block";
-    toggleDivFreeze(false);
+    innerDisplayState("stopped", "");
     console.log("stopping stream");
 };
+document.getElementById("audioeffects-update").onclick = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var audio_effects_params, status;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                audio_effects_params = getAudioEffectParams();
+                console.log(audio_effects_params);
+                console.log("updating stream");
+                return [4 /*yield*/, ipcRenderer.invoke("audioeffects-start", audio_effects_params)];
+            case 1:
+                status = _a.sent();
+                return [2 /*return*/];
+        }
+    });
+}); };
 document.getElementById("audioeffects-audioeffectselect").onchange = function () {
     var chosenEffectElement = document.getElementById("audioeffects-audioeffectselect");
     var chosenEffect = chosenEffectElement.value;
@@ -250,6 +240,55 @@ document.getElementById("audioeffects-audioeffectselect").onchange = function ()
             break;
     }
 };
+function getAudioEffectParams() {
+    var chosen_sink_monitor = document.getElementById("audioeffects-audionameselect").value;
+    var current_effects = Array.from(document.querySelectorAll("#audioeffects-added .list-group-item"))
+        .map(function (item) { return item.getAttribute("data-effect-name"); })
+        .filter(function (effect) { return effect && audioEffectOptions.includes(effect); });
+    if (current_effects.length === 0 || chosen_sink_monitor === "none") {
+        var statusLabel_1 = document.getElementById("audioeffects-status-label");
+        statusLabel_1.innerText = "configure audio selection & effect";
+        setTimeout(function () {
+            statusLabel_1.innerText = "";
+        }, 1200);
+        return;
+    }
+    var audio_effects_params = {
+        source: chosen_sink_monitor,
+        effects: current_effects.map(function (effectName) { return ({
+            type: effectName,
+            params: getEffectParams(effectName),
+        }); }),
+    };
+    return audio_effects_params;
+}
+function innerDisplayState(status, labelMsg) {
+    if (labelMsg === void 0) { labelMsg = ""; }
+    switch (status) {
+        case "streaming":
+            streaming = true;
+            status_str = "streaming audio effects";
+            document.getElementById("audioeffects-status-label").innerText = labelMsg;
+            document.getElementById("audioeffects-start").style.display = "none";
+            document.getElementById("audioeffects-stop").style.display = "block";
+            document.getElementById("audioeffects-update").style.display = "block";
+            document.getElementById("audioeffects-refresh").style.display = "none";
+            toggleDivFreeze(true);
+            setRemoveHeader(true, status_str, true);
+            break;
+        case "stopped":
+            streaming = false;
+            status_str = "";
+            document.getElementById("audioeffects-status-label").innerText = labelMsg;
+            document.getElementById("audioeffects-start").style.display = "block";
+            document.getElementById("audioeffects-stop").style.display = "none";
+            document.getElementById("audioeffects-update").style.display = "none";
+            document.getElementById("audioeffects-refresh").style.display = "block";
+            toggleDivFreeze(false);
+            setRemoveHeader(false, status_str, false);
+            break;
+    }
+}
 function setRemoveHeader(add_message, message, flash_bool) {
     var scroll_flash_text = "scroll-flash-text";
     var scroll_text = "scroll-text";
@@ -294,7 +333,7 @@ function showModal(message) {
 }
 //deactivate the divs which are for user input when streaming
 function toggleDivFreeze(freeze) {
-    var divIds = ["audioeffects-col1", "audioeffects-col2", "audioeffects-controls", "audioeffects-added"];
+    var divIds = ["audioeffects-col1"]; //, "audioeffects-col2", "audioeffects-controls", "audioeffects-added"];
     divIds.forEach(function (divId) {
         var div = document.getElementById(divId);
         if (div) {

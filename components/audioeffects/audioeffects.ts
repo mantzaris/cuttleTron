@@ -3,6 +3,8 @@ const { ipcRenderer } = window.electron;
 type AudioEffectOption = "none" | "pitch" | "echo" | "reverb" | "bandFilter";
 const audioEffectOptions: AudioEffectOption[] = ["none", "pitch", "echo", "reverb", "bandFilter"];
 
+type Status = "streaming" | "stopped";
+
 import { populateEffectArea_Pitch, pitchValue } from "./pitch/pitcheffect.js";
 import { populateEffectArea_Echo, echo_delay, echo_intensity, echo_feedback } from "./echo/echoeffect.js";
 import { populateEffectArea_Reverb, reverb_roomsize, reverb_damping, reverb_level, reverb_width } from "./reverb/reverbeffect.js";
@@ -15,6 +17,7 @@ let status_str = "";
 function initialCleaning() {
   if (!initialCleaningDone) {
     ipcRenderer.invoke("audioeffects-cleanup");
+    initialCleaningDone = true;
   }
 }
 initialCleaning();
@@ -33,9 +36,11 @@ document.getElementById("audioeffects-expand").onclick = () => {
       populateAudeioEffectOptions();
       document.getElementById("audioeffects-start").style.display = "block";
       document.getElementById("audioeffects-stop").style.display = "none";
+      document.getElementById("audioeffects-update").style.display = "none";
       toggleDivFreeze(false);
     } else {
       document.getElementById("audioeffects-start").style.display = "none";
+      document.getElementById("audioeffects-stop").style.display = "block";
       document.getElementById("audioeffects-stop").style.display = "block";
       toggleDivFreeze(true);
     }
@@ -140,30 +145,11 @@ function getEffectParams(effectName: AudioEffectOption) {
 }
 
 document.getElementById("audioeffects-start").onclick = async () => {
-  const chosen_sink_monitor = (document.getElementById("audioeffects-audionameselect") as HTMLSelectElement).value;
-
-  const current_effects = Array.from(document.querySelectorAll("#audioeffects-added .list-group-item"))
-    .map((item) => item.getAttribute("data-effect-name"))
-    .filter((effect) => effect && audioEffectOptions.includes(effect as AudioEffectOption));
-
-  if (current_effects.length === 0 || chosen_sink_monitor === "none") {
-    const statusLabel = document.getElementById("audioeffects-status-label");
-    statusLabel.innerText = "configure audio selection & effect";
-    setTimeout(() => {
-      statusLabel.innerText = "";
-    }, 1200);
+  const audio_effects_params = getAudioEffectParams();
+  if (audio_effects_params == undefined) {
     return;
   }
-
-  const audio_effects_params = {
-    source: chosen_sink_monitor,
-    effects: current_effects.map((effectName) => ({
-      type: effectName,
-      params: getEffectParams(effectName as AudioEffectOption),
-    })),
-  };
-
-  //console.log(audio_effects_params);
+  console.log(audio_effects_params);
 
   try {
     const status = await ipcRenderer.invoke("audioeffects-start", audio_effects_params);
@@ -176,17 +162,9 @@ document.getElementById("audioeffects-start").onclick = async () => {
       await ipcRenderer.invoke("audioeffects-stop");
       return;
     }
-    document.getElementById("audioeffects-status-label").innerText = status.message;
     console.log("Status:", status); // Log the status string returned from the main process
+    innerDisplayState("streaming", status.message);
 
-    document.getElementById("audioeffects-start").style.display = "none";
-    document.getElementById("audioeffects-stop").style.display = "block";
-    document.getElementById("audioeffects-refresh").style.display = "none";
-    toggleDivFreeze(true);
-    streaming = true;
-
-    status_str = "streaming audio effects";
-    setRemoveHeader(true, status_str, true);
     return;
   } catch (error) {
     console.error("Error:", error);
@@ -194,16 +172,17 @@ document.getElementById("audioeffects-start").onclick = async () => {
 };
 
 document.getElementById("audioeffects-stop").onclick = () => {
-  streaming = false;
-  status_str = "";
   ipcRenderer.invoke("audioeffects-stop");
-  document.getElementById("audioeffects-status-label").innerText = "";
-  setRemoveHeader(false, status_str, false);
-  document.getElementById("audioeffects-start").style.display = "block";
-  document.getElementById("audioeffects-stop").style.display = "none";
-  document.getElementById("audioeffects-refresh").style.display = "block";
-  toggleDivFreeze(false);
+  innerDisplayState("stopped", "");
   console.log("stopping stream");
+};
+
+document.getElementById("audioeffects-update").onclick = async () => {
+  //ipcRenderer.invoke("audioeffects-stop");
+  const audio_effects_params = getAudioEffectParams();
+  console.log(audio_effects_params);
+  console.log("updating stream");
+  const status = await ipcRenderer.invoke("audioeffects-start", audio_effects_params);
 };
 
 document.getElementById("audioeffects-audioeffectselect").onchange = () => {
@@ -232,6 +211,60 @@ document.getElementById("audioeffects-audioeffectselect").onchange = () => {
       break;
   }
 };
+
+function getAudioEffectParams() {
+  const chosen_sink_monitor = (document.getElementById("audioeffects-audionameselect") as HTMLSelectElement).value;
+
+  const current_effects = Array.from(document.querySelectorAll("#audioeffects-added .list-group-item"))
+    .map((item) => item.getAttribute("data-effect-name"))
+    .filter((effect) => effect && audioEffectOptions.includes(effect as AudioEffectOption));
+
+  if (current_effects.length === 0 || chosen_sink_monitor === "none") {
+    const statusLabel = document.getElementById("audioeffects-status-label");
+    statusLabel.innerText = "configure audio selection & effect";
+    setTimeout(() => {
+      statusLabel.innerText = "";
+    }, 1200);
+    return;
+  }
+
+  const audio_effects_params = {
+    source: chosen_sink_monitor,
+    effects: current_effects.map((effectName) => ({
+      type: effectName,
+      params: getEffectParams(effectName as AudioEffectOption),
+    })),
+  };
+
+  return audio_effects_params;
+}
+
+function innerDisplayState(status: Status, labelMsg = "") {
+  switch (status) {
+    case "streaming":
+      streaming = true;
+      status_str = "streaming audio effects";
+      document.getElementById("audioeffects-status-label").innerText = labelMsg;
+      document.getElementById("audioeffects-start").style.display = "none";
+      document.getElementById("audioeffects-stop").style.display = "block";
+      document.getElementById("audioeffects-update").style.display = "block";
+      document.getElementById("audioeffects-refresh").style.display = "none";
+      toggleDivFreeze(true);
+      setRemoveHeader(true, status_str, true);
+      break;
+    case "stopped":
+      streaming = false;
+      status_str = "";
+      document.getElementById("audioeffects-status-label").innerText = labelMsg;
+      document.getElementById("audioeffects-start").style.display = "block";
+      document.getElementById("audioeffects-stop").style.display = "none";
+      document.getElementById("audioeffects-update").style.display = "none";
+      document.getElementById("audioeffects-refresh").style.display = "block";
+      toggleDivFreeze(false);
+      setRemoveHeader(false, status_str, false);
+      break;
+  }
+}
 
 function setRemoveHeader(add_message: boolean, message: string, flash_bool: boolean) {
   const scroll_flash_text = "scroll-flash-text";
@@ -285,7 +318,7 @@ function showModal(message: string) {
 
 //deactivate the divs which are for user input when streaming
 function toggleDivFreeze(freeze: boolean) {
-  const divIds = ["audioeffects-col1", "audioeffects-col2", "audioeffects-controls", "audioeffects-added"];
+  const divIds = ["audioeffects-col1"]; //, "audioeffects-col2", "audioeffects-controls", "audioeffects-added"];
 
   divIds.forEach((divId) => {
     const div = document.getElementById(divId);
