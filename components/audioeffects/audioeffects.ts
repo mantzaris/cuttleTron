@@ -145,7 +145,7 @@ function getEffectParams(effectName: AudioEffectOption) {
 }
 
 document.getElementById("audioeffects-start").onclick = async () => {
-  const audio_effects_params = getAudioEffectParams();
+  const audio_effects_params = getAllEffectParams();
   if (audio_effects_params == undefined) {
     return;
   }
@@ -179,10 +179,14 @@ document.getElementById("audioeffects-stop").onclick = () => {
 
 document.getElementById("audioeffects-update").onclick = async () => {
   //ipcRenderer.invoke("audioeffects-stop");
-  const audio_effects_params = getAudioEffectParams();
+  const audio_effects_params = getAllEffectParams();
   console.log(audio_effects_params);
   console.log("updating stream");
   const status = await ipcRenderer.invoke("audioeffects-start", audio_effects_params);
+
+  if (status.success) {
+    showBriefMessage("Updated");
+  }
 };
 
 document.getElementById("audioeffects-audioeffectselect").onchange = () => {
@@ -212,7 +216,7 @@ document.getElementById("audioeffects-audioeffectselect").onchange = () => {
   }
 };
 
-function getAudioEffectParams() {
+function getAllEffectParams() {
   const chosen_sink_monitor = (document.getElementById("audioeffects-audionameselect") as HTMLSelectElement).value;
 
   const current_effects = Array.from(document.querySelectorAll("#audioeffects-added .list-group-item"))
@@ -332,5 +336,13 @@ function toggleDivFreeze(freeze: boolean) {
   });
 }
 
-// const gstreamerCheck = await ipcRenderer.invoke("check-GStreamer");
-//     console.log(`result the GStreamer package check: ${gstreamerCheck}`);
+function showBriefMessage(message) {
+  const audioEffectsStatusLabel = document.getElementById("audioeffects-status-label");
+  const originalMessage = audioEffectsStatusLabel.textContent;
+
+  audioEffectsStatusLabel.textContent = message;
+
+  setTimeout(() => {
+    audioEffectsStatusLabel.textContent = originalMessage;
+  }, 1000);
+}

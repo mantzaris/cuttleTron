@@ -165,7 +165,7 @@ document.getElementById("audioeffects-start").onclick = function () { return __a
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                audio_effects_params = getAudioEffectParams();
+                audio_effects_params = getAllEffectParams();
                 if (audio_effects_params == undefined) {
                     return [2 /*return*/];
                 }
@@ -205,12 +205,15 @@ document.getElementById("audioeffects-update").onclick = function () { return __
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                audio_effects_params = getAudioEffectParams();
+                audio_effects_params = getAllEffectParams();
                 console.log(audio_effects_params);
                 console.log("updating stream");
                 return [4 /*yield*/, ipcRenderer.invoke("audioeffects-start", audio_effects_params)];
             case 1:
                 status = _a.sent();
+                if (status.success) {
+                    showBriefMessage("Updated");
+                }
                 return [2 /*return*/];
         }
     });
@@ -240,7 +243,7 @@ document.getElementById("audioeffects-audioeffectselect").onchange = function ()
             break;
     }
 };
-function getAudioEffectParams() {
+function getAllEffectParams() {
     var chosen_sink_monitor = document.getElementById("audioeffects-audionameselect").value;
     var current_effects = Array.from(document.querySelectorAll("#audioeffects-added .list-group-item"))
         .map(function (item) { return item.getAttribute("data-effect-name"); })
@@ -346,6 +349,12 @@ function toggleDivFreeze(freeze) {
         }
     });
 }
-// const gstreamerCheck = await ipcRenderer.invoke("check-GStreamer");
-//     console.log(`result the GStreamer package check: ${gstreamerCheck}`);
+function showBriefMessage(message) {
+    var audioEffectsStatusLabel = document.getElementById("audioeffects-status-label");
+    var originalMessage = audioEffectsStatusLabel.textContent;
+    audioEffectsStatusLabel.textContent = message;
+    setTimeout(function () {
+        audioEffectsStatusLabel.textContent = originalMessage;
+    }, 1000);
+}
 //# sourceMappingURL=audioeffects.js.map

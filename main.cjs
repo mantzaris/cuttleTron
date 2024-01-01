@@ -178,13 +178,3 @@ ipcMain.handle("audioeffects-stop", async (event) => {
 ipcMain.handle("audioeffects-cleanup", async (event) => {
   await cleanupAudioDevices();
 });
-// ipcMain.handle("check-GStreamer", async (event, args) => {
-//   try {
-//     // Call the function to check for the packages
-//     const check = await checkGStreamerPackages();
-//     return check; // Return the result (true/false) to the renderer
-//   } catch (error) {
-//     console.error("Error in checking GStreamer Audio packages:", error);
-//     return false; // Return false in case of error
-//   }
-// });

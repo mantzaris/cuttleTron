@@ -63,14 +63,12 @@ async function audioEffectsStop() {
 
   try {
     if (virtualSourceModuleId) {
-      await execAsync(`pactl unload-module ${virtualSourceModuleId}`);
-      console.log(`Virtual source with module ID ${virtualSourceModuleId} unloaded successfully.`);
+      await unloadPA_Module(virtualSourceModuleId);
       virtualSourceModuleId = null;
     }
 
     if (virtualSinkModuleId) {
-      await execAsync(`pactl unload-module ${virtualSinkModuleId}`);
-      console.log(`Virtual sink with module ID ${virtualSinkModuleId} unloaded successfully.`);
+      await unloadPA_Module(virtualSinkModuleId);
       virtualSinkModuleId = null;
     }
   } catch (error) {
@@ -81,12 +79,13 @@ async function audioEffectsStop() {
 async function cleanupAudioDevices() {
   try {
     killGStreamer();
+    virtualSinkModuleId = null;
+    virtualSourceModuleId = null;
 
     // List all modules
     const { stdout: modulesList } = await execAsync("pactl list short modules");
 
     // Unload virtual sinks (module-null-sink)
-    virtualSinkModuleId = null;
     const nullSinkPattern = new RegExp(`(\\d+)\\s+module-null-sink\\s+sink_name=${virtualSinkName}`, "g");
     let match;
     while ((match = nullSinkPattern.exec(modulesList)) !== null) {
@@ -94,7 +93,6 @@ async function cleanupAudioDevices() {
     }
 
     // Unload virtual sources (module-remap-source)
-    virtualSourceModuleId = null;
     const remapSourcePattern = new RegExp(`(\\d+)\\s+module-remap-source\\s+.*?source_name=${virtualSourceName}`, "g");
     while ((match = remapSourcePattern.exec(modulesList)) !== null) {
       await unloadPA_Module(match[1]);
@@ -167,6 +165,6 @@ async function unloadPA_Module(moduleId) {
     await execAsync(`pactl unload-module ${moduleId}`);
     console.log(`Successfully unloaded module with ID: ${moduleId}`);
   } catch (unloadError) {
-    console.error(`Error unloading module ${moduleId}: ${unloadError.message}`);
+    console.error(`Error unloading moduleID=${moduleId}: ${unloadError.message}`);
   }
 }
