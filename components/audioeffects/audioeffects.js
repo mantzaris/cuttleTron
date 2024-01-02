@@ -35,9 +35,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var ipcRenderer = window.electron.ipcRenderer;
-var audioEffectOptions = ["none", "pitch", "echo", "reverb", "bandFilter"];
+var audioEffectOptions = ["none", "pitch", "echo", "distortion", "reverb", "bandFilter"];
 import { populateEffectArea_Pitch, pitchValue } from "./pitch/pitcheffect.js";
 import { populateEffectArea_Echo, echo_delay, echo_intensity, echo_feedback } from "./echo/echoeffect.js";
+import { populateEffectArea_Distortion, distortion_drive, distortion_gain, distortion_level, distortion_over, distortion_overdrive, distortion_trigger, distortion_vibrato, } from "./distortion/distortioneffect.js";
 import { populateEffectArea_Reverb, reverb_roomsize, reverb_damping, reverb_level, reverb_width } from "./reverb/reverbeffect.js";
 import { populateEffectArea_BandFilter, band_lower, band_upper, band_mode, band_poles, band_ripple, band_type } from "./bandfilter/bandfilter.js";
 var initialCleaningDone = false;
@@ -152,6 +153,16 @@ function getEffectParams(effectName) {
             return { pitchValue: pitchValue };
         case "echo":
             return { echo_delay: echo_delay, echo_intensity: echo_intensity, echo_feedback: echo_feedback };
+        case "distortion":
+            return {
+                distortion_drive: distortion_drive,
+                distortion_gain: distortion_gain,
+                distortion_level: distortion_level,
+                distortion_over: distortion_over,
+                distortion_overdrive: distortion_overdrive,
+                distortion_trigger: distortion_trigger,
+                distortion_vibrato: distortion_vibrato,
+            };
         case "reverb":
             return { reverb_roomsize: reverb_roomsize, reverb_damping: reverb_damping, reverb_level: reverb_level, reverb_width: reverb_width };
         case "bandFilter":
@@ -227,6 +238,9 @@ document.getElementById("audioeffects-audioeffectselect").onchange = function ()
             break;
         case "echo":
             populateEffectArea_Echo();
+            break;
+        case "distortion":
+            populateEffectArea_Distortion();
             break;
         case "reverb":
             populateEffectArea_Reverb();

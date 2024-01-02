@@ -1,12 +1,22 @@
 const { ipcRenderer } = window.electron;
 
-type AudioEffectOption = "none" | "pitch" | "echo" | "reverb" | "bandFilter";
-const audioEffectOptions: AudioEffectOption[] = ["none", "pitch", "echo", "reverb", "bandFilter"];
+type AudioEffectOption = "none" | "pitch" | "echo" | "distortion" | "reverb" | "bandFilter";
+const audioEffectOptions: AudioEffectOption[] = ["none", "pitch", "echo", "distortion", "reverb", "bandFilter"];
 
 type Status = "streaming" | "stopped";
 
 import { populateEffectArea_Pitch, pitchValue } from "./pitch/pitcheffect.js";
 import { populateEffectArea_Echo, echo_delay, echo_intensity, echo_feedback } from "./echo/echoeffect.js";
+import {
+  populateEffectArea_Distortion,
+  distortion_drive,
+  distortion_gain,
+  distortion_level,
+  distortion_over,
+  distortion_overdrive,
+  distortion_trigger,
+  distortion_vibrato,
+} from "./distortion/distortioneffect.js";
 import { populateEffectArea_Reverb, reverb_roomsize, reverb_damping, reverb_level, reverb_width } from "./reverb/reverbeffect.js";
 import { populateEffectArea_BandFilter, band_lower, band_upper, band_mode, band_poles, band_ripple, band_type } from "./bandfilter/bandfilter.js";
 
@@ -133,6 +143,17 @@ function getEffectParams(effectName: AudioEffectOption) {
     case "echo":
       return { echo_delay, echo_intensity, echo_feedback };
 
+    case "distortion":
+      return {
+        distortion_drive,
+        distortion_gain,
+        distortion_level,
+        distortion_over,
+        distortion_overdrive,
+        distortion_trigger,
+        distortion_vibrato,
+      };
+
     case "reverb":
       return { reverb_roomsize, reverb_damping, reverb_level, reverb_width };
 
@@ -199,6 +220,9 @@ document.getElementById("audioeffects-audioeffectselect").onchange = () => {
       break;
     case "echo":
       populateEffectArea_Echo();
+      break;
+    case "distortion":
+      populateEffectArea_Distortion();
       break;
     case "reverb":
       populateEffectArea_Reverb();

@@ -121,6 +121,26 @@ function getGStreamerEffectArgs(effects) {
         const feedback = params.echo_feedback;
         gs_effectArgs.push("!", `audioecho`, `delay=${delay}`, `intensity=${intensity}`, `feedback=${feedback}`);
         break;
+      case "distortion":
+        const drive = params.distortion_drive;
+        const drivegain = params.distortion_gain;
+        const drivelevel = params.distortion_level;
+        const driveover = params.distortion_over;
+        const overdrive = params.distortion_overdrive;
+        const trigger = params.distortion_trigger;
+        const vibrato = params.distortion_vibrato;
+        gs_effectArgs.push(
+          "!",
+          `ladspa-guitarix-distortion-so-guitarix-distortion`,
+          `drive=${drive}`,
+          `drivegain=${drivegain}`,
+          `drivelevel=${drivelevel}`,
+          `driveover=${driveover}`,
+          `overdrive=${overdrive}`,
+          `trigger=${trigger}`,
+          `vibrato=${vibrato}`
+        );
+        break;
       case "reverb":
         const roomsize = params.reverb_roomsize;
         const damping = params.reverb_damping;
