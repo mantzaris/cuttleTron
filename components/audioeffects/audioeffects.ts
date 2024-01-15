@@ -1,7 +1,7 @@
 const { ipcRenderer } = window.electron;
 
-type AudioEffectOption = "none" | "pitch" | "echo" | "distortion" | "reverb" | "bandFilter";
-const audioEffectOptions: AudioEffectOption[] = ["none", "pitch", "echo", "distortion", "reverb", "bandFilter"];
+type AudioEffectOption = "none" | "pitch" | "echo" | "distortion" | "reverb" | "scaletempo" | "bandFilter";
+const audioEffectOptions: AudioEffectOption[] = ["none", "pitch", "echo", "distortion", "reverb", "scaletempo", "bandFilter"];
 
 type Status = "streaming" | "stopped";
 
@@ -18,6 +18,7 @@ import {
   distortion_vibrato,
 } from "./distortion/distortioneffect.js";
 import { populateEffectArea_Reverb, reverb_roomsize, reverb_damping, reverb_level, reverb_width } from "./reverb/reverbeffect.js";
+import { populateEffectArea_ScaleTempo, scaletempo_stride, scaletempo_overlap, scaletempo_search } from "./scaletempo/scaletempo.js";
 import { populateEffectArea_BandFilter, band_lower, band_upper, band_mode, band_poles, band_ripple, band_type } from "./bandfilter/bandfilter.js";
 
 let initialCleaningDone = false;
@@ -157,6 +158,9 @@ function getEffectParams(effectName: AudioEffectOption) {
     case "reverb":
       return { reverb_roomsize, reverb_damping, reverb_level, reverb_width };
 
+    case "scaletempo":
+      return { scaletempo_stride, scaletempo_overlap, scaletempo_search };
+
     case "bandFilter":
       return { band_lower, band_upper, band_mode, band_poles, band_ripple, band_type };
 
@@ -226,6 +230,9 @@ document.getElementById("audioeffects-audioeffectselect").onchange = () => {
       break;
     case "reverb":
       populateEffectArea_Reverb();
+      break;
+    case "scaletempo":
+      populateEffectArea_ScaleTempo();
       break;
     case "bandFilter":
       populateEffectArea_BandFilter();

@@ -35,11 +35,12 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var ipcRenderer = window.electron.ipcRenderer;
-var audioEffectOptions = ["none", "pitch", "echo", "distortion", "reverb", "bandFilter"];
+var audioEffectOptions = ["none", "pitch", "echo", "distortion", "reverb", "scaletempo", "bandFilter"];
 import { populateEffectArea_Pitch, pitchValue } from "./pitch/pitcheffect.js";
 import { populateEffectArea_Echo, echo_delay, echo_intensity, echo_feedback } from "./echo/echoeffect.js";
 import { populateEffectArea_Distortion, distortion_drive, distortion_gain, distortion_level, distortion_over, distortion_overdrive, distortion_trigger, distortion_vibrato, } from "./distortion/distortioneffect.js";
 import { populateEffectArea_Reverb, reverb_roomsize, reverb_damping, reverb_level, reverb_width } from "./reverb/reverbeffect.js";
+import { populateEffectArea_ScaleTempo, scaletempo_stride, scaletempo_overlap, scaletempo_search } from "./scaletempo/scaletempo.js";
 import { populateEffectArea_BandFilter, band_lower, band_upper, band_mode, band_poles, band_ripple, band_type } from "./bandfilter/bandfilter.js";
 var initialCleaningDone = false;
 var streaming = false;
@@ -165,6 +166,8 @@ function getEffectParams(effectName) {
             };
         case "reverb":
             return { reverb_roomsize: reverb_roomsize, reverb_damping: reverb_damping, reverb_level: reverb_level, reverb_width: reverb_width };
+        case "scaletempo":
+            return { scaletempo_stride: scaletempo_stride, scaletempo_overlap: scaletempo_overlap, scaletempo_search: scaletempo_search };
         case "bandFilter":
             return { band_lower: band_lower, band_upper: band_upper, band_mode: band_mode, band_poles: band_poles, band_ripple: band_ripple, band_type: band_type };
         default:
@@ -244,6 +247,9 @@ document.getElementById("audioeffects-audioeffectselect").onchange = function ()
             break;
         case "reverb":
             populateEffectArea_Reverb();
+            break;
+        case "scaletempo":
+            populateEffectArea_ScaleTempo();
             break;
         case "bandFilter":
             populateEffectArea_BandFilter();

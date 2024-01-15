@@ -148,6 +148,12 @@ function getGStreamerEffectArgs(effects) {
         const width = params.reverb_width;
         gs_effectArgs.push("!", `freeverb`, `room-size=${roomsize}`, `damping=${damping}`, `level=${level}`, `width=${width}`);
         break;
+      case "scaletempo":
+        const stride = params.scaletempo_stride;
+        const overlap = params.scaletempo_overlap;
+        const search = params.scaletempo_search;
+        gs_effectArgs.push("!", `scaletempo`, `stride=${stride}`, `overlap=${overlap}`, `search=${search}`);
+        break;
       case "bandFilter":
         const lower_frequency = params.band_lower;
         const upper_frequency = params.band_upper;
