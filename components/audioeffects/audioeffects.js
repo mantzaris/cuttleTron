@@ -35,13 +35,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var ipcRenderer = window.electron.ipcRenderer;
-var audioEffectOptions = ["none", "pitch", "echo", "distortion", "reverb", "scaletempo", "bandFilter"];
+var audioEffectOptions = ["none", "pitch", "echo", "distortion", "reverb", "scaletempo", "bandFilter", "amplify1", "amplify2"];
 import { populateEffectArea_Pitch, pitchValue } from "./pitch/pitcheffect.js";
 import { populateEffectArea_Echo, echo_delay, echo_intensity, echo_feedback } from "./echo/echoeffect.js";
 import { populateEffectArea_Distortion, distortion_drive, distortion_gain, distortion_level, distortion_over, distortion_overdrive, distortion_trigger, distortion_vibrato, } from "./distortion/distortioneffect.js";
 import { populateEffectArea_Reverb, reverb_roomsize, reverb_damping, reverb_level, reverb_width } from "./reverb/reverbeffect.js";
 import { populateEffectArea_ScaleTempo, scaletempo_stride, scaletempo_overlap, scaletempo_search } from "./scaletempo/scaletempo.js";
 import { populateEffectArea_BandFilter, band_lower, band_upper, band_mode, band_poles, band_ripple, band_type } from "./bandfilter/bandfilter.js";
+import { populateEffectArea_Amplify1, amplify1_amplification } from "./amplify1/amplifyeffect1.js";
+import { populateEffectArea_Amplify2, amplify2_amplification } from "./amplify2/amplifyeffect2.js";
 var initialCleaningDone = false;
 var streaming = false;
 var status_str = "";
@@ -61,7 +63,7 @@ document.getElementById("audioeffects-expand").onclick = function () {
         expand_button.setAttribute("data-action", "hide");
         if (!streaming) {
             populateAudioSinkOptions();
-            populateAudeioEffectOptions();
+            populateAudioEffectOptions();
             document.getElementById("audioeffects-start").style.display = "block";
             document.getElementById("audioeffects-stop").style.display = "none";
             document.getElementById("audioeffects-update").style.display = "none";
@@ -104,7 +106,7 @@ function populateAudioSinkOptions() {
         });
     });
 }
-function populateAudeioEffectOptions() {
+function populateAudioEffectOptions() {
     return __awaiter(this, void 0, void 0, function () {
         var selection_sources, _i, audioEffectOptions_1, effect, src;
         return __generator(this, function (_a) {
@@ -124,7 +126,7 @@ function populateAudeioEffectOptions() {
 document.getElementById("audioeffects-refresh").onclick = function () {
     if (!streaming) {
         populateAudioSinkOptions();
-        populateAudeioEffectOptions();
+        populateAudioEffectOptions();
     }
 };
 //Audio Effect List START
@@ -170,6 +172,10 @@ function getEffectParams(effectName) {
             return { scaletempo_stride: scaletempo_stride, scaletempo_overlap: scaletempo_overlap, scaletempo_search: scaletempo_search };
         case "bandFilter":
             return { band_lower: band_lower, band_upper: band_upper, band_mode: band_mode, band_poles: band_poles, band_ripple: band_ripple, band_type: band_type };
+        case "amplify1":
+            return { amplify1_amplification: amplify1_amplification };
+        case "amplify2":
+            return { amplify2_amplification: amplify2_amplification };
         default:
             return {};
     }
@@ -253,6 +259,12 @@ document.getElementById("audioeffects-audioeffectselect").onchange = function ()
             break;
         case "bandFilter":
             populateEffectArea_BandFilter();
+            break;
+        case "amplify1":
+            populateEffectArea_Amplify1();
+            break;
+        case "amplify2":
+            populateEffectArea_Amplify2();
             break;
         case "none":
             document.getElementById("audioeffects-controls").innerHTML = "";

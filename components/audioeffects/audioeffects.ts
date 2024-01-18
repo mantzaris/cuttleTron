@@ -1,7 +1,7 @@
 const { ipcRenderer } = window.electron;
 
-type AudioEffectOption = "none" | "pitch" | "echo" | "distortion" | "reverb" | "scaletempo" | "bandFilter";
-const audioEffectOptions: AudioEffectOption[] = ["none", "pitch", "echo", "distortion", "reverb", "scaletempo", "bandFilter"];
+type AudioEffectOption = "none" | "pitch" | "echo" | "distortion" | "reverb" | "scaletempo" | "bandFilter" | "amplify1" | "amplify2";
+const audioEffectOptions: AudioEffectOption[] = ["none", "pitch", "echo", "distortion", "reverb", "scaletempo", "bandFilter", "amplify1", "amplify2"];
 
 type Status = "streaming" | "stopped";
 
@@ -20,6 +20,8 @@ import {
 import { populateEffectArea_Reverb, reverb_roomsize, reverb_damping, reverb_level, reverb_width } from "./reverb/reverbeffect.js";
 import { populateEffectArea_ScaleTempo, scaletempo_stride, scaletempo_overlap, scaletempo_search } from "./scaletempo/scaletempo.js";
 import { populateEffectArea_BandFilter, band_lower, band_upper, band_mode, band_poles, band_ripple, band_type } from "./bandfilter/bandfilter.js";
+import { populateEffectArea_Amplify1, amplify1_amplification } from "./amplify1/amplifyeffect1.js";
+import { populateEffectArea_Amplify2, amplify2_amplification } from "./amplify2/amplifyeffect2.js";
 
 let initialCleaningDone = false;
 let streaming = false;
@@ -44,7 +46,7 @@ document.getElementById("audioeffects-expand").onclick = () => {
 
     if (!streaming) {
       populateAudioSinkOptions();
-      populateAudeioEffectOptions();
+      populateAudioEffectOptions();
       document.getElementById("audioeffects-start").style.display = "block";
       document.getElementById("audioeffects-stop").style.display = "none";
       document.getElementById("audioeffects-update").style.display = "none";
@@ -84,7 +86,7 @@ async function populateAudioSinkOptions() {
   });
 }
 
-async function populateAudeioEffectOptions() {
+async function populateAudioEffectOptions() {
   let selection_sources = document.getElementById("audioeffects-audioeffectselect");
   selection_sources.innerHTML = "";
 
@@ -99,7 +101,7 @@ async function populateAudeioEffectOptions() {
 document.getElementById("audioeffects-refresh").onclick = () => {
   if (!streaming) {
     populateAudioSinkOptions();
-    populateAudeioEffectOptions();
+    populateAudioEffectOptions();
   }
 };
 
@@ -164,6 +166,12 @@ function getEffectParams(effectName: AudioEffectOption) {
     case "bandFilter":
       return { band_lower, band_upper, band_mode, band_poles, band_ripple, band_type };
 
+    case "amplify1":
+      return { amplify1_amplification };
+
+    case "amplify2":
+      return { amplify2_amplification };
+
     default:
       return {};
   }
@@ -174,6 +182,7 @@ document.getElementById("audioeffects-start").onclick = async () => {
   if (audio_effects_params == undefined) {
     return;
   }
+
   console.log(audio_effects_params);
 
   try {
@@ -236,6 +245,12 @@ document.getElementById("audioeffects-audioeffectselect").onchange = () => {
       break;
     case "bandFilter":
       populateEffectArea_BandFilter();
+      break;
+    case "amplify1":
+      populateEffectArea_Amplify1();
+      break;
+    case "amplify2":
+      populateEffectArea_Amplify2();
       break;
     case "none":
       document.getElementById("audioeffects-controls").innerHTML = "";

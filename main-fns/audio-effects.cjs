@@ -154,6 +154,14 @@ function getGStreamerEffectArgs(effects) {
         const search = params.scaletempo_search;
         gs_effectArgs.push("!", `scaletempo`, `stride=${stride}`, `overlap=${overlap}`, `search=${search}`);
         break;
+      case "amplify1":
+        const amplification1 = params.amplify1_amplification;
+        gs_effectArgs.push("!", `audioamplify`, `amplification=${amplification1}`);
+        break;
+      case "amplify2":
+        const amplification2 = params.amplify2_amplification;
+        gs_effectArgs.push("!", `audioamplify`, `amplification=${amplification2}`);
+        break;
       case "bandFilter":
         const lower_frequency = params.band_lower;
         const upper_frequency = params.band_upper;
