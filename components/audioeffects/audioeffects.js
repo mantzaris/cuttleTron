@@ -35,7 +35,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var ipcRenderer = window.electron.ipcRenderer;
-var audioEffectOptions = ["none", "pitch", "echo", "distortion", "reverb", "scaletempo", "bandFilter", "amplify1", "amplify2"];
+var audioEffectOptions = ["none", "pitch", "echo", "distortion", "reverb", "scaletempo", "bandFilter", "amplify1", "amplify2", "stereo"];
 import { populateEffectArea_Pitch, pitchValue } from "./pitch/pitcheffect.js";
 import { populateEffectArea_Echo, echo_delay, echo_intensity, echo_feedback } from "./echo/echoeffect.js";
 import { populateEffectArea_Distortion, distortion_drive, distortion_gain, distortion_level, distortion_over, distortion_overdrive, distortion_trigger, distortion_vibrato, } from "./distortion/distortioneffect.js";
@@ -44,6 +44,7 @@ import { populateEffectArea_ScaleTempo, scaletempo_stride, scaletempo_overlap, s
 import { populateEffectArea_BandFilter, band_lower, band_upper, band_mode, band_poles, band_ripple, band_type } from "./bandfilter/bandfilter.js";
 import { populateEffectArea_Amplify1, amplify1_amplification } from "./amplify1/amplifyeffect1.js";
 import { populateEffectArea_Amplify2, amplify2_amplification } from "./amplify2/amplifyeffect2.js";
+import { populateEffectArea_Stereo, stereo_stereo } from "./stereo/stereoeffect.js";
 var initialCleaningDone = false;
 var streaming = false;
 var status_str = "";
@@ -176,6 +177,8 @@ function getEffectParams(effectName) {
             return { amplify1_amplification: amplify1_amplification };
         case "amplify2":
             return { amplify2_amplification: amplify2_amplification };
+        case "stereo":
+            return { stereo_stereo: stereo_stereo };
         default:
             return {};
     }
@@ -265,6 +268,9 @@ document.getElementById("audioeffects-audioeffectselect").onchange = function ()
             break;
         case "amplify2":
             populateEffectArea_Amplify2();
+            break;
+        case "stereo":
+            populateEffectArea_Stereo();
             break;
         case "none":
             document.getElementById("audioeffects-controls").innerHTML = "";

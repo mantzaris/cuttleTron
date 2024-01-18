@@ -162,6 +162,10 @@ function getGStreamerEffectArgs(effects) {
         const amplification2 = params.amplify2_amplification;
         gs_effectArgs.push("!", `audioamplify`, `amplification=${amplification2}`);
         break;
+      case "stereo":
+        const stereo = params.stereo_stereo;
+        gs_effectArgs.push("!", `stereo`, `stereo=${stereo}`);
+        break;
       case "bandFilter":
         const lower_frequency = params.band_lower;
         const upper_frequency = params.band_upper;

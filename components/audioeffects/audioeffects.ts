@@ -1,7 +1,7 @@
 const { ipcRenderer } = window.electron;
 
-type AudioEffectOption = "none" | "pitch" | "echo" | "distortion" | "reverb" | "scaletempo" | "bandFilter" | "amplify1" | "amplify2";
-const audioEffectOptions: AudioEffectOption[] = ["none", "pitch", "echo", "distortion", "reverb", "scaletempo", "bandFilter", "amplify1", "amplify2"];
+type AudioEffectOption = "none" | "pitch" | "echo" | "distortion" | "reverb" | "scaletempo" | "bandFilter" | "amplify1" | "amplify2" | "stereo";
+const audioEffectOptions: AudioEffectOption[] = ["none", "pitch", "echo", "distortion", "reverb", "scaletempo", "bandFilter", "amplify1", "amplify2", "stereo"];
 
 type Status = "streaming" | "stopped";
 
@@ -22,6 +22,7 @@ import { populateEffectArea_ScaleTempo, scaletempo_stride, scaletempo_overlap, s
 import { populateEffectArea_BandFilter, band_lower, band_upper, band_mode, band_poles, band_ripple, band_type } from "./bandfilter/bandfilter.js";
 import { populateEffectArea_Amplify1, amplify1_amplification } from "./amplify1/amplifyeffect1.js";
 import { populateEffectArea_Amplify2, amplify2_amplification } from "./amplify2/amplifyeffect2.js";
+import { populateEffectArea_Stereo, stereo_stereo } from "./stereo/stereoeffect.js";
 
 let initialCleaningDone = false;
 let streaming = false;
@@ -172,6 +173,9 @@ function getEffectParams(effectName: AudioEffectOption) {
     case "amplify2":
       return { amplify2_amplification };
 
+    case "stereo":
+      return { stereo_stereo };
+
     default:
       return {};
   }
@@ -251,6 +255,9 @@ document.getElementById("audioeffects-audioeffectselect").onchange = () => {
       break;
     case "amplify2":
       populateEffectArea_Amplify2();
+      break;
+    case "stereo":
+      populateEffectArea_Stereo();
       break;
     case "none":
       document.getElementById("audioeffects-controls").innerHTML = "";
