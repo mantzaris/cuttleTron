@@ -166,6 +166,16 @@ function getGStreamerEffectArgs(effects) {
         const stereo = params.stereo_stereo;
         gs_effectArgs.push("!", `stereo`, `stereo=${stereo}`);
         break;
+      case "dynamicExpander":
+        const exp_ratio = params.dynamicExpander_ratio;
+        const exp_threshold = params.dynamicExpander_threshold;
+        gs_effectArgs.push("!", `audiodynamic`, `mode=expander`, `ratio=${exp_ratio}`, `threshold=${exp_threshold}`);
+        break;
+      case "dynamicCompressor":
+        const comp_ratio = params.dynamicCompressor_ratio;
+        const comp_threshold = params.dynamicCompressor_threshold;
+        gs_effectArgs.push("!", `audiodynamic`, `mode=compressor`, `ratio=${comp_ratio}`, `threshold=${comp_threshold}`);
+        break;
       case "bandFilter":
         const lower_frequency = params.band_lower;
         const upper_frequency = params.band_upper;

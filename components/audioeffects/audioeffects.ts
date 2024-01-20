@@ -1,7 +1,32 @@
 const { ipcRenderer } = window.electron;
 
-type AudioEffectOption = "none" | "pitch" | "echo" | "distortion" | "reverb" | "scaletempo" | "bandFilter" | "amplify1" | "amplify2" | "stereo";
-const audioEffectOptions: AudioEffectOption[] = ["none", "pitch", "echo", "distortion", "reverb", "scaletempo", "bandFilter", "amplify1", "amplify2", "stereo"];
+type AudioEffectOption =
+  | "none"
+  | "pitch"
+  | "echo"
+  | "distortion"
+  | "reverb"
+  | "scaletempo"
+  | "bandFilter"
+  | "amplify1"
+  | "amplify2"
+  | "stereo"
+  | "dynamicExpander"
+  | "dynamicCompressor";
+const audioEffectOptions: AudioEffectOption[] = [
+  "none",
+  "pitch",
+  "echo",
+  "distortion",
+  "reverb",
+  "scaletempo",
+  "bandFilter",
+  "amplify1",
+  "amplify2",
+  "stereo",
+  "dynamicExpander",
+  "dynamicCompressor",
+];
 
 type Status = "streaming" | "stopped";
 
@@ -23,6 +48,8 @@ import { populateEffectArea_BandFilter, band_lower, band_upper, band_mode, band_
 import { populateEffectArea_Amplify1, amplify1_amplification } from "./amplify1/amplifyeffect1.js";
 import { populateEffectArea_Amplify2, amplify2_amplification } from "./amplify2/amplifyeffect2.js";
 import { populateEffectArea_Stereo, stereo_stereo } from "./stereo/stereoeffect.js";
+import { populateEffectArea_DynamicExpander, dynamicExpander_ratio, dynamicExpander_threshold } from "./dynamicExpander/dynamicExpander.js";
+import { populateEffectArea_DynamicCompressor, dynamicCompressor_ratio, dynamicCompressor_threshold } from "./dynamicCompressor/dynamicCompressor.js";
 
 let initialCleaningDone = false;
 let streaming = false;
@@ -176,6 +203,12 @@ function getEffectParams(effectName: AudioEffectOption) {
     case "stereo":
       return { stereo_stereo };
 
+    case "dynamicExpander":
+      return { dynamicExpander_ratio, dynamicExpander_threshold };
+
+    case "dynamicCompressor":
+      return { dynamicCompressor_ratio, dynamicCompressor_threshold };
+
     default:
       return {};
   }
@@ -258,6 +291,12 @@ document.getElementById("audioeffects-audioeffectselect").onchange = () => {
       break;
     case "stereo":
       populateEffectArea_Stereo();
+      break;
+    case "dynamicExpander":
+      populateEffectArea_DynamicExpander();
+      break;
+    case "dynamicCompressor":
+      populateEffectArea_DynamicCompressor();
       break;
     case "none":
       document.getElementById("audioeffects-controls").innerHTML = "";
