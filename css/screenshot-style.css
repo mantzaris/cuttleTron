@@ -30,7 +30,7 @@
   flex-direction: column; /* Stack the select and button vertically */
   align-items: flex-start; /* Center items horizontally */
   justify-content: flex-start; /* Center items vertically */
-  gap: 2px; /* Space between select and button */
+  gap: 2px;
   margin-left: 10px;
 }
 

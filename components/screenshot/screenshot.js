@@ -4,6 +4,10 @@ import { generateRandomString } from "../../utilities/utils.js";
 
 import { initializeTooltips, getWebcamSources } from "../main-components/main-utilities.js";
 
+const screenSelMenuId = "screenshot-selectionUL";
+const screen_sel_btn_id = "screenshot-screen-select-btn";
+const tooltipClassName = "screenshot-screen-tooltip";
+
 async function getSavingFilePath() {
   const targetDir = await getTargetDir();
 
@@ -26,68 +30,11 @@ document.getElementById("screenshot-expand").onclick = () => {
     expand_button.setAttribute("data-action", "expand");
   }
 
-  populateScreenOptions();
+  populateScreenOptions(screenSelMenuId, screen_sel_btn_id, tooltipClassName, screenshotSelection);
 };
 
-// Fetch available screen capture sources and populate the dropdown
-function populateScreenOptions() {
-  ipcRenderer.invoke("getCaptureID").then(async (sources) => {
-    let dropdownMenu = document.getElementById("screenshot-selectionUL");
-    dropdownMenu.innerHTML = "";
-
-    // Add 'None' option
-    let noneItem = document.createElement("li");
-    let noneAnchor = document.createElement("a");
-    noneAnchor.classList.add("dropdown-item");
-    noneAnchor.href = "#";
-    noneAnchor.textContent = "none";
-    noneAnchor.addEventListener("click", function (event) {
-      event.preventDefault();
-      document.getElementById("screenshot-screen-select-btn").textContent = this.textContent;
-      screenshotSelection({ type: "none" }); // Call the handler function
-    });
-    noneItem.appendChild(noneAnchor);
-    dropdownMenu.appendChild(noneItem);
-
-    const webcamSources = await getWebcamSources();
-    const allSources = sources.concat(webcamSources);
-
-    allSources.forEach((source) => {
-      let listItem = document.createElement("li");
-      let anchor = document.createElement("a");
-      anchor.classList.add("dropdown-item");
-      anchor.classList.add("class", "screenshot-screen-tooltip");
-      anchor.href = "#";
-      anchor.textContent = source.name;
-      anchor.setAttribute("data-bs-toggle", "tooltip");
-
-      if ("type" in source && source.type == "webcam") {
-        anchor.setAttribute("title", `no thumbnail for webcam`);
-      } else {
-        anchor.setAttribute("title", `<img src='${source.thumbnail}' alt='Thumbnail'>`);
-      }
-
-      anchor.setAttribute("data-tooltip-init", "false"); // Custom attribute to control tooltip initialization
-
-      // Attach click event listener to each dropdown item
-      anchor.addEventListener("click", function (event) {
-        event.preventDefault();
-
-        // Update the button text to reflect the selected item
-        document.getElementById("screenshot-screen-select-btn").textContent = this.textContent;
-        screenshotSelection(source); // Call the handler function
-      });
-
-      listItem.appendChild(anchor);
-      dropdownMenu.appendChild(listItem);
-    });
-
-    initializeTooltips(".screenshot-screen-tooltip");
-  });
-}
-
 document.getElementById("screenshot-refresh").onclick = () => {
-  populateScreenOptions();
+  populateScreenOptions(screenSelMenuId, screen_sel_btn_id, tooltipClassName, screenshotSelection);
 };
 
 async function screenshotSelection(source) {
@@ -183,4 +130,61 @@ function writeMessageLabel(message, color) {
   setTimeout(() => {
     saveMessageLabel.style.opacity = "0";
   }, 1200);
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+//produce the thumbnails for the screen selections on the selection
+////////////////////////////////////////////////////////////////////////////////////
+// Fetch available screen capture sources and populate the dropdown
+export async function populateScreenOptions(dropdownMenuId, buttonId, tooltipClassName, optionClickCallBack, screens = true, webcams = true) {
+  const dropdownMenu = document.getElementById(dropdownMenuId);
+  dropdownMenu.innerHTML = "";
+
+  try {
+    //fetch available screen capture sources combine with webcam sources
+    let allSources = [];
+
+    if (screens) {
+      const sources = await ipcRenderer.invoke("getCaptureID");
+      allSources = allSources.concat(sources);
+    }
+
+    if (webcams) {
+      const webcamSources = await getWebcamSources();
+      allSources = allSources.concat(webcamSources);
+    }
+
+    addScreenDropOptions(dropdownMenu, buttonId, tooltipClassName, optionClickCallBack, { name: "none", type: "none" });
+    allSources.forEach((source) => {
+      addScreenDropOptions(dropdownMenu, buttonId, tooltipClassName, optionClickCallBack, source);
+    });
+
+    initializeTooltips("." + tooltipClassName);
+  } catch (error) {
+    console.error("Error populating screen options:", error);
+    return;
+  }
+}
+
+export function addScreenDropOptions(dropdownMenu, buttonId, tooltipClassName, optionClickCallBack, source) {
+  let listItem = document.createElement("li");
+  let anchor = document.createElement("a");
+  anchor.classList.add("dropdown-item");
+  anchor.href = "#";
+  anchor.textContent = source.name;
+  anchor.addEventListener("click", function (event) {
+    event.preventDefault();
+    document.getElementById(buttonId).textContent = this.textContent;
+    optionClickCallBack(source); // Call the handler function
+  });
+
+  if (source.type !== "none") {
+    anchor.classList.add(tooltipClassName);
+    anchor.setAttribute("data-bs-toggle", "tooltip");
+    anchor.setAttribute("title", source.type === "webcam" ? `no thumbnail for webcam` : `<img src='${source.thumbnail}' alt='Thumbnail'>`);
+    anchor.setAttribute("data-tooltip-init", "false"); // Custom attribute to control tooltip initialization
+  }
+
+  listItem.appendChild(anchor);
+  dropdownMenu.appendChild(listItem);
 }

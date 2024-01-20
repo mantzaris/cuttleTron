@@ -1,3 +1,5 @@
+const { ipcRenderer } = window.electron;
+
 export function initializeTooltips(className) {
   var tooltipTriggerList = [].slice.call(document.querySelectorAll(className));
   tooltipTriggerList.map(function (tooltipTriggerEl) {
