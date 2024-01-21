@@ -29,16 +29,18 @@
   display: flex;
   flex-direction: column; /* Stack the select and button vertically */
   align-items: flex-start; /* Center items horizontally */
-  justify-content: flex-start; /* Center items vertically */
+  justify-content: space-between; /* Center items vertically */
   gap: 2px;
   margin-left: 10px;
 }
 
 .screenshot-saved-label {
-  color: green; /* Color for a successful message */
-  margin-left: 10px; /* Spacing between the labels */
-  opacity: 0; /* Start hidden */
+  color: green;
+  margin-left: 10px;
+  opacity: 0;
   transition: opacity 0.5s; /* Smooth fade-in and fade-out */
+  padding: 0px;
+  font-size: smaller;
 }
 
 #screenshot-screen-dropdown-menu {
@@ -72,4 +74,14 @@
   overflow: hidden; /* Hide overflow text */
   text-overflow: ellipsis; /* Add ellipsis for overflow text */
   padding: 0px 0px; /* Adjust padding to reduce space, modify as needed */
+}
+
+#screenshot-filename-input {
+  padding: 2px; /* Reduces the padding inside the input field */
+  font-size: smaller; /* Optionally, reduce the font size if needed */
+}
+
+.cool-label {
+  margin: 0px 0;
+  padding: 1px;
 }

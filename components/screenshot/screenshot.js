@@ -1,6 +1,6 @@
 const { ipcRenderer } = window.electron;
 const { joinPath, writeFileSync, bufferFrom, getTargetDir } = window.nodeModules;
-import { generateRandomString } from "../../utilities/utils.js";
+import { fileNameCollisionCheck } from "../../utilities/utils.js";
 
 import { initializeTooltips, getWebcamSources } from "../main-components/main-utilities.js";
 
@@ -8,11 +8,14 @@ const screenSelMenuId = "screenshot-selectionUL";
 const screen_sel_btn_id = "screenshot-screen-select-btn";
 const tooltipClassName = "screenshot-screen-tooltip";
 
-async function getSavingFilePath() {
+async function getSavingFilePath(filename) {
   const targetDir = await getTargetDir();
 
-  const randomString = generateRandomString(5);
-  return await joinPath([targetDir, `screenshot__${randomString}.png`]);
+  if (!filename.toLowerCase().endsWith(".png")) {
+    filename += ".png";
+  }
+
+  return await joinPath([targetDir, filename]);
 }
 
 document.getElementById("screenshot-expand").onclick = () => {
@@ -89,6 +92,7 @@ function clearVideo() {
 
 // select a screen to snap
 document.getElementById("screenshot-snap").onclick = async () => {
+  const fileName = document.getElementById("screenshot-filename-input").value;
   const videoElement = document.querySelector("#screenshot-feed video");
   const selectElement = document.getElementById("screenshot-screen-select-btn");
 
@@ -110,10 +114,11 @@ document.getElementById("screenshot-snap").onclick = async () => {
   const imageData = canvas.toDataURL("image/png").replace(/^data:image\/\w+;base64,/, "");
   const buffer = bufferFrom(imageData, "base64");
   // Save the image data to a file
-  const filePath = await getSavingFilePath();
+  const filePath = await getSavingFilePath(fileName);
   try {
     await writeFileSync({ filePath, buffer });
     writeMessageLabel("saved screenshot", "green");
+    updateFilenameForNextSave();
   } catch (error) {
     writeMessageLabel("can't save", "red");
     console.error("Error writing file:", error);
@@ -135,7 +140,6 @@ function writeMessageLabel(message, color) {
 ////////////////////////////////////////////////////////////////////////////////////
 //produce the thumbnails for the screen selections on the selection
 ////////////////////////////////////////////////////////////////////////////////////
-// Fetch available screen capture sources and populate the dropdown
 export async function populateScreenOptions(dropdownMenuId, buttonId, tooltipClassName, optionClickCallBack, screens = true, webcams = true) {
   const dropdownMenu = document.getElementById(dropdownMenuId);
   dropdownMenu.innerHTML = "";
@@ -187,4 +191,42 @@ export function addScreenDropOptions(dropdownMenu, buttonId, tooltipClassName, o
 
   listItem.appendChild(anchor);
   dropdownMenu.appendChild(listItem);
+}
+
+document.getElementById("screenshot-filename-input").oninput = async (event) => {
+  const fileName = event.target.value;
+  const fileExists = await fileNameCollisionCheck(fileName, [".png", ".jpg"]);
+
+  if (fileExists) {
+    document.getElementById("screenshot-snap").disabled = true;
+    writeMessageLabel("file exists", "brown");
+    return;
+  }
+
+  if (document.getElementById("screenshot-snap").disabled) {
+    document.getElementById("screenshot-snap").disabled = false;
+  }
+};
+
+function updateFilenameForNextSave() {
+  const filenameInput = document.getElementById("screenshot-filename-input");
+  let currentFilename = filenameInput.value;
+
+  // Regular expression to separate the base filename, number part, and extension
+  const filenameRegex = /^(.*?)(\d*)(\.[^.]+)?$/;
+  const matches = currentFilename.match(filenameRegex);
+
+  let baseFilename = matches[1];
+  let numberPart = matches[2];
+  let extension = matches[3] || ""; // Include the extension if present
+
+  if (numberPart) {
+    let incrementedNumber = parseInt(numberPart, 10) + 1;
+    let paddedNumber = incrementedNumber.toString().padStart(numberPart.length, "0");
+    currentFilename = baseFilename + paddedNumber + extension;
+  } else {
+    currentFilename = baseFilename + "001" + extension;
+  }
+
+  filenameInput.value = currentFilename;
 }

@@ -111,6 +111,9 @@ ipcMain.handle("getTargetDir", () => {
 ipcMain.handle("writeFileSync", (event, arg_obj) => {
   myWriteFileSync(event, arg_obj);
 });
+ipcMain.handle("existsSync", (event, path) => {
+  return fs.existsSync(path);
+});
 //ge the list of ids of screens or windows to record with the electron mediaRecorder (audio on linux no go)
 ipcMain.handle("getCaptureID", async (event) => {
   const screen_sources = await desktopCapturer.getSources({ types: ["window", "screen"] });

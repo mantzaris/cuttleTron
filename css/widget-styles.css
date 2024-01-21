@@ -14,6 +14,13 @@
   background-color: #2980b9; /* Darker color on hover */
 }
 
+.cool-button:disabled {
+  background-color: #1b1e41; /* Light gray background */
+  color: #8b8a8a; /* Darker text color */
+  cursor: not-allowed; /* Cursor indicates the button is not clickable */
+  opacity: 0.5; /* Make the button look faded */
+}
+
 .cool-label {
   display: inline-block; /* To allow padding and other block properties */
   font-size: max(1.2vh, 12px); /* Adjust font size relative to viewport height with a minimum size */
