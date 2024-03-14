@@ -3,7 +3,7 @@ const { promisify } = require("util");
 
 const execAsync = promisify(exec);
 
-const bufferTime = 100000;
+const bufferTime = 2000000; //100000 0.1 millisecond
 
 const virtualSinkName = "cuttletronVirtualMicTemp";
 const virtualSinkDescription = "cuttletron_Virtual_Mic_Temp";
