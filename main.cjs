@@ -33,7 +33,7 @@ let mainWindow;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1400,
+    width: 1200,
     height: 800,
     title: appName,
     webPreferences: {
@@ -47,12 +47,17 @@ function createWindow() {
 
   if (process.env.NODE_ENV === "development") {
     // Keep the default menu in development mode
+    mainWindow.webContents.openDevTools();
   } else {
     mainWindow.setMenu(null); // remove the menu bar and deactivates devTools
   }
 
   mainWindow.on("closed", function () {
     mainWindow = null;
+
+    if (maskcam_window) {
+      maskcam_window.close();
+    }
   });
 }
 
@@ -180,4 +185,64 @@ ipcMain.handle("audioeffects-stop", async (event) => {
 
 ipcMain.handle("audioeffects-cleanup", async (event) => {
   await cleanupAudioDevices();
+});
+
+/////////////////////////////////////
+//for maskcam
+/////////////////////////////////////
+let maskcam_window;
+let currentColor = "gray"; // Initial color
+
+ipcMain.on("start-maskcam", () => {
+  if (maskcam_window) {
+    maskcam_window.focus(); // Focus the already opened window instead of creating a new one
+    return;
+  }
+
+  maskcam_window = new BrowserWindow({
+    width: 800,
+    height: 500,
+    minimizable: false,
+    maximizable: false,
+    resizable: true,
+    frame: false, // Remove window frame
+    transparent: false, // transparent background
+    backgroundColor: "blue",
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, "preload.cjs"),
+      webviewTag: false,
+    }, //skipTaskbar boolean (optional) macOS Windows - Whether to show the window in taskbar. Default is false
+  }); //offscreen boolean (optional) - Whether to enable offscreen rendering for the browser window
+  //win.setAspectRatio(aspectRatio[, extraSize])
+  //win.setSize(width, height[, animate])  win.getSize()
+  //win.getMediaSourceId()
+
+  maskcam_window.setMenu(null); // remove the menu bar and deactivates devTools
+
+  // maskcam_window.loadFile("maskcam-view.html");
+
+  maskcam_window.show(); // Show the window after loading //win.destroy() //win.isDestroyed() //win.isVisible()
+  maskcam_window.loadFile("maskcam-view.html");
+
+  if (process.env.NODE_ENV !== "production") {
+    maskcam_window.webContents.openDevTools();
+  }
+
+  maskcam_window.on("closed", function () {
+    maskcam_window = null;
+  });
+});
+
+ipcMain.handle("mask-opened", () => {
+  return maskcam_window !== null;
+});
+
+ipcMain.on("resize-window", (event, { aspectRatio }) => {
+  if (maskcam_window) {
+    const currentHeight = maskcam_window.getSize()[1]; // Keep the current height
+    const newWidth = Math.round(currentHeight * aspectRatio);
+    maskcam_window.setSize(newWidth, currentHeight);
+  }
 });

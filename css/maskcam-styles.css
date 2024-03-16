@@ -1,0 +1,40 @@
+#maskcam {
+  display: flex; /* Use flexbox for layout */
+  flex-direction: row;
+  height: 0; /* Start collapsed */
+  overflow: hidden;
+  padding: 0;
+}
+#maskcam.expanded {
+  height: 25vh; /* Expand to 25% of viewport height */
+  padding: 10px;
+}
+
+/* ---------------------- */
+/* for the maskcam view */
+/* ---------------------- */
+#maskcam-view-top {
+  height: 100vh;
+  width: 100vw;
+  outline: none;
+  background-color: gray;
+  -webkit-app-region: drag; /* Make the div draggable */
+  cursor: grab;
+}
+
+#maskcam-view-top:active {
+  cursor: grabbing; /* Change cursor to grabbing when active */
+}
+
+#maskcam-webcam-feed {
+  flex: 0 0 100%; /* Take up 30% of the width */
+  display: flex;
+  align-items: center; /* Center the image vertically */
+  justify-content: center; /* Center the image horizontally */
+  height: 100%; /* 90% of the #screenshot height */
+}
+
+#maskcam-webcam-feed video {
+  max-width: 100%; /* Ensure the image doesn't overflow its container */
+  max-height: 100%;
+}

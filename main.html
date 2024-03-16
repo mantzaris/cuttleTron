@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="css/screenshot-style.css">
     <link rel="stylesheet" href="css/screenrecord-style.css">
     <link rel="stylesheet" href="css/audioeffects.css">
+    <link rel="stylesheet" href="css/maskcam-styles.css">
 
 </head>
 <body>
@@ -196,6 +197,52 @@
             </div>
             
         </div>
+
+
+        <!-- ---------------------------------------------- -->
+        <!-- MASK CAM -->
+        <!-- ---------------------------------------------- -->
+        <div class="component">
+            <div class="component-header">
+                <span class="component-title">Mask Cam</span>
+                <div class="scroll-container ">
+                    <div class="flash-text">                        
+                    </div>
+                </div>
+                <button id="maskcam-expand" class="toggle-button" data-action="expand">Expand</button>
+            </div>
+            <div id="maskcam" class="component-content">
+                <button id="testMask" >TEST!</button>
+                <!--<div id="maskcam-feed">
+                    <!~~ Image goes here ~~>
+                    <video id="maskcam-video" alt="Screenshot">
+                    <canvas id="maskcam-canvas" style="display: none;"></canvas>
+
+                </div>
+                <div id="maskcam-selection">   
+                    <div>
+                        <label class="cool-label" for="maskcam-nameselect">Source Selection</label>
+                        <label id="maskcam-saved" class="maskcam-saved-label"></label>
+                    </div>
+                    <div id="maskcam-screen-dropdown-menu">
+                        <button class="btn btn-secondary dropdown-toggle " type="button" id="maskcam-screen-select-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                            none
+                        </button>
+                        <ul id="maskcam-selectionUL" class="dropdown-menu " aria-labelledby="maskcam-screen-select-btn">
+                            <!~~ <li><a class="dropdown-item" href="#">Action</a></li> ~~>
+                        </ul>
+                    </div>
+                    
+                    <button id="maskcam-test" class="cool-button">test</button>
+
+                    <div>
+                        <button id="maskcam-snap" class="cool-button">Snap</button>
+                        <button id="screenshot-refresh" class="cool-button">Refresh Window List</button>                    
+                    </div>
+                    
+                </div>-->
+            </div>
+        </div>
     
     </div>
     
@@ -203,6 +250,7 @@
     <script type="module" src="./components/screenshot/screenshot.js"></script>
     <script type="module" src="./components/screenrecord/screenrecord.js"></script>
     <script type="module" src="./components/audioeffects/audioeffects.js"></script>
+    <script type="module" src="./components/maskcam/maskcam.js"></script>
 
 
 </body>
