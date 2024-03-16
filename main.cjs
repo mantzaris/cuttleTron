@@ -65,31 +65,27 @@ app.on("ready", createWindow);
 
 app.on("before-quit", async (event) => {
   // Prevent the default behavior first if needed
-  event.preventDefault();
+  // event.preventDefault();
+
+  console.log("before before quit");
 
   await audioEffectsStop();
   await cleanupAudioDevices();
-
-  app.quit();
+  // app.quit();
+  console.log("Cleanup completed. before quit");
 });
 
-app.on("window-all-closed", async function () {
-  //await audioEffectsStop();
-  //app.quit();
-});
+// app.on("window-all-closed", async function () {
+//   //await audioEffectsStop();
+//   //app.quit();
+// });
 
 app.on("will-quit", async (event) => {
-  // Prevent the default quit process to perform cleanup
-  event.preventDefault();
+  console.log("before will  quit");
+  await audioEffectsStop();
+  await cleanupAudioDevices();
 
-  try {
-    await audioEffectsStop();
-    await cleanupAudioDevices();
-  } catch (error) {
-    console.error("Error during cleanup:", error);
-  }
-
-  // Now allow the app to quit
+  console.log("Cleanup completed. will quit");
   app.quit();
 });
 
@@ -209,9 +205,10 @@ ipcMain.on("start-maskcam", () => {
     transparent: false, // transparent background
     backgroundColor: "blue",
     webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      preload: path.join(__dirname, "preload.cjs"),
+      nodeIntegration: true, // Enable Node.js integration
+      nodeIntegrationInWorker: true, // Enable Node.js integration in Web Workers
+      contextIsolation: false,
+      // preload: path.join(__dirname, "preload.cjs"),
       webviewTag: false,
     }, //skipTaskbar boolean (optional) macOS Windows - Whether to show the window in taskbar. Default is false
   }); //offscreen boolean (optional) - Whether to enable offscreen rendering for the browser window

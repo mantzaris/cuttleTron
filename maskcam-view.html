@@ -4,7 +4,7 @@
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
 
     <link rel="stylesheet" href="./assets/bootstrap/bootstrap.min.css">
     <script src="assets/bootstrap/bootstrap.bundle.min.js"></script>
@@ -19,7 +19,7 @@
         <video id="maskcam-webcam-feed" autoplay></video>
     </div>
     
-    <script type="module" src="./components/maskcam/maskcam-view.js"></script>
+    <script  src="./components/maskcam/maskcam-view.js"></script>
 
 </body>
 
