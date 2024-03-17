@@ -237,9 +237,21 @@ ipcMain.handle("mask-opened", () => {
 });
 
 ipcMain.on("resize-window", (event, { aspectRatio }) => {
-  if (maskcam_window) {
-    const currentHeight = maskcam_window.getSize()[1]; // Keep the current height
+  if (maskcam_window && aspectRatio) {
+    const [currentWidth, currentHeight] = maskcam_window.getSize();
     const newWidth = Math.round(currentHeight * aspectRatio);
-    maskcam_window.setSize(newWidth, currentHeight);
+
+    // To avoid unnecessary resizing, check if the new width is different enough to warrant a resize
+    if (Math.abs(currentWidth - newWidth) > 1) {
+      maskcam_window.setSize(newWidth, currentHeight);
+    }
   }
 });
+
+// ipcMain.on("resize-window", (event, { aspectRatio }) => {
+//   if (maskcam_window) {
+//     const currentHeight = maskcam_window.getSize()[1]; // Keep the current height
+//     const newWidth = Math.round(currentHeight * aspectRatio);
+//     maskcam_window.setSize(newWidth, currentHeight);
+//   }
+// });

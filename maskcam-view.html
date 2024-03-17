@@ -16,7 +16,13 @@
 <body>
     
     <div id="maskcam-view-top">
-        <video id="maskcam-webcam-feed" autoplay></video>
+        <div id="video-container" style="position: relative;">
+            <video id="maskcam-webcam-feed" style="position: absolute; top: 0; left: 0;" width="100%" height="100%" autoplay></video>
+            <canvas id="face-mesh-canvas" style="position: absolute; top: 0; left: 0;" width="100%" height="100%"></canvas>
+        </div>
+        
+        <!-- <video id="maskcam-webcam-feed" autoplay></video> -->
+
     </div>
     
     <script  src="./components/maskcam/maskcam-view.js"></script>

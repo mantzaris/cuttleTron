@@ -20,10 +20,17 @@
   background-color: gray;
   -webkit-app-region: drag; /* Make the div draggable */
   cursor: grab;
+  overflow: auto;
 }
 
 #maskcam-view-top:active {
   cursor: grabbing; /* Change cursor to grabbing when active */
+}
+
+#video-container {
+  height: 100%;
+  width: 100%;
+  background-color: gray;
 }
 
 #maskcam-webcam-feed {
@@ -37,4 +44,10 @@
 #maskcam-webcam-feed video {
   max-width: 100%; /* Ensure the image doesn't overflow its container */
   max-height: 100%;
+}
+
+#face-mesh-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
