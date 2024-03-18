@@ -18,8 +18,13 @@ const human_config = {
     iris: { enabled: true, return: true },
     distance: { enabled: true, return: true },
     description: { enabled: true },
+    emotion: { enabled: false },
   },
+  gesture: { enabled: true },
 };
+//hand: { enabled: false, minConfidence: 0.1, maxDetected: 1, landmarks: true, rotation: false },
+//attention: { enabled: true },
+//body: { enabled: false, minConfidence: 0.1, maxDetected: 1, modelPath: 'blazepose-heavy.json' },
 
 const human = new Human(human_config);
 
@@ -79,7 +84,9 @@ async function processVideoFrame() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawings
 
     result.face.forEach((face) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawMesh(face.mesh, ctx); // You can also use meshRaw depending on your needs
+      drawMask(face, ctx);
     });
 
     console.log(result);
@@ -90,7 +97,10 @@ async function processVideoFrame() {
     // result.body
     // result.face[0].meshRaw
     // result.face[0].iris
-    // result.face[0].mesh
+    // result.face[0].drawMesh
+    // result.face[0].mesh.drawMesh
+    // result.body[0].keypoints[1].part //leftEye or rightEye leftEar rightEar nose
+    // result.face[0].annotations;
     // You can use face landmarks to overlay graphics or perform other operations
   }
 
@@ -98,6 +108,62 @@ async function processVideoFrame() {
   attempts++;
 }
 
+//////////////////////////////////////
+//draw a 'mask'
+//////////////////////////////////////
+const face_annotations = [
+  "leftEyeLower0",
+  "rightEyeLower0",
+  "leftEyeUpper0",
+  "rightEyeUpper0",
+  "lipsUpperSemiOuter",
+  "lipsUpperSemiInner",
+  "lipsLowerSemiOuter",
+  "lipsLowerSemiInner",
+  "lipsLowerInner",
+  "leftEyeIris",
+  "rightEyeIris",
+];
+
+function drawMask(face, ctx) {
+  // ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const scaleX = videoElement.offsetWidth / videoElement.videoWidth;
+  const scaleY = videoElement.offsetHeight / videoElement.videoHeight;
+
+  const outline = face.annotations.silhouette;
+  ctx.beginPath();
+  outline.forEach((point, index) => {
+    const x = point[0] * scaleX;
+    const y = point[1] * scaleY;
+    ctx[index === 0 ? "moveTo" : "lineTo"](x, y);
+  });
+  ctx.closePath();
+  ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+  ctx.fill();
+
+  // Draw the eyes, mouth, etc., using specific annotations
+  // drawFeature(face.annotations.leftEyeLower0, ctx, scaleX, scaleY);
+  for (const annotation of Object.keys(face.annotations)) {
+    if (face_annotations.includes(annotation)) {
+      drawFeature(face.annotations[annotation], ctx, scaleX, scaleY);
+    }
+  }
+}
+
+function drawFeature(featurePoints, ctx, scaleX, scaleY) {
+  ctx.beginPath();
+  featurePoints.forEach((point, index) => {
+    const x = point[0] * scaleX;
+    const y = point[1] * scaleY;
+    ctx[index === 0 ? "moveTo" : "lineTo"](x, y);
+  });
+  ctx.closePath();
+  ctx.stroke(); // Or fill, depending on the desired effect
+}
+
+//////////////////////////////////////
+//draw the 'mesh'
+//////////////////////////////////////
 function drawMesh(mesh, ctx) {
   const scaleX = videoElement.offsetWidth / videoElement.videoWidth;
   const scaleY = videoElement.offsetHeight / videoElement.videoHeight;
@@ -110,10 +176,6 @@ function drawMesh(mesh, ctx) {
     ctx.fillStyle = "blue"; // Draw blue boxes around mesh points
     ctx.fillRect(x, y, size, size);
   });
-
-  // ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // Clear previous frame
-  // ctx.fillStyle = "red";
-  // ctx.fillRect(10, 10, 50, 50); // Draw a red box for testing
 }
 
 window.addEventListener("resize", adjustVideoSize);
@@ -139,3 +201,16 @@ function adjustVideoSize() {
   canvas.width = videoElement.offsetWidth;
   canvas.height = videoElement.offsetHeight;
 }
+
+//https://vladmandic.github.io/human/typedoc/interfaces/DrawOptions.html#fillPolygons
+//https://github.com/vladmandic/human/blob/main/src/draw/options.ts#L39
+// const drawOptions = {
+//   drawPolygons: true,
+//   lineWidth: 1,
+//   pointSize: 2,
+//   useDepth: false, // Set to true if you want to use the z-coordinate for depth effects
+//   color: "blue", // Color for lines and points
+//   drawPoints: true, // Set to true if you want to draw points at landmarks
+//   fillPolygons: true,
+// };
+// human.draw.face(canvas, result.face, drawOptions);
