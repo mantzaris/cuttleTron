@@ -111,20 +111,6 @@ async function processVideoFrame() {
 //////////////////////////////////////
 //draw a 'mask'
 //////////////////////////////////////
-const face_annotations = [
-  "leftEyeLower0",
-  "rightEyeLower0",
-  "leftEyeUpper0",
-  "rightEyeUpper0",
-  "lipsUpperSemiOuter",
-  "lipsUpperSemiInner",
-  "lipsLowerSemiOuter",
-  "lipsLowerSemiInner",
-  "lipsLowerInner",
-  "leftEyeIris",
-  "rightEyeIris",
-];
-
 function drawMask(face, ctx) {
   // ctx.clearRect(0, 0, canvas.width, canvas.height);
   const scaleX = videoElement.offsetWidth / videoElement.videoWidth;
@@ -141,13 +127,40 @@ function drawMask(face, ctx) {
   ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
   ctx.fill();
 
-  // Draw the eyes, mouth, etc., using specific annotations
-  // drawFeature(face.annotations.leftEyeLower0, ctx, scaleX, scaleY);
-  for (const annotation of Object.keys(face.annotations)) {
-    if (face_annotations.includes(annotation)) {
-      drawFeature(face.annotations[annotation], ctx, scaleX, scaleY);
-    }
-  }
+  //iris
+  drawFeature(face.annotations.leftEyeIris, ctx, scaleX, scaleY);
+  drawFeature(face.annotations.rightEyeIris, ctx, scaleX, scaleY);
+  //mouth
+  drawPairedFeatures(face.annotations.lipsUpperInner, face.annotations.lipsLowerInner, ctx, scaleX, scaleY);
+  drawPairedFeatures(face.annotations.lipsUpperSemiOuter, face.annotations.lipsLowerSemiOuter, ctx, scaleX, scaleY);
+  //eyes core
+  drawPairedFeatures(face.annotations.leftEyeUpper0, face.annotations.leftEyeLower0, ctx, scaleX, scaleY);
+  drawPairedFeatures(face.annotations.rightEyeUpper0, face.annotations.rightEyeLower0, ctx, scaleX, scaleY);
+  //eyebrows
+  drawPairedFeatures(face.annotations.leftEyebrowUpper, face.annotations.leftEyebrowLower, ctx, scaleX, scaleY);
+  drawPairedFeatures(face.annotations.rightEyebrowUpper, face.annotations.rightEyebrowLower, ctx, scaleX, scaleY);
+  //nose
+  drawNose(
+    {
+      noseBottom: face.annotations.noseBottom,
+      noseLeftCorner: face.annotations.noseLeftCorner,
+      noseRightCorner: face.annotations.noseRightCorner,
+      noseTip: face.annotations.noseTip,
+      midwayBetweenEyes: face.annotations.midwayBetweenEyes,
+    },
+    ctx,
+    scaleX,
+    scaleY
+  );
+  //eyes periphery
+  //drawPairedFeatures(face.annotations.leftEyeUpper1, face.annotations.leftEyeLower1, ctx, scaleX, scaleY);
+  //drawPairedFeatures(face.annotations.rightEyeUpper1, face.annotations.rightEyeLower1, ctx, scaleX, scaleY);
+
+  // for (const annotation of Object.keys(face.annotations)) {
+  //   if (face_annotations.includes(annotation)) {
+  //     drawFeature(face.annotations[annotation], ctx, scaleX, scaleY);
+  //   }
+  // }
 }
 
 function drawFeature(featurePoints, ctx, scaleX, scaleY) {
@@ -159,6 +172,58 @@ function drawFeature(featurePoints, ctx, scaleX, scaleY) {
   });
   ctx.closePath();
   ctx.stroke(); // Or fill, depending on the desired effect
+}
+
+function drawPairedFeatures(upperFeaturePoints, lowerFeaturePoints, ctx, scaleX, scaleY) {
+  ctx.beginPath();
+
+  // Draw the upper feature
+  upperFeaturePoints.forEach((point, index) => {
+    const x = point[0] * scaleX;
+    const y = point[1] * scaleY;
+    ctx[index === 0 ? "moveTo" : "lineTo"](x, y);
+  });
+
+  // Draw the lower feature in reverse order to connect the shape back to the start
+  lowerFeaturePoints
+    .slice()
+    .reverse()
+    .forEach((point, index) => {
+      const x = point[0] * scaleX;
+      const y = point[1] * scaleY;
+      ctx.lineTo(x, y);
+    });
+
+  ctx.closePath();
+  ctx.stroke(); // Or fill, depending on the desired effect
+}
+
+function drawNose(nosePoints, ctx, scaleX, scaleY) {
+  const { noseBottom, noseLeftCorner, noseRightCorner, noseTip, midwayBetweenEyes } = nosePoints;
+
+  // Scale the points
+  const bottom = [noseBottom[0][0] * scaleX, noseBottom[0][1] * scaleY];
+  const leftCorner = [noseLeftCorner[0][0] * scaleX, noseLeftCorner[0][1] * scaleY];
+  const rightCorner = [noseRightCorner[0][0] * scaleX, noseRightCorner[0][1] * scaleY];
+  const tip = [noseTip[0][0] * scaleX, noseTip[0][1] * scaleY];
+  const midway = [midwayBetweenEyes[0][0] * scaleX, midwayBetweenEyes[0][1] * scaleY];
+
+  // Draw the nose
+  ctx.beginPath();
+  // Start from the left corner, go to the tip, then to the right corner
+  ctx.moveTo(leftCorner[0], leftCorner[1]);
+  ctx.lineTo(tip[0], tip[1]);
+  ctx.lineTo(rightCorner[0], rightCorner[1]);
+
+  // Draw a line from the right corner to the bottom and then connect to the left corner
+  ctx.lineTo(bottom[0], bottom[1]);
+  ctx.lineTo(leftCorner[0], leftCorner[1]);
+
+  // Draw a line from the midway point between the eyes to the tip of the nose
+  ctx.moveTo(midway[0], midway[1]);
+  ctx.lineTo(tip[0], tip[1]);
+
+  ctx.stroke();
 }
 
 //////////////////////////////////////
