@@ -218,8 +218,6 @@ ipcMain.on("start-maskcam", () => {
 
   maskcam_window.setMenu(null); // remove the menu bar and deactivates devTools
 
-  // maskcam_window.loadFile("maskcam-view.html");
-
   maskcam_window.show(); // Show the window after loading //win.destroy() //win.isDestroyed() //win.isVisible()
   maskcam_window.loadFile("maskcam-view.html");
 
@@ -248,10 +246,12 @@ ipcMain.on("resize-window", (event, { aspectRatio }) => {
   }
 });
 
-// ipcMain.on("resize-window", (event, { aspectRatio }) => {
-//   if (maskcam_window) {
-//     const currentHeight = maskcam_window.getSize()[1]; // Keep the current height
-//     const newWidth = Math.round(currentHeight * aspectRatio);
-//     maskcam_window.setSize(newWidth, currentHeight);
-//   }
-// });
+ipcMain.on("update-mask-view-settings", (event, settings) => {
+  if (!maskcam_window) {
+    console.error("MaskCam window is not available.");
+    return;
+  }
+  console.log("in mask toggle");
+
+  maskcam_window.webContents.send("toggle-mask-view", settings);
+});

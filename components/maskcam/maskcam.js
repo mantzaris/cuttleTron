@@ -26,6 +26,12 @@ document.getElementById("testMask").onclick = async () => {
   // Send an IPC message to the main process to open the maskcam window
   await ipcRenderer.send("start-maskcam");
 
+  ipcRenderer.send("update-mask-view-settings", {
+    webcam_show: false,
+    mesh_show: true,
+    basic_mask_show: true,
+  });
+
   const isMaskCamWindowOpen = await ipcRenderer.invoke("mask-opened");
   console.log("Is maskcam window open:", isMaskCamWindowOpen);
 };

@@ -40,8 +40,48 @@ let canvas;
 let ctx;
 let webcam_aspectRatio;
 
+let webcam_show = true;
+let mesh_show = true;
+let basic_mask_show = true;
+// let webcam_show = true;
+// let mesh_show = true;
+// let basic_mask_show = true;
+
+ipcRenderer.on("toggle-mask-view", (event, settings) => {
+  console.log(settings);
+  let needsRedraw = false;
+
+  if (settings.hasOwnProperty("webcam_show")) {
+    webcam_show = settings.webcam_show;
+    videoElement.style.visibility = webcam_show ? "visible" : "hidden";
+
+    if (webcam_show) {
+      // Ensure the video element has correct dimensions
+      setTimeout(() => {
+        adjustVideoSize(); // Adjust video and canvas size
+        processVideoFrame(); // Start processing frames
+      }, 0);
+    }
+  }
+  if (settings.hasOwnProperty("mesh_show")) {
+    mesh_show = settings.mesh_show;
+    needsRedraw = true;
+  }
+  if (settings.hasOwnProperty("basic_mask_show")) {
+    basic_mask_show = settings.basic_mask_show;
+    needsRedraw = true;
+  }
+
+  console.log(webcam_show, mesh_show, basic_mask_show);
+  if (needsRedraw) {
+    processVideoFrame();
+  }
+});
+
 document.addEventListener("DOMContentLoaded", async () => {
   videoElement = document.getElementById("maskcam-webcam-feed");
+  webcam_show ? (videoElement.style.visibility = "visible") : (videoElement.style.visibility = "hidden");
+
   videoContainer = document.getElementById("video-container");
   canvas = document.getElementById("face-mesh-canvas");
   ctx = canvas.getContext("2d");
@@ -76,34 +116,22 @@ async function processVideoFrame() {
 
   // Run detection
   const result = await human.detect(videoElement);
+  console.log(result);
 
   // You can access various results, e.g., face landmarks
   if (result.face.length > 0) {
-    const canvas = document.getElementById("face-mesh-canvas");
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawings
 
     result.face.forEach((face) => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawMesh(face.mesh, ctx); // You can also use meshRaw depending on your needs
-      drawMask(face, ctx);
+      if (mesh_show) drawMesh(face.mesh, ctx); // You can also use meshRaw depending on your needs
+      if (basic_mask_show) drawMask(face, ctx);
     });
 
-    console.log(result);
-    console.log(result.face[0].rotation);
-    console.log("distance:", result.face[0].distance);
-    console.log("Face detected:", result.face[0].age);
-    // result.hand
-    // result.body
-    // result.face[0].meshRaw
-    // result.face[0].iris
-    // result.face[0].drawMesh
-    // result.face[0].mesh.drawMesh
-    // result.body[0].keypoints[1].part //leftEye or rightEye leftEar rightEar nose
-    // result.face[0].annotations;
-    // You can use face landmarks to overlay graphics or perform other operations
+    //console.log(result); // result.face[0].mesh.drawMesh // result.hand// result.body // result.face[0].annotations;
   }
 
+  //TODO: this is for testing, remove!
   if (attempts < 180) requestAnimationFrame(processVideoFrame);
   attempts++;
 }
