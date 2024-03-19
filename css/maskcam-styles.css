@@ -6,12 +6,30 @@
   padding: 0;
 }
 #maskcam.expanded {
-  height: 25vh; /* Expand to 25% of viewport height */
-  padding: 10px;
+  height: 30vh; /* Expand to 25% of viewport height */
+  padding: 0px;
+}
+
+.scrollable-column {
+  overflow-y: auto;
+  height: 100%;
+}
+
+#maskcam-feed {
+  flex: 0 0 30%; /* Take up 30% of the width */
+  display: flex;
+  align-items: center; /* Center the image vertically */
+  justify-content: center; /* Center the image horizontally */
+  height: 100%; /* 90% of the #screenrecord height */
+}
+
+#maskcam-feed video {
+  max-width: 100%; /* Ensure the image doesn't overflow its container */
+  max-height: 100%;
 }
 
 /* ---------------------- */
-/* for the maskcam view */
+/* for the maskcam view PAGE WINDOW */
 /* ---------------------- */
 #maskcam-view-top {
   height: 100vh;

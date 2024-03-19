@@ -212,7 +212,54 @@
                 <button id="maskcam-expand" class="toggle-button" data-action="expand">Expand</button>
             </div>
             <div id="maskcam" class="component-content">
-                <button id="testMask" >TEST!</button>
+                
+                <div class="row h-100 w-100">
+                    <div class="col-4 scrollable-column pl-4">
+                        <div class="form-group">
+                            <label class="myBSlbl" for="webcamSelect">Source Select:</label>
+                            <select id="webcamSelect" class="form-control myBSsel" disabled>
+                                <option selected>Webcam</option>
+                            </select>
+                        </div>
+                    
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="videoFeedCheck">
+                            <label class="form-check-label myBSlbl" for="videoFeedCheck">
+                                Video feed
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="faceMeshCheck">
+                            <label class="form-check-label myBSlbl" for="faceMeshCheck">
+                                Face mesh
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="basicMaskCheck" checked>
+                            <label class="form-check-label myBSlbl" for="basicMaskCheck">
+                                Basic mask
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="col-4 scrollable-column d-flex flex-column align-items-center">
+                        <div>
+                            <button id="maskcam-start" class="btn btn-outline-primary font-weight-bold mt-2">START</button>
+                            <button id="maskcam-stop" class="btn btn-outline-primary font-weight-bold mt-2">STOP</button>
+                        </div>
+                        
+                        <label id="maskcam-status-label" class="my-2">...</label> <!-- Dynamically filled label -->
+                        <label id="maskcam-device-name" class="my-2">...</label> <!-- Another dynamically filled label -->
+                    </div>
+                    
+                    <div class="col-4 scrollable-column" >
+                        <div id="maskcam-feed">
+                            <!-- <video id="screenrecord-video" alt="screenrecord"> -->
+                            <video id="maskcam-output-feed" alt="maskcam feed">        
+                        </div>
+                    </div>
+                </div>
+                
                 <!--<div id="maskcam-feed">
                     <!~~ Image goes here ~~>
                     <video id="maskcam-video" alt="Screenshot">
@@ -241,12 +288,13 @@
                     </div>
                     
                 </div>-->
+
             </div>
         </div>
     
     </div>
     
-    
+    <!-- <button id="testMask" >TEST!</button> -->
     <script type="module" src="./components/screenshot/screenshot.js"></script>
     <script type="module" src="./components/screenrecord/screenrecord.js"></script>
     <script type="module" src="./components/audioeffects/audioeffects.js"></script>

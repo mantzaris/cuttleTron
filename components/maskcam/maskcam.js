@@ -20,7 +20,7 @@ document.getElementById("maskcam-expand").onclick = () => {
   //populateScreenOptions(screenSelMenuId, screen_sel_btn_id, tooltipClassName, maskcamSelection);
 };
 
-document.getElementById("testMask").onclick = async () => {
+document.getElementById("maskcam-start").onclick = async () => {
   console.log("foo");
 
   // Send an IPC message to the main process to open the maskcam window

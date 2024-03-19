@@ -66,3 +66,63 @@
 .select-wide {
   width: 60%;
 }
+
+/* --------------------- */
+/* Bootstrap styling */
+/* --------------------- */
+button.myBSbtn {
+  font-size: 16px !important;
+  padding: 2px !important;
+}
+/* Adjust for medium screens based on width or height */
+@media (max-width: 800px), (max-height: 750px) {
+  button.myBSbtn {
+    font-size: 14px !important;
+    padding: 1px !important;
+  }
+}
+/* Adjust for smaller screens based on width or height */
+@media (max-width: 650px), (max-height: 650px) {
+  button.myBSbtn {
+    font-size: 12px !important;
+    padding: 0px !important;
+  }
+}
+
+label.myBSlbl {
+  font-size: 16px !important;
+  padding: 2px !important;
+}
+/* Adjust for medium screens based on width or height */
+@media (max-width: 800px), (max-height: 750px) {
+  label.myBSlbl {
+    font-size: 14px !important;
+    padding: 1px !important;
+  }
+}
+/* Adjust for smaller screens based on width or height */
+@media (max-width: 650px), (max-height: 650px) {
+  label.myBSlbl {
+    font-size: 12px !important;
+    padding: 0px !important;
+  }
+}
+
+select.myBSsel {
+  font-size: 16px !important;
+  padding: 2px !important;
+}
+/* Adjust for medium screens based on width or height */
+@media (max-width: 800px), (max-height: 750px) {
+  select.myBSsel {
+    font-size: 14px !important;
+    padding: 1px !important;
+  }
+}
+/* Adjust for smaller screens based on width or height */
+@media (max-width: 650px), (max-height: 650px) {
+  select.myBSsel {
+    font-size: 12px !important;
+    padding: 0px !important;
+  }
+}
