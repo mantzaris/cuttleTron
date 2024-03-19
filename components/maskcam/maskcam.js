@@ -21,17 +21,27 @@ document.getElementById("maskcam-expand").onclick = () => {
 };
 
 document.getElementById("maskcam-start").onclick = async () => {
-  console.log("foo");
+  const webcam_show = document.getElementById("webcamFeedCheck").checked;
+  const mesh_show = document.getElementById("faceMeshCheck").checked;
+  const basic_mask_show = document.getElementById("basicMaskCheck").checked;
 
-  // Send an IPC message to the main process to open the maskcam window
-  await ipcRenderer.send("start-maskcam");
-
-  ipcRenderer.send("update-mask-view-settings", {
-    webcam_show: false,
-    mesh_show: true,
-    basic_mask_show: true,
-  });
+  const mask_settings = {
+    webcam_show,
+    mesh_show,
+    basic_mask_show,
+  };
 
   const isMaskCamWindowOpen = await ipcRenderer.invoke("mask-opened");
-  console.log("Is maskcam window open:", isMaskCamWindowOpen);
+  console.log("maskcam window open?:", isMaskCamWindowOpen);
+
+  if (!isMaskCamWindowOpen) {
+    // Send an IPC message to the main process to open the maskcam window
+    await ipcRenderer.send("start-maskcam", mask_settings);
+  }
+
+  ipcRenderer.send("update-mask-view-settings", mask_settings);
+};
+
+document.getElementById("maskcam-stop").onclick = async () => {
+  await ipcRenderer.send("stop-maskcam");
 };

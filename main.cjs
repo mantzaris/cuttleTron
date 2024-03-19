@@ -189,7 +189,7 @@ ipcMain.handle("audioeffects-cleanup", async (event) => {
 let maskcam_window;
 let currentColor = "gray"; // Initial color
 
-ipcMain.on("start-maskcam", () => {
+ipcMain.on("start-maskcam", async (event, mask_settings) => {
   if (maskcam_window) {
     maskcam_window.focus(); // Focus the already opened window instead of creating a new one
     return;
@@ -216,10 +216,12 @@ ipcMain.on("start-maskcam", () => {
   //win.setSize(width, height[, animate])  win.getSize()
   //win.getMediaSourceId()
 
-  maskcam_window.setMenu(null); // remove the menu bar and deactivates devTools
+  await maskcam_window.setMenu(null); // remove the menu bar and deactivates devTools
 
-  maskcam_window.show(); // Show the window after loading //win.destroy() //win.isDestroyed() //win.isVisible()
-  maskcam_window.loadFile("maskcam-view.html");
+  await maskcam_window.show(); // Show the window after loading //win.destroy() //win.isDestroyed() //win.isVisible()
+  await maskcam_window.loadFile("maskcam-view.html");
+
+  await maskcam_window.webContents.send("toggle-mask-view", mask_settings);
 
   if (process.env.NODE_ENV !== "production") {
     maskcam_window.webContents.openDevTools();
@@ -231,7 +233,7 @@ ipcMain.on("start-maskcam", () => {
 });
 
 ipcMain.handle("mask-opened", () => {
-  return maskcam_window !== null;
+  return maskcam_window && !maskcam_window.isDestroyed() && maskcam_window.isVisible();
 });
 
 ipcMain.on("resize-window", (event, { aspectRatio }) => {
@@ -246,12 +248,20 @@ ipcMain.on("resize-window", (event, { aspectRatio }) => {
   }
 });
 
-ipcMain.on("update-mask-view-settings", (event, settings) => {
+ipcMain.on("update-mask-view-settings", (event, mask_settings) => {
   if (!maskcam_window) {
     console.error("MaskCam window is not available.");
     return;
   }
   console.log("in mask toggle");
 
-  maskcam_window.webContents.send("toggle-mask-view", settings);
+  maskcam_window.webContents.send("toggle-mask-view", mask_settings);
+});
+
+ipcMain.on("stop-maskcam", async (event) => {
+  maskcam_window.webContents.send("stop-maskcam");
+  if (maskcam_window) {
+    maskcam_window.close();
+    maskcam_window = null;
+  }
 });

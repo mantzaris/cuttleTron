@@ -43,13 +43,13 @@ let webcam_aspectRatio;
 let webcam_show = true;
 let mesh_show = true;
 let basic_mask_show = true;
-// let webcam_show = true;
-// let mesh_show = true;
-// let basic_mask_show = true;
+
+let maskcam_stop = false;
 
 ipcRenderer.on("toggle-mask-view", (event, settings) => {
-  console.log(settings);
+  //console.log(settings);
   let needsRedraw = false;
+  maskcam_stop = false;
 
   if (settings.hasOwnProperty("webcam_show")) {
     webcam_show = settings.webcam_show;
@@ -72,13 +72,19 @@ ipcRenderer.on("toggle-mask-view", (event, settings) => {
     needsRedraw = true;
   }
 
-  console.log(webcam_show, mesh_show, basic_mask_show);
+  //console.log(webcam_show, mesh_show, basic_mask_show);
+
   if (needsRedraw) {
     processVideoFrame();
   }
 });
 
+ipcRenderer.on("stop-maskcam", (event) => {
+  maskcam_stop = true;
+});
+
 document.addEventListener("DOMContentLoaded", async () => {
+  maskcam_stop = false;
   videoElement = document.getElementById("maskcam-webcam-feed");
   webcam_show ? (videoElement.style.visibility = "visible") : (videoElement.style.visibility = "hidden");
 
@@ -109,14 +115,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-let attempts = 0;
-
 async function processVideoFrame() {
+  if (maskcam_stop) return;
   if (videoElement.paused || videoElement.ended) return;
 
   // Run detection
   const result = await human.detect(videoElement);
-  console.log(result);
+  //console.log(result);
 
   // You can access various results, e.g., face landmarks
   if (result.face.length > 0) {
@@ -127,13 +132,10 @@ async function processVideoFrame() {
       if (mesh_show) drawMesh(face.mesh, ctx); // You can also use meshRaw depending on your needs
       if (basic_mask_show) drawMask(face, ctx);
     });
-
     //console.log(result); // result.face[0].mesh.drawMesh // result.hand// result.body // result.face[0].annotations;
   }
 
-  //TODO: this is for testing, remove!
-  if (attempts < 180) requestAnimationFrame(processVideoFrame);
-  attempts++;
+  requestAnimationFrame(processVideoFrame);
 }
 
 //////////////////////////////////////
