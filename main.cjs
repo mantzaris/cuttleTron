@@ -1,10 +1,14 @@
 ///////
 // requires ffmpeg to be installed on the system
 // requires ...sudo apt-get install gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly
+// v4l2loopback-dkms v4l2loopback-utils
 /////////
 const { app, BrowserWindow, ipcMain, desktopCapturer } = require("electron");
+const os = require("os");
 const fs = require("fs");
 const path = require("path");
+
+const systemEndianness = os.endianness();
 
 const { myWriteFileSync } = require("./main-fns/main-utilities.cjs");
 const {
@@ -187,7 +191,7 @@ ipcMain.handle("audioeffects-cleanup", async (event) => {
 //for maskcam
 /////////////////////////////////////
 let maskcam_window;
-let currentColor = "gray"; // Initial color
+let maskcam_winId;
 
 ipcMain.on("start-maskcam", async (event, mask_settings) => {
   if (maskcam_window) {
@@ -221,14 +225,31 @@ ipcMain.on("start-maskcam", async (event, mask_settings) => {
   await maskcam_window.show(); // Show the window after loading //win.destroy() //win.isDestroyed() //win.isVisible()
   await maskcam_window.loadFile("maskcam-view.html");
 
+  //TODO: do for Wayland as well
+  console.log("foo");
+  let buffer = maskcam_window.getNativeWindowHandle(); // The buffer contains the window ID in a platform-specific format For X11 on Linux, the ID is an unsigned long (32-bit) integer in the buffer
+  // Read the window ID based on the system's endianness
+  if (systemEndianness === "LE") {
+    maskcam_winId = buffer.readUInt32LE(0);
+  } else {
+    maskcam_winId = buffer.readUInt32BE(0);
+  }
+
+  console.log(`--------Window ID: ${maskcam_winId}`);
+  console.log("bar");
+
   await maskcam_window.webContents.send("toggle-mask-view", mask_settings);
 
   if (process.env.NODE_ENV !== "production") {
     maskcam_window.webContents.openDevTools();
   }
 
+  streamMaskcamToDevice();
+
   maskcam_window.on("closed", function () {
+    stopMaskcamStream();
     maskcam_window = null;
+    maskcam_winId = null;
   });
 });
 
@@ -262,6 +283,113 @@ ipcMain.on("stop-maskcam", async (event) => {
   maskcam_window.webContents.send("stop-maskcam");
   if (maskcam_window) {
     maskcam_window.close();
+    stopMaskcamStream();
     maskcam_window = null;
+    maskcam_winId = null;
   }
 });
+
+/////////////////////
+//stream maskcam
+//sudo modprobe -r v4l2loopback; sudo modprobe v4l2loopback video_nr=54 card_label="cuttleTron"
+////////////////////
+const sudo = require("sudo-prompt");
+const { exec, execSync } = require("child_process");
+const { promisify } = require("util");
+const execAsync = promisify(exec);
+const sudoExecAsync = promisify(sudo.exec);
+
+let videoDevIdNum = null;
+let gstProcess = null;
+//TODO: check if X11 or Wayland, new approaches should have a modern version of device management https://github.com/umlaeute/v4l2loopback?tab=readme-ov-file#dynamic-device-management
+//https://github.com/umlaeute/v4l2loopback?tab=readme-ov-file#dynamic-device-management
+async function createMaskcamVideoDevice() {
+  let output = execSync("v4l2-ctl --list-devices").toString();
+  console.log(`in createMaskcamVideoDevice 1, v4l2-ctl --list-devices = ${output}`);
+
+  // Generating a random device number between 30 and 60
+  videoDevIdNum = Math.floor(Math.random() * (61 - 30) + 30);
+  const cardLabel = "cuttleTronVidStream";
+  const command = `modprobe -r v4l2loopback && modprobe v4l2loopback video_nr=${videoDevIdNum} card_label="${cardLabel}"`;
+
+  try {
+    // Executing the combined command with sudo
+    await sudoExecAsync(command, { name: "Your Application" });
+
+    console.log(`Device /dev/video${videoDevIdNum} created successfully with label ${cardLabel}.`);
+
+    output = execSync("v4l2-ctl --list-devices").toString();
+    console.log(`in createMaskcamVideoDevice 2, v4l2-ctl --list-devices = ${output}`);
+
+    return videoDevIdNum;
+  } catch (error) {
+    console.error(`Error in creating video device: ${error}`);
+    videoDevIdNum = null;
+    return null;
+  }
+}
+
+async function streamMaskcamToDevice() {
+  try {
+    console.log("Starting device creation and streaming process");
+    videoDevIdNum = await createMaskcamVideoDevice(); // Capture the returned device ID
+
+    if (!videoDevIdNum) {
+      console.error("No video device ID returned. Exiting the streaming process.");
+      return;
+    }
+
+    console.log(`Device ID obtained: ${videoDevIdNum}`);
+    const output = await execAsync("v4l2-ctl --list-devices");
+    console.log(`Device list:\n${output.stdout}`);
+
+    const gstCommand = `gst-launch-1.0 ximagesrc xid=${maskcam_winId} ! videoconvert ! v4l2sink device=/dev/video${videoDevIdNum}`;
+    console.log(`Executing GStreamer command: ${gstCommand}`);
+    const gstOutput = await execAsync(gstCommand);
+
+    console.log(`GStreamer process completed.\nstdout: ${gstOutput.stdout}`);
+    if (gstOutput.stderr) {
+      console.error(`GStreamer stderr: ${gstOutput.stderr}`);
+    }
+  } catch (error) {
+    console.error(`Error during streaming process: ${error}`);
+  }
+}
+
+async function stopMaskcamStream() {
+  // Handle closing the GStreamer process when your application exits or when needed
+  if (gstProcess) {
+    console.log("Terminating GStreamer process...");
+    gstProcess.kill();
+    gstProcess = null;
+  }
+
+  console.log("Removing all v4l2loopback devices...");
+  try {
+    await execAsync("sudo modprobe -r v4l2loopback");
+    console.log("All v4l2loopback devices removed successfully.");
+  } catch (error) {
+    console.error(`Failed to remove v4l2loopback devices: ${error}`);
+  }
+
+  // Resetting the device ID to null as all devices are removed
+  videoDevIdNum = null;
+}
+
+//TODO:  add code to remove the virtual video device using the modprobe -r v4l2loopback command when stopping the stream.
+
+//TODO: put at the start of the app start-up and check
+// const installCommand = "apt-get install v4l2loopback-dkms";
+// sudo.exec(installCommand, { name: "cuttleTron" }, (error, stdout, stderr) => {
+//   if (error) throw error;
+//   console.log("stdout:", stdout);
+//   console.error("stderr:", stderr);
+// });
+
+// sudo.exec(command, { name: "cuttleTron" }, (error, stdout, stderr) => {
+//   if (error) {
+//     console.error(`Error creating device /dev/video${video_dev_id_num}:`, error);
+//     return;
+//   }
+//   console.log(`Device /dev/video${video_dev_id_num} created successfully.`);
+// });
