@@ -187,21 +187,84 @@ ipcMain.handle("audioeffects-cleanup", async (event) => {
   await cleanupAudioDevices();
 });
 
-/////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
 //for maskcam
-/////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
 let maskcam_window;
 let maskcam_winId;
 
-ipcMain.on("start-maskcam", async (event, mask_settings) => {
+let webcamAspectRatio;
+let webcamWidth;
+let webcamHeight;
+let maskcamWidth;
+let maskcamHeight;
+
+function resetMaskCam() {
+  maskcam_window.close();
+  stopMaskcamStream();
+  maskcam_window = maskcam_winId = null;
+  webcamAspectRatio = null;
+  webcamWidth = webcamHeight = null;
+  maskcamWidth = maskcamHeight = null;
+}
+
+ipcMain.handle("mask-opened", () => {
+  return maskcam_window && !maskcam_window.isDestroyed() && maskcam_window.isVisible();
+});
+
+ipcMain.on("stop-maskcam", async (event) => {
+  maskcam_window.webContents.send("stop-maskcam"); //calls renderer handler
+
+  if (maskcam_window) {
+    resetMaskCam();
+  }
+});
+
+ipcMain.on("update-maskcam", (event, mask_settings) => {
+  if (!maskcam_window) {
+    console.error("MaskCam window is not available.");
+    return;
+  }
+
+  maskcam_window.webContents.send("toggle-mask-view", mask_settings);
+});
+
+ipcMain.on("stream-maskcam", async (event, mask_settings) => {
+  if (maskcam_window && !maskcam_window.isDestroyed()) {
+    let [width, height] = maskcam_window.getSize();
+    const currentAspectRatio = width / height;
+
+    if (currentAspectRatio > webcamAspectRatio) {
+      // Current aspect ratio is wider than webcam's, adjust width to match
+      width = Math.round(height * webcamAspectRatio);
+    } else {
+      // Current aspect ratio is taller, adjust height to match
+      height = Math.round(width / webcamAspectRatio);
+    }
+
+    // Update global variables
+    maskcamWidth = width;
+    maskcamHeight = height;
+
+    maskcam_window.setSize(maskcamWidth, maskcamHeight);
+    maskcam_window.setResizable(false);
+    maskcam_window.setAlwaysOnTop(true);
+  }
+
+  await maskcam_window.webContents.send("anchor-mask-view");
+  streamMaskcamToDevice();
+});
+
+ipcMain.on("init-maskcam", async (event, mask_settings) => {
   if (maskcam_window) {
     maskcam_window.focus(); // Focus the already opened window instead of creating a new one
     return;
   }
 
   maskcam_window = new BrowserWindow({
-    width: 800,
-    height: 500,
+    title: "cuttleTronMaskcam",
+    width: 640,
+    height: 480, //640x480 is the 4:3 aspect ratio init
     minimizable: false,
     maximizable: false,
     resizable: true,
@@ -216,9 +279,7 @@ ipcMain.on("start-maskcam", async (event, mask_settings) => {
       webviewTag: false,
     }, //skipTaskbar boolean (optional) macOS Windows - Whether to show the window in taskbar. Default is false
   }); //offscreen boolean (optional) - Whether to enable offscreen rendering for the browser window
-  //win.setAspectRatio(aspectRatio[, extraSize])
-  //win.setSize(width, height[, animate])  win.getSize()
-  //win.getMediaSourceId()
+  //win.setAspectRatio(aspectRatio[, extraSize]) //win.setSize(width, height[, animate])  win.getSize() //win.getMediaSourceId()
 
   await maskcam_window.setMenu(null); // remove the menu bar and deactivates devTools
 
@@ -226,7 +287,6 @@ ipcMain.on("start-maskcam", async (event, mask_settings) => {
   await maskcam_window.loadFile("maskcam-view.html");
 
   //TODO: do for Wayland as well
-  console.log("foo");
   let buffer = maskcam_window.getNativeWindowHandle(); // The buffer contains the window ID in a platform-specific format For X11 on Linux, the ID is an unsigned long (32-bit) integer in the buffer
   // Read the window ID based on the system's endianness
   if (systemEndianness === "LE") {
@@ -236,56 +296,30 @@ ipcMain.on("start-maskcam", async (event, mask_settings) => {
   }
 
   console.log(`--------Window ID: ${maskcam_winId}`);
-  console.log("bar");
 
   await maskcam_window.webContents.send("toggle-mask-view", mask_settings);
 
   if (process.env.NODE_ENV !== "production") {
-    maskcam_window.webContents.openDevTools();
+    //TODO: uncomment
+    // maskcam_window.webContents.openDevTools();
   }
-
-  streamMaskcamToDevice();
 
   maskcam_window.on("closed", function () {
     stopMaskcamStream();
-    maskcam_window = null;
-    maskcam_winId = null;
+    resetMaskCam();
   });
 });
 
-ipcMain.handle("mask-opened", () => {
-  return maskcam_window && !maskcam_window.isDestroyed() && maskcam_window.isVisible();
-});
+//called from maskcam-view
+ipcMain.on("webcam-size", (event, { webcam_specs }) => {
+  if (maskcam_window && !maskcam_window.isDestroyed()) {
+    const { width, height } = webcam_specs;
+    // Update global variables
+    webcamWidth = width;
+    webcamHeight = height;
+    webcamAspectRatio = width / height; // Calculate the aspect ratio
 
-ipcMain.on("resize-window", (event, { aspectRatio }) => {
-  if (maskcam_window && aspectRatio) {
-    const [currentWidth, currentHeight] = maskcam_window.getSize();
-    const newWidth = Math.round(currentHeight * aspectRatio);
-
-    // To avoid unnecessary resizing, check if the new width is different enough to warrant a resize
-    if (Math.abs(currentWidth - newWidth) > 1) {
-      maskcam_window.setSize(newWidth, currentHeight);
-    }
-  }
-});
-
-ipcMain.on("update-mask-view-settings", (event, mask_settings) => {
-  if (!maskcam_window) {
-    console.error("MaskCam window is not available.");
-    return;
-  }
-  console.log("in mask toggle");
-
-  maskcam_window.webContents.send("toggle-mask-view", mask_settings);
-});
-
-ipcMain.on("stop-maskcam", async (event) => {
-  maskcam_window.webContents.send("stop-maskcam");
-  if (maskcam_window) {
-    maskcam_window.close();
-    stopMaskcamStream();
-    maskcam_window = null;
-    maskcam_winId = null;
+    console.log(`Webcam Aspect Ratio: ${webcamAspectRatio}, webcamWidth=${webcamWidth}, webcamHeight=${webcamHeight}`);
   }
 });
 
@@ -343,7 +377,9 @@ async function streamMaskcamToDevice() {
     const output = await execAsync("v4l2-ctl --list-devices");
     console.log(`Device list:\n${output.stdout}`);
 
-    const gstCommand = `gst-launch-1.0 ximagesrc xid=${maskcam_winId} ! videoconvert ! v4l2sink device=/dev/video${videoDevIdNum}`;
+    // const gstCommand = `gst-launch-1.0 ximagesrc xid=${maskcam_winId} ! videoconvert ! videoscale ! queue ! video/x-raw,format=BGRx,width=667,height=500,framerate=30/1 ! v4l2sink device=/dev/video${videoDevIdNum}`;
+    // const gstCommand = `ffmpeg -f x11grab -i :0.0+100,200 -vcodec rawvideo -pix_fmt bgr0 -s 667x500 -r 30 -f v4l2 /dev/video${videoDevIdNum}`;
+    const gstCommand = `ffmpeg -f x11grab -i :0.0 -vcodec rawvideo -pix_fmt bgr0 -r 30 -f v4l2 /dev/video${videoDevIdNum}`;
     console.log(`Executing GStreamer command: ${gstCommand}`);
     const gstOutput = await execAsync(gstCommand);
 
@@ -375,6 +411,8 @@ async function stopMaskcamStream() {
   // Resetting the device ID to null as all devices are removed
   videoDevIdNum = null;
 }
+
+//TODO: make window always on top and not moveable once the stream is SET and no resize
 
 //TODO:  add code to remove the virtual video device using the modprobe -r v4l2loopback command when stopping the stream.
 

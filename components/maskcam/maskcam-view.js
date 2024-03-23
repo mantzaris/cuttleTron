@@ -79,8 +79,15 @@ ipcRenderer.on("toggle-mask-view", (event, settings) => {
   }
 });
 
+//called from main process to signal
 ipcRenderer.on("stop-maskcam", (event) => {
   maskcam_stop = true;
+});
+
+ipcRenderer.on("anchor-mask-view", (event) => {
+  // body {
+  //   pointer-events: none;
+  // }
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -99,7 +106,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await new Promise((resolve) => {
         videoElement.onloadedmetadata = () => {
           const aspectRatio = videoElement.videoWidth / videoElement.videoHeight;
-          ipcRenderer.send("resize-window", { aspectRatio }); // Initial resize
+          ipcRenderer.send("webcam-size", { width: videoElement.videoWidth, height: videoElement.videoHeight }); // Initial resize
           webcam_aspectRatio = aspectRatio;
           adjustVideoSize(); // Adjust video and canvas size within the container
           resolve();

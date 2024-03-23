@@ -2,6 +2,8 @@ const { ipcRenderer } = window.electron;
 
 import { initializeTooltips, getWebcamSources } from "../main-components/main-utilities.js";
 
+const start_btn = document.getElementById("maskcam-start");
+
 document.getElementById("maskcam-expand").onclick = () => {
   const maskcam = document.querySelector("#maskcam");
   const expand_button = document.getElementById("maskcam-expand");
@@ -20,7 +22,7 @@ document.getElementById("maskcam-expand").onclick = () => {
   //populateScreenOptions(screenSelMenuId, screen_sel_btn_id, tooltipClassName, maskcamSelection);
 };
 
-document.getElementById("maskcam-start").onclick = async () => {
+start_btn.onclick = async () => {
   const webcam_show = document.getElementById("webcamFeedCheck").checked;
   const mesh_show = document.getElementById("faceMeshCheck").checked;
   const basic_mask_show = document.getElementById("basicMaskCheck").checked;
@@ -32,16 +34,31 @@ document.getElementById("maskcam-start").onclick = async () => {
   };
 
   const isMaskCamWindowOpen = await ipcRenderer.invoke("mask-opened");
-  console.log("maskcam window open?:", isMaskCamWindowOpen);
+  console.log("maskcam window open (in maskcam.js)?:", isMaskCamWindowOpen);
+  const action = start_btn.getAttribute("data-action"); //init or stream
 
-  if (!isMaskCamWindowOpen) {
-    // Send an IPC message to the main process to open the maskcam window
-    await ipcRenderer.send("start-maskcam", mask_settings);
+  if (action == "init") {
+    start_btn.setAttribute("data-action", "stream");
+    start_btn.textContent = "STREAM";
+
+    if (!isMaskCamWindowOpen) {
+      await ipcRenderer.send("init-maskcam", mask_settings);
+      return;
+    }
+  } else if (action == "stream") {
+    //activate stream start
+    start_btn.textContent = "UPDATE";
+    start_btn.setAttribute("data-action", "update");
+    ipcRenderer.send("stream-maskcam", mask_settings);
+  } else if (action == "update") {
+    ipcRenderer.send("update-maskcam", mask_settings);
   }
-
-  ipcRenderer.send("update-mask-view-settings", mask_settings);
 };
 
 document.getElementById("maskcam-stop").onclick = async () => {
+  const action = start_btn.getAttribute("data-action"); //init or stream
+
+  start_btn.textContent = "INIT";
+  start_btn.setAttribute("data-action", "init");
   await ipcRenderer.send("stop-maskcam");
 };
