@@ -190,8 +190,13 @@ ipcMain.handle("audioeffects-cleanup", async (event) => {
 //////////////////////////////////////////////////////////////////////////
 //for maskcam
 //////////////////////////////////////////////////////////////////////////
+const maskcamWindowTitle = "cuttleTronMaskcam";
+
+let ffmpegProcess = null;
+
 let maskcam_window;
-let maskcam_winId;
+let maskcamWinIdInt;
+let maskcamWinIdHex; //needed? TODO:
 
 let webcamAspectRatio;
 let webcamWidth;
@@ -199,10 +204,15 @@ let webcamHeight;
 let maskcamWidth;
 let maskcamHeight;
 
+let isCleanupInitiated = false;
+
 function resetMaskCam() {
-  maskcam_window.close();
-  stopMaskcamStream();
-  maskcam_window = maskcam_winId = null;
+  if (maskcam_window) {
+    maskcam_window.close();
+    maskcam_window = null;
+  }
+
+  maskcamWinIdInt = maskcamWinIdHex = null;
   webcamAspectRatio = null;
   webcamWidth = webcamHeight = null;
   maskcamWidth = maskcamHeight = null;
@@ -215,7 +225,8 @@ ipcMain.handle("mask-opened", () => {
 ipcMain.on("stop-maskcam", async (event) => {
   maskcam_window.webContents.send("stop-maskcam"); //calls renderer handler
 
-  if (maskcam_window) {
+  if (!isCleanupInitiated && maskcam_window) {
+    await stopMaskcamStream();
     resetMaskCam();
   }
 });
@@ -249,6 +260,8 @@ ipcMain.on("stream-maskcam", async (event, mask_settings) => {
     maskcam_window.setSize(maskcamWidth, maskcamHeight);
     maskcam_window.setResizable(false);
     maskcam_window.setAlwaysOnTop(true);
+
+    maskcam_window.webContents.send("toggle-mask-view", mask_settings);
   }
 
   await maskcam_window.webContents.send("anchor-mask-view");
@@ -261,8 +274,10 @@ ipcMain.on("init-maskcam", async (event, mask_settings) => {
     return;
   }
 
+  isCleanupInitiated = false;
+
   maskcam_window = new BrowserWindow({
-    title: "cuttleTronMaskcam",
+    title: maskcamWindowTitle,
     width: 640,
     height: 480, //640x480 is the 4:3 aspect ratio init
     minimizable: false,
@@ -272,7 +287,7 @@ ipcMain.on("init-maskcam", async (event, mask_settings) => {
     transparent: false, // transparent background
     backgroundColor: "blue",
     webPreferences: {
-      nodeIntegration: true, // Enable Node.js integration
+      nodeIntegration: true, //needed for tensorflow in the renderer window...
       nodeIntegrationInWorker: true, // Enable Node.js integration in Web Workers
       contextIsolation: false,
       // preload: path.join(__dirname, "preload.cjs"),
@@ -290,12 +305,15 @@ ipcMain.on("init-maskcam", async (event, mask_settings) => {
   let buffer = maskcam_window.getNativeWindowHandle(); // The buffer contains the window ID in a platform-specific format For X11 on Linux, the ID is an unsigned long (32-bit) integer in the buffer
   // Read the window ID based on the system's endianness
   if (systemEndianness === "LE") {
-    maskcam_winId = buffer.readUInt32LE(0);
+    maskcamWinIdInt = buffer.readUInt32LE(0);
+    //TODO: get the hex as well
   } else {
-    maskcam_winId = buffer.readUInt32BE(0);
+    maskcamWinIdInt = buffer.readUInt32BE(0);
   }
 
-  console.log(`--------Window ID: ${maskcam_winId}`);
+  maskcamWinIdHex = maskcamWinIdInt.toString(16);
+
+  console.log(`--------Window ID int: ${maskcamWinIdInt}, maskcamWinIdHex: ${maskcamWinIdHex}`);
 
   await maskcam_window.webContents.send("toggle-mask-view", mask_settings);
 
@@ -305,13 +323,15 @@ ipcMain.on("init-maskcam", async (event, mask_settings) => {
   }
 
   maskcam_window.on("closed", function () {
-    stopMaskcamStream();
-    resetMaskCam();
+    if (!isCleanupInitiated) {
+      stopMaskcamStream(); // This is async, so it might still be running when resetMaskCam() executes
+      resetMaskCam();
+    }
   });
 });
 
 //called from maskcam-view
-ipcMain.on("webcam-size", (event, { webcam_specs }) => {
+ipcMain.on("webcam-size", (event, webcam_specs) => {
   if (maskcam_window && !maskcam_window.isDestroyed()) {
     const { width, height } = webcam_specs;
     // Update global variables
@@ -323,12 +343,12 @@ ipcMain.on("webcam-size", (event, { webcam_specs }) => {
   }
 });
 
-/////////////////////
-//stream maskcam
-//sudo modprobe -r v4l2loopback; sudo modprobe v4l2loopback video_nr=54 card_label="cuttleTron"
-////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// stream maskcam
+// sudo modprobe -r v4l2loopback; sudo modprobe v4l2loopback video_nr=54 card_label="cuttleTron"
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 const sudo = require("sudo-prompt");
-const { exec, execSync } = require("child_process");
+const { exec, execSync, spawn } = require("child_process");
 const { promisify } = require("util");
 const execAsync = promisify(exec);
 const sudoExecAsync = promisify(sudo.exec);
@@ -343,14 +363,13 @@ async function createMaskcamVideoDevice() {
 
   // Generating a random device number between 30 and 60
   videoDevIdNum = Math.floor(Math.random() * (61 - 30) + 30);
-  const cardLabel = "cuttleTronVidStream";
-  const command = `modprobe -r v4l2loopback && modprobe v4l2loopback video_nr=${videoDevIdNum} card_label="${cardLabel}"`;
+  const command = `modprobe -r v4l2loopback && modprobe v4l2loopback video_nr=${videoDevIdNum} card_label="${maskcamWindowTitle}"`;
 
   try {
     // Executing the combined command with sudo
-    await sudoExecAsync(command, { name: "Your Application" });
+    await sudoExecAsync(command, { name: "cuttleTron" });
 
-    console.log(`Device /dev/video${videoDevIdNum} created successfully with label ${cardLabel}.`);
+    console.log(`Device /dev/video${videoDevIdNum} created successfully with label ${maskcamWindowTitle}.`);
 
     output = execSync("v4l2-ctl --list-devices").toString();
     console.log(`in createMaskcamVideoDevice 2, v4l2-ctl --list-devices = ${output}`);
@@ -363,53 +382,99 @@ async function createMaskcamVideoDevice() {
   }
 }
 
+//wmctrl -l to get the ids in hex
+// xwininfo -id  0x4600002: to get the dimensions and position for ffmpeg
+// ffmpeg -probesize 10M -analyzeduration 10M -f x11grab -framerate 30 -video_size 1280x720 -i :0.0+2582,491 -vf "hflip" -f v4l2 -vcodec rawvideo -pix_fmt yuv420p /dev/video12
+// const ffmpegCommand = `ffmpeg -probesize 10M -analyzeduration 10M -f x11grab -framerate 30 -video_size 1280x720 -i :0.0+2582,491 -vf "hflip" -f v4l2 -vcodec rawvideo -pix_fmt yuv420p /dev/video${videoDevIdNum}`;
 async function streamMaskcamToDevice() {
   try {
     console.log("Starting device creation and streaming process");
-    videoDevIdNum = await createMaskcamVideoDevice(); // Capture the returned device ID
+    await createMaskcamVideoDevice(); // set the global device ID
+  } catch (error) {
+    console.error(`Error in streamMaskcamToDevice trying to set the maskcam video device and ID: ${error}`);
+  }
 
+  const ffmpegCommand = `ffmpeg`;
+  const ffmpegArgs = [
+    "-loglevel",
+    "error",
+    "-probesize",
+    "10M",
+    "-analyzeduration",
+    "10M",
+    "-f",
+    "x11grab",
+    "-framerate",
+    "30",
+    "-video_size",
+    "1280x720",
+    "-i",
+    `:0.0+2582,491`,
+    "-vf",
+    "hflip",
+    "-f",
+    "v4l2",
+    "-vcodec",
+    "rawvideo",
+    "-pix_fmt",
+    "yuv420p",
+    `/dev/video${videoDevIdNum}`,
+  ];
+
+  try {
     if (!videoDevIdNum) {
       console.error("No video device ID returned. Exiting the streaming process.");
       return;
     }
 
-    console.log(`Device ID obtained: ${videoDevIdNum}`);
-    const output = await execAsync("v4l2-ctl --list-devices");
-    console.log(`Device list:\n${output.stdout}`);
+    const output = execSync("v4l2-ctl --list-devices").toString();
+    console.log(`in streamMaskcamToDevice, v4l2-ctl --list-devices = ${output}`);
 
-    // const gstCommand = `gst-launch-1.0 ximagesrc xid=${maskcam_winId} ! videoconvert ! videoscale ! queue ! video/x-raw,format=BGRx,width=667,height=500,framerate=30/1 ! v4l2sink device=/dev/video${videoDevIdNum}`;
-    // const gstCommand = `ffmpeg -f x11grab -i :0.0+100,200 -vcodec rawvideo -pix_fmt bgr0 -s 667x500 -r 30 -f v4l2 /dev/video${videoDevIdNum}`;
-    const gstCommand = `ffmpeg -f x11grab -i :0.0 -vcodec rawvideo -pix_fmt bgr0 -r 30 -f v4l2 /dev/video${videoDevIdNum}`;
-    console.log(`Executing GStreamer command: ${gstCommand}`);
-    const gstOutput = await execAsync(gstCommand);
+    console.log("prior to spawning ffmpeg command");
+    console.log(`Using device: /dev/video${videoDevIdNum}`);
+    console.log(`Executing ffmpeg command: ffmpeg ${ffmpegArgs.join(" ")}`);
 
-    console.log(`GStreamer process completed.\nstdout: ${gstOutput.stdout}`);
-    if (gstOutput.stderr) {
-      console.error(`GStreamer stderr: ${gstOutput.stderr}`);
-    }
+    ffmpegProcess = spawn(ffmpegCommand, ffmpegArgs);
+
+    ffmpegProcess.stdout.on("data", (data) => {
+      console.log(`stdout: ${data}`);
+    });
+
+    ffmpegProcess.stderr.on("data", (data) => {
+      console.error(`stderr: ${data}`);
+    });
+
+    ffmpegProcess.on("close", (code) => {
+      console.log(`FFmpeg process exited with code ${code}`);
+      ffmpegProcess = null;
+    });
   } catch (error) {
-    console.error(`Error during streaming process: ${error}`);
+    console.error(`Error during ffmpeg process spawning: ${error}`);
   }
 }
 
 async function stopMaskcamStream() {
-  // Handle closing the GStreamer process when your application exits or when needed
-  if (gstProcess) {
-    console.log("Terminating GStreamer process...");
-    gstProcess.kill();
-    gstProcess = null;
+  // Handle closing the ffmpeg process when your application exits or when needed
+  if (ffmpegProcess) {
+    console.log("Terminating maskcam stream process...");
+    ffmpegProcess.kill("SIGTERM"); //SIGINT || SIGKILL
+    ffmpegProcess = null;
   }
 
+  if (isCleanupInitiated) return;
+
   console.log("Removing all v4l2loopback devices...");
+
   try {
-    await execAsync("sudo modprobe -r v4l2loopback");
-    console.log("All v4l2loopback devices removed successfully.");
+    const options = { name: "cuttleTron" };
+    const command = "modprobe -r v4l2loopback";
+    const result = await sudoExecAsync(command, options);
+
+    console.log("All v4l2loopback devices removed successfully:", result);
+    isCleanupInitiated = true;
   } catch (error) {
     console.error(`Failed to remove v4l2loopback devices: ${error}`);
   }
-
-  // Resetting the device ID to null as all devices are removed
-  videoDevIdNum = null;
 }
 
 //TODO: make window always on top and not moveable once the stream is SET and no resize
@@ -431,3 +496,7 @@ async function stopMaskcamStream() {
 //   }
 //   console.log(`Device /dev/video${video_dev_id_num} created successfully.`);
 // });
+
+// console.log(`Device ID in streamMaskcamToDevice: ${videoDevIdNum}`);
+// const output = await execAsync("v4l2-ctl --list-devices");
+// console.log(`Device list:\n${output.stdout}`);

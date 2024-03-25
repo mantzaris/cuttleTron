@@ -85,9 +85,9 @@ ipcRenderer.on("stop-maskcam", (event) => {
 });
 
 ipcRenderer.on("anchor-mask-view", (event) => {
-  // body {
-  //   pointer-events: none;
-  // }
+  const draggableElement = document.getElementById("maskcam-view-top");
+  draggableElement.style.webkitAppRegion = "no-drag";
+  document.body.style.pointerEvents = "none";
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -302,6 +302,8 @@ function adjustVideoSize() {
 
   canvas.width = videoElement.offsetWidth;
   canvas.height = videoElement.offsetHeight;
+
+  ipcRenderer.send("webcam-size", { width: videoElement.videoWidth, height: videoElement.videoHeight });
 }
 
 //https://vladmandic.github.io/human/typedoc/interfaces/DrawOptions.html#fillPolygons
