@@ -1,7 +1,7 @@
 ///////
 // requires ffmpeg to be installed on the system
 // requires ...sudo apt-get install gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly
-// v4l2loopback-dkms v4l2loopback-utils
+// v4l2loopback-dkms v4l2loopback-utils, wmctrl,
 /////////
 const { app, BrowserWindow, ipcMain, desktopCapturer } = require("electron");
 const os = require("os");
@@ -311,7 +311,7 @@ ipcMain.on("init-maskcam", async (event, mask_settings) => {
     maskcamWinIdInt = buffer.readUInt32BE(0);
   }
 
-  maskcamWinIdHex = maskcamWinIdInt.toString(16);
+  maskcamWinIdHex = `0x${maskcamWinIdInt.toString(16).padStart(8, "0")}`;
 
   console.log(`--------Window ID int: ${maskcamWinIdInt}, maskcamWinIdHex: ${maskcamWinIdHex}`);
 
@@ -394,6 +394,24 @@ async function streamMaskcamToDevice() {
     console.error(`Error in streamMaskcamToDevice trying to set the maskcam video device and ID: ${error}`);
   }
 
+  const windowInfoOutput = await getWindowInfo(maskcamWinIdHex);
+  if (!windowInfoOutput) {
+    console.error("Could not get window information.");
+    return;
+  }
+
+  console.log("windowInfoOutput", windowInfoOutput);
+
+  const windowInfo = parseWindowInfo(windowInfoOutput);
+  if (!windowInfo) {
+    console.error("Could not parse window dimensions or position.");
+    return;
+  }
+
+  console.log("windowInfo", windowInfo);
+
+  const { width, height, x, y } = windowInfo;
+
   const ffmpegCommand = `ffmpeg`;
   const ffmpegArgs = [
     "-loglevel",
@@ -407,9 +425,9 @@ async function streamMaskcamToDevice() {
     "-framerate",
     "30",
     "-video_size",
-    "1280x720",
+    `${width}x${height}`,
     "-i",
-    `:0.0+2582,491`,
+    `:0.0+${x},${y}`,
     "-vf",
     "hflip",
     "-f",
@@ -474,6 +492,37 @@ async function stopMaskcamStream() {
     isCleanupInitiated = true;
   } catch (error) {
     console.error(`Failed to remove v4l2loopback devices: ${error}`);
+  }
+}
+
+async function getWindowInfo(windowIdHex) {
+  const command = `xwininfo -id ${windowIdHex}`;
+  try {
+    const { stdout } = await execAsync(command);
+    return stdout;
+  } catch (error) {
+    console.error(`Error fetching window info: ${error}`);
+    return null;
+  }
+}
+
+function parseWindowInfo(xwininfoOutput) {
+  const sizeRegex = /Width:\s*(\d+)\s+Height:\s*(\d+)/;
+  const posRegex = /Absolute upper-left X:\s*(\d+)\s+Absolute upper-left Y:\s*(\d+)/;
+
+  const sizeMatches = sizeRegex.exec(xwininfoOutput);
+  const posMatches = posRegex.exec(xwininfoOutput);
+
+  if (sizeMatches && posMatches) {
+    return {
+      width: parseInt(sizeMatches[1], 10),
+      height: parseInt(sizeMatches[2], 10),
+      x: parseInt(posMatches[1], 10),
+      y: parseInt(posMatches[2], 10),
+    };
+  } else {
+    console.error("Could not parse window information from xwininfo output.");
+    return null;
   }
 }
 
