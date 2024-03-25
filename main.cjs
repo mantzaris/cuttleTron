@@ -363,7 +363,7 @@ async function createMaskcamVideoDevice() {
 
   // Generating a random device number between 30 and 60
   videoDevIdNum = Math.floor(Math.random() * (61 - 30) + 30);
-  const command = `modprobe -r v4l2loopback && modprobe v4l2loopback video_nr=${videoDevIdNum} card_label="${maskcamWindowTitle}"`;
+  const command = `modprobe -r v4l2loopback && modprobe v4l2loopback exclusive_caps=1 video_nr=${videoDevIdNum} card_label="${maskcamWindowTitle}"`;
 
   try {
     // Executing the combined command with sudo
