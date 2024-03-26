@@ -51,6 +51,8 @@ import { populateEffectArea_Stereo, stereo_stereo } from "./stereo/stereoeffect.
 import { populateEffectArea_DynamicExpander, dynamicExpander_ratio, dynamicExpander_threshold } from "./dynamicExpander/dynamicExpander.js";
 import { populateEffectArea_DynamicCompressor, dynamicCompressor_ratio, dynamicCompressor_threshold } from "./dynamicCompressor/dynamicCompressor.js";
 
+import { setRemoveHeader } from "../main-components/main-utilities.js";
+
 let initialCleaningDone = false;
 let streaming = false;
 let status_str = "";
@@ -346,7 +348,7 @@ function innerDisplayState(status: Status, labelMsg = "") {
       document.getElementById("audioeffects-update").style.display = "block";
       document.getElementById("audioeffects-refresh").style.display = "none";
       toggleDivFreeze(true);
-      setRemoveHeader(true, status_str, true);
+      setRemoveHeader("audioeffects-message", true, status_str, true);
       break;
     case "stopped":
       streaming = false;
@@ -357,45 +359,9 @@ function innerDisplayState(status: Status, labelMsg = "") {
       document.getElementById("audioeffects-update").style.display = "none";
       document.getElementById("audioeffects-refresh").style.display = "block";
       toggleDivFreeze(false);
-      setRemoveHeader(false, status_str, false);
+      setRemoveHeader("audioeffects-message", false, status_str, false);
       break;
   }
-}
-
-function setRemoveHeader(add_message: boolean, message: string, flash_bool: boolean) {
-  const scroll_flash_text = "scroll-flash-text";
-  const scroll_text = "scroll-text";
-  const flash_text = "flash-text";
-
-  var container = document.getElementById("audioeffects-message");
-  var textElement = container.querySelector("div"); // Assuming the text is in a div inside the container
-
-  textElement.classList.remove(scroll_flash_text);
-  textElement.classList.remove(scroll_text);
-  textElement.classList.remove(flash_text);
-
-  if (!add_message) {
-    textElement.innerText = "";
-    return;
-  }
-
-  textElement.innerText = message;
-
-  if (textElement.scrollWidth > container.clientWidth) {
-    // Text is too long
-    if (flash_bool) {
-      textElement.classList.add(scroll_flash_text);
-    } else {
-      textElement.classList.add(scroll_text);
-    }
-  } else {
-    // Text fits in the container
-    if (flash_bool) {
-      textElement.classList.add(flash_text);
-    }
-  }
-
-  textElement.style.display = "block";
 }
 
 //notify the user if the neccessary GStreamer packages are found

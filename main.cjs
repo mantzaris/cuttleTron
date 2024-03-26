@@ -254,25 +254,28 @@ ipcMain.on("update-maskcam", (event, mask_settings) => {
   maskcam_window.webContents.send("toggle-mask-view", mask_settings);
 });
 
-ipcMain.on("stream-maskcam", async (event, mask_settings) => {
+ipcMain.handle("stream-maskcam", async (event, mask_settings) => {
   if (maskcam_window && !maskcam_window.isDestroyed()) {
-    let [width, height] = maskcam_window.getSize();
-    const currentAspectRatio = width / height;
+    const standardResolutions = [
+      { width: 640, height: 480 }, // 4:3
+      { width: 1280, height: 720 }, // 16:9
+      { width: 1920, height: 1080 }, // 16:9
+      // Add more resolutions if necessary
+    ];
 
-    if (currentAspectRatio > webcamAspectRatio) {
-      // Current aspect ratio is wider than webcam's, adjust width to match
-      width = Math.round(height * webcamAspectRatio);
-    } else {
-      // Current aspect ratio is taller, adjust height to match
-      height = Math.round(width / webcamAspectRatio);
+    let bestMatch = standardResolutions[0];
+    for (const res of standardResolutions) {
+      if (Math.abs(res.width / res.height - webcamAspectRatio) < Math.abs(bestMatch.width / bestMatch.height - webcamAspectRatio)) {
+        bestMatch = res;
+      }
     }
 
-    // Update global variables
-    maskcamWidth = width;
-    maskcamHeight = height;
+    // Update the window size to the best matching standard resolution
+    maskcamWidth = bestMatch.width;
+    maskcamHeight = bestMatch.height;
 
-    maskcam_window.setSize(maskcamWidth, maskcamHeight);
-    maskcam_window.setResizable(false);
+    await maskcam_window.setSize(maskcamWidth, maskcamHeight);
+    await maskcam_window.setResizable(false);
     maskcam_window.setAlwaysOnTop(true);
 
     maskcam_window.webContents.send("toggle-mask-view", mask_settings);
@@ -280,9 +283,10 @@ ipcMain.on("stream-maskcam", async (event, mask_settings) => {
 
   await maskcam_window.webContents.send("anchor-mask-view");
   streamMaskcamToDevice();
+  return "maskcamWindowTitle";
 });
 
-ipcMain.on("init-maskcam", async (event, mask_settings) => {
+ipcMain.handle("init-maskcam", async (event, mask_settings) => {
   if (maskcam_window) {
     maskcam_window.focus(); // Focus the already opened window instead of creating a new one
     return;
@@ -342,6 +346,8 @@ ipcMain.on("init-maskcam", async (event, mask_settings) => {
       resetMaskCam();
     }
   });
+
+  return "move window, resize, then stream";
 });
 
 //called from maskcam-view

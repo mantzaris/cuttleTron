@@ -29,7 +29,7 @@
     <div class="menu">
         <!-- Menu content goes here -->
         <p>
-            <button id="install-dependencies" class="btn btn-info font-weight-bold mt-1 mb-1 fs-4">Install Dependencies</button>
+            <button id="install-dependencies" class="btn btn-info myBSbtn mt-1 mb-1 fs-4">Install Dependencies</button>
         </p>
     </div>
     <div class="content">
@@ -208,7 +208,7 @@
         <div class="component">
             <div class="component-header">
                 <span class="component-title">Mask Cam</span>
-                <div class="scroll-container ">
+                <div id="maskcam-message"  class="scroll-container ">
                     <div class="flash-text">                        
                     </div>
                 </div>
@@ -245,15 +245,15 @@
                         </div>
                     </div>
 
-                    <div class="col-4 scrollable-column d-flex flex-column align-items-center">
-                        <div>
+                    <div class="col-4 scrollable-column d-flex flex-column align-items-center" >
+                        <div class="d-flex justify-content-between flex-grow-1 w-75" >
                             <!-- init or stream -->
-                            <button id="maskcam-start" data-action="init" class="btn btn-outline-primary font-weight-bold mt-2">INIT</button>
-                            <button id="maskcam-stop" class="btn btn-outline-primary font-weight-bold mt-2">STOP</button>
+                            <button id="maskcam-start" data-action="init" class="btn myBSbtn btn-outline-primary flex-fill font-weight-bold mt-2">INIT</button>
+                            <button id="maskcam-stop" class="btn myBSbtn btn-outline-primary flex-fill font-weight-bold mt-2">STOP</button>
                         </div>
                         
-                        <label id="maskcam-status-label" class="my-2">...</label> <!-- Dynamically filled label -->
-                        <label id="maskcam-device-name" class="my-2">...</label> <!-- Another dynamically filled label -->
+                        <label id="maskcam-status-label" class="my-2" >...</label> <!-- Dynamically filled label -->
+                        <label id="maskcam-device-name" class="my-2" >...</label> <!-- Another dynamically filled label -->
                     </div>
                     
                     <div class="col-4 scrollable-column" >

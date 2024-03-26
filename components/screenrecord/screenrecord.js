@@ -2,7 +2,7 @@ const { ipcRenderer } = window.electron;
 const { joinPath, writeFileSync, getDirname, getTargetDir } = window.nodeModules;
 import { generateRandomString } from "../../utilities/utils.js";
 
-import { initializeTooltips, getWebcamSources } from "../main-components/main-utilities.js";
+import { initializeTooltips, getWebcamSources, setRemoveHeader } from "../main-components/main-utilities.js";
 
 let targetDir;
 let mediaRecorder;
@@ -67,7 +67,7 @@ document.getElementById("screenrecord-expand").onclick = async () => {
       populatAudioSinkOptions();
     }
 
-    setRemoveHeader(false, "", false);
+    setRemoveHeader("screenrecord-message", false, "", false);
   } else {
     // does not stop the streaming/actions if active to reopen later as an option
     screenrecord.classList.remove("expanded");
@@ -75,15 +75,15 @@ document.getElementById("screenrecord-expand").onclick = async () => {
     expand_button.setAttribute("data-action", "expand");
 
     if (status_str == "") {
-      setRemoveHeader(false, status_str, false);
+      setRemoveHeader("screenrecord-message", false, status_str, false);
       clearVideoAudio();
       return;
     }
 
     if (status_str == "Recording" || status_str == "Paused") {
-      setRemoveHeader(true, status_str, true);
+      setRemoveHeader("screenrecord-message", true, status_str, true);
     } else {
-      setRemoveHeader(true, status_str, false);
+      setRemoveHeader("screenrecord-message", true, status_str, false);
     }
   }
 };
@@ -420,40 +420,4 @@ function buttonsStateControl(buttonPressedId) {
     cancelButton.style.display = "none";
     saveButton.style.display = "none";
   }
-}
-
-function setRemoveHeader(add_message, message, flash_bool) {
-  const scroll_flash_text = "scroll-flash-text";
-  const scroll_text = "scroll-text";
-  const flash_text = "flash-text";
-
-  var container = document.getElementById("screenrecord-message");
-  var textElement = container.querySelector("div"); // Assuming the text is in a div inside the container
-
-  textElement.classList.remove(scroll_flash_text);
-  textElement.classList.remove(scroll_text);
-  textElement.classList.remove(flash_text);
-
-  if (!add_message) {
-    textElement.innerText = "";
-    return;
-  }
-
-  textElement.innerText = message;
-
-  if (textElement.scrollWidth > container.clientWidth) {
-    // Text is too long
-    if (flash_bool) {
-      textElement.classList.add(scroll_flash_text);
-    } else {
-      textElement.classList.add(scroll_text);
-    }
-  } else {
-    // Text fits in the container
-    if (flash_bool) {
-      textElement.classList.add(flash_text);
-    }
-  }
-
-  textElement.style.display = "block";
 }

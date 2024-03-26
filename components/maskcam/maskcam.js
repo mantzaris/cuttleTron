@@ -1,6 +1,6 @@
 const { ipcRenderer } = window.electron;
 
-import { initializeTooltips, getWebcamSources } from "../main-components/main-utilities.js";
+import { setRemoveHeader } from "../main-components/main-utilities.js";
 
 const start_btn = document.getElementById("maskcam-start");
 
@@ -13,7 +13,7 @@ document.getElementById("maskcam-expand").onclick = () => {
     expand_button.textContent = "Hide";
     expand_button.setAttribute("data-action", "hide");
   } else {
-    clearVideo();
+    //clearVideo();
     maskcam.classList.remove("expanded");
     expand_button.textContent = "Expand";
     expand_button.setAttribute("data-action", "expand");
@@ -42,14 +42,18 @@ start_btn.onclick = async () => {
     start_btn.textContent = "STREAM";
 
     if (!isMaskCamWindowOpen) {
-      await ipcRenderer.send("init-maskcam", mask_settings);
+      const message = await ipcRenderer.invoke("init-maskcam", mask_settings);
+      setMaskcamStatusLabels("set up:", message);
       return;
     }
   } else if (action == "stream") {
     //activate stream start
     start_btn.textContent = "UPDATE";
     start_btn.setAttribute("data-action", "update");
-    ipcRenderer.send("stream-maskcam", mask_settings);
+
+    const message = await ipcRenderer.invoke("stream-maskcam", mask_settings);
+    setRemoveHeader("maskcam-message", true, message, true);
+    setMaskcamStatusLabels("streaming to:", message);
   } else if (action == "update") {
     ipcRenderer.send("update-maskcam", mask_settings);
   }
@@ -61,4 +65,11 @@ document.getElementById("maskcam-stop").onclick = async () => {
   start_btn.textContent = "INIT";
   start_btn.setAttribute("data-action", "init");
   await ipcRenderer.send("stop-maskcam");
+  setMaskcamStatusLabels("", "");
+  setRemoveHeader("maskcam-message", false, null, false);
 };
+
+function setMaskcamStatusLabels(status, message) {
+  document.getElementById("maskcam-status-label").textContent = status;
+  document.getElementById("maskcam-device-name").textContent = message;
+}
