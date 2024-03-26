@@ -10,7 +10,7 @@ const path = require("path");
 
 const systemEndianness = os.endianness();
 
-const { myWriteFileSync } = require("./main-fns/main-utilities.cjs");
+const { myWriteFileSync, systemX11orWayland, installDependencies } = require("./main-fns/main-utilities.cjs");
 const {
   getSinksAndSourcesList,
   startAudioRecording,
@@ -33,6 +33,7 @@ if (process.env.NODE_ENV !== "production") {
   });
 }
 
+let X11orWayland = systemX11orWayland();
 let mainWindow;
 
 function createWindow() {
@@ -130,6 +131,19 @@ ipcMain.handle("getCaptureID", async (event) => {
   }));
 
   return mappedScreenSources;
+});
+
+////////////////////////////////////
+//install dependencies
+////////////////////////////////////
+ipcMain.handle("install-dependencies", async () => {
+  try {
+    await installDependencies();
+    return { success: true };
+  } catch (error) {
+    console.error(`Installation error: ${error}`);
+    return { success: false, error: error.message };
+  }
 });
 
 //*trying to use any npm package to get the audio or even repos for pulse audio specifically like

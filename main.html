@@ -6,6 +6,7 @@
         [ffmpeg version >=4.2]
         ["gstreamer1.0-tools", "gstreamer1.0-plugins-base", "gstreamer1.0-plugins-good", "gstreamer1.0-plugins-bad", "gstreamer1.0-plugins-ugly"]
         ["v4l2loopback-dkms" "v4l2loopback-utils"]
+        [ pulseaudio and pulseaudio-utils ]
     -->
     
     <meta charset="UTF-8">
@@ -27,7 +28,8 @@
 <body>
     <div class="menu">
         <!-- Menu content goes here -->
-        <p>Menu: (install) pulseaudio and pulseaudio-utils 
+        <p>
+            <button id="install-dependencies" class="btn btn-info font-weight-bold mt-1 mb-1 fs-4">Install Dependencies</button>
         </p>
     </div>
     <div class="content">
@@ -297,6 +299,7 @@
     </div>
     
     <!-- <button id="testMask" >TEST!</button> -->
+    <script type="module" src="./components/main-title/main-title.js"></script>
     <script type="module" src="./components/screenshot/screenshot.js"></script>
     <script type="module" src="./components/screenrecord/screenrecord.js"></script>
     <script type="module" src="./components/audioeffects/audioeffects.js"></script>
