@@ -42,7 +42,7 @@
 }
 
 #maskcam-view-top:active {
-  cursor: grabbing; /* Change cursor to grabbing when active */
+  cursor: grabbing;
 }
 
 #video-container {

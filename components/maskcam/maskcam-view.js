@@ -5,6 +5,8 @@ const path = require("path");
 const tf = require("@tensorflow/tfjs");
 const Human = require("@vladmandic/human").default;
 
+const THREE = require("three");
+
 const model_path = path.join(__dirname, "models");
 
 const human_config = {
@@ -113,6 +115,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         };
       });
 
+      initThreeJS();
       requestAnimationFrame(processVideoFrame);
     } catch (error) {
       console.log("Something went wrong with accessing the webcam!", error);
@@ -136,14 +139,97 @@ async function processVideoFrame() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawings
 
     result.face.forEach((face) => {
-      if (mesh_show) drawMesh(face.mesh, ctx); // You can also use meshRaw depending on your needs
-      if (basic_mask_show) drawMask(face, ctx);
+      if (mesh_show || 1) drawMesh(face.mesh, ctx); // You can also use meshRaw depending on your needs
+      //if (basic_mask_show) drawMask(face, ctx);
+      drawThreeJS(face.mesh);
     });
     //console.log(result); // result.face[0].mesh.drawMesh // result.hand// result.body // result.face[0].annotations;
   }
 
   requestAnimationFrame(processVideoFrame);
 }
+
+/////////////////////////////////////////
+// threeJS approach
+/////////////////////////////////////////
+let scene, camera, renderer, points;
+
+function initThreeJS() {
+  // Initialize the scene
+  scene = new THREE.Scene();
+
+  // Initialize the renderer
+  renderer = new THREE.WebGLRenderer({ alpha: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.getElementById("video-container").appendChild(renderer.domElement);
+
+  let aspect = videoElement.offsetWidth / videoElement.offsetHeight;
+
+  // Initialize the OrthographicCamera based on the video element's dimensions
+  camera = new THREE.OrthographicCamera(
+    -videoElement.offsetWidth / 2,
+    videoElement.offsetWidth / 2,
+    videoElement.offsetHeight / 2,
+    -videoElement.offsetHeight / 2,
+    1,
+    1000
+  );
+  camera.position.z = 10; // This can stay as is unless you need a different view
+
+  adjustCameraFrustum();
+}
+function adjustCameraFrustum() {
+  if (camera instanceof THREE.OrthographicCamera) {
+    let aspect = videoElement.offsetWidth / videoElement.offsetHeight;
+    camera.left = -videoElement.offsetWidth / 2;
+    camera.right = videoElement.offsetWidth / 2;
+    camera.top = videoElement.offsetHeight / 2;
+    camera.bottom = -videoElement.offsetHeight / 2;
+    camera.updateProjectionMatrix();
+  }
+}
+
+function drawThreeJS(mesh) {
+  if (!renderer || !scene || mesh.length < 3) {
+    console.error("Renderer, scene is not initialized, or mesh data is insufficient.");
+    return;
+  }
+
+  // Clear the scene and the renderer
+  while (scene.children.length > 0) {
+    scene.remove(scene.children[0]);
+  }
+  renderer.clear();
+
+  // Convert video element dimensions to Three.js coordinate system
+  let vertices = [];
+  for (let i = 0; i < mesh.length; i++) {
+    let x = ((mesh[i][0] - renderer.domElement.width / 2) * (camera.right - camera.left)) / renderer.domElement.width;
+    let y = (-(mesh[i][1] - renderer.domElement.height / 2) * (camera.top - camera.bottom)) / renderer.domElement.height;
+    let z = 0; // z-coordinate can be set to 0 for 2D mapping
+    vertices.push(x, y, z);
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(vertices), 3));
+
+  const material = new THREE.PointsMaterial({ color: 0xff0000, size: 2 });
+
+  if (points) scene.remove(points); // Remove old points if they exist
+  points = new THREE.Points(geometry, material);
+  scene.add(points);
+
+  renderer.render(scene, camera);
+}
+
+// window.addEventListener("resize", () => {
+//   camera.aspect = videoElement.offsetWidth / videoElement.offsetHeight;
+//   camera.updateProjectionMatrix();
+//   renderer.setSize(videoElement.offsetWidth, videoElement.offsetHeight);
+
+//   // Optionally, re-draw the points to adjust for the new size
+//   drawThreeJS(yourCurrentMeshData);
+// });
 
 //////////////////////////////////////
 //draw a 'mask'
@@ -304,6 +390,22 @@ function adjustVideoSize() {
   canvas.height = videoElement.offsetHeight;
 
   ipcRenderer.send("webcam-size", { width: videoElement.videoWidth, height: videoElement.videoHeight });
+
+  //for the Three.js
+  if (renderer && camera) {
+    renderer.setSize(videoElement.offsetWidth, videoElement.offsetHeight);
+
+    if (camera instanceof THREE.OrthographicCamera) {
+      camera.left = -videoElement.offsetWidth / 2;
+      camera.right = videoElement.offsetWidth / 2;
+      camera.top = videoElement.offsetHeight / 2;
+      camera.bottom = -videoElement.offsetHeight / 2;
+      camera.updateProjectionMatrix();
+    } else if (camera instanceof THREE.PerspectiveCamera) {
+      camera.aspect = videoElement.offsetWidth / videoElement.offsetHeight;
+      camera.updateProjectionMatrix();
+    }
+  }
 }
 
 //https://vladmandic.github.io/human/typedoc/interfaces/DrawOptions.html#fillPolygons

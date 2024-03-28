@@ -284,7 +284,7 @@ ipcMain.handle("stream-maskcam", async (event, mask_settings) => {
 
   await maskcam_window.webContents.send("anchor-mask-view");
   streamMaskcamToDevice(maskcamWindowTitle, maskcamWinIdHex);
-  return "maskcamWindowTitle";
+  return maskcamWindowTitle;
 });
 
 ipcMain.handle("init-maskcam", async (event, mask_settings) => {
@@ -314,6 +314,7 @@ ipcMain.handle("init-maskcam", async (event, mask_settings) => {
     }, //skipTaskbar boolean (optional) macOS Windows - Whether to show the window in taskbar. Default is false
   }); //offscreen boolean (optional) - Whether to enable offscreen rendering for the browser window
   //win.setAspectRatio(aspectRatio[, extraSize]) //win.setSize(width, height[, animate])  win.getSize() //win.getMediaSourceId()
+  //TODO: remove from the toolbar too
 
   await maskcam_window.setMenu(null); // remove the menu bar and deactivates devTools
 
@@ -336,7 +337,7 @@ ipcMain.handle("init-maskcam", async (event, mask_settings) => {
   await maskcam_window.webContents.send("toggle-mask-view", mask_settings);
 
   if (process.env.NODE_ENV !== "production") {
-    // maskcam_window.webContents.openDevTools();
+    maskcam_window.webContents.openDevTools();
   }
 
   maskcam_window.on("closed", async function () {
@@ -346,7 +347,7 @@ ipcMain.handle("init-maskcam", async (event, mask_settings) => {
     }
   });
 
-  return "move window, resize, then stream";
+  return "move window, then stream";
 });
 
 //called from maskcam-view
