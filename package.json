@@ -29,6 +29,7 @@
     "@tensorflow/tfjs": "^4.17.0",
     "@tensorflow/tfjs-node": "^4.17.0",
     "@vladmandic/human": "^3.2.1",
+    "babylonjs": "^6.48.1",
     "bootstrap": "^5.3.2",
     "electron": "^27.1.2",
     "node-record-lpcm16": "^1.0.1",

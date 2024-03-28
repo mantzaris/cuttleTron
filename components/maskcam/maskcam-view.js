@@ -116,6 +116,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
 
       initThreeJS();
+      adjustVideoSize();
       requestAnimationFrame(processVideoFrame);
     } catch (error) {
       console.log("Something went wrong with accessing the webcam!", error);
@@ -160,7 +161,11 @@ function initThreeJS() {
 
   // Initialize the renderer
   renderer = new THREE.WebGLRenderer({ alpha: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(videoElement.innerWidth, videoElement.innerHeight);
+  renderer.domElement.style.position = "absolute";
+  renderer.domElement.style.top = "0";
+  renderer.domElement.style.left = "0";
+  // renderer.domElement.style.border = '2px dashed green'; // For debuggin
   document.getElementById("video-container").appendChild(renderer.domElement);
 
   let aspect = videoElement.offsetWidth / videoElement.offsetHeight;
@@ -179,12 +184,20 @@ function initThreeJS() {
   adjustCameraFrustum();
 }
 function adjustCameraFrustum() {
+  if (!camera || !renderer) return;
+
+  // Update renderer size to match video element's size
+  renderer.setSize(videoElement.offsetWidth, videoElement.offsetHeight);
+
+  // Update camera's frustum based on the video element's dimensions
   if (camera instanceof THREE.OrthographicCamera) {
-    let aspect = videoElement.offsetWidth / videoElement.offsetHeight;
     camera.left = -videoElement.offsetWidth / 2;
     camera.right = videoElement.offsetWidth / 2;
     camera.top = videoElement.offsetHeight / 2;
     camera.bottom = -videoElement.offsetHeight / 2;
+    camera.updateProjectionMatrix();
+  } else if (camera instanceof THREE.PerspectiveCamera) {
+    camera.aspect = videoElement.offsetWidth / videoElement.offsetHeight;
     camera.updateProjectionMatrix();
   }
 }
@@ -201,12 +214,20 @@ function drawThreeJS(mesh) {
   }
   renderer.clear();
 
-  // Convert video element dimensions to Three.js coordinate system
   let vertices = [];
   for (let i = 0; i < mesh.length; i++) {
-    let x = ((mesh[i][0] - renderer.domElement.width / 2) * (camera.right - camera.left)) / renderer.domElement.width;
-    let y = (-(mesh[i][1] - renderer.domElement.height / 2) * (camera.top - camera.bottom)) / renderer.domElement.height;
-    let z = 0; // z-coordinate can be set to 0 for 2D mapping
+    //TODO: exclude the wierd artifact of the face appearing on the sides sporadically by ignoring edge/boundary situations
+
+    let x = mapCoordinate(mesh[i][0], 0, videoElement.offsetWidth, camera.left, camera.right);
+    let y = mapCoordinate(mesh[i][1], 0, videoElement.offsetHeight, camera.top, camera.bottom);
+    let z = 0; // Since it's a 2D overlay in a 3D space
+
+    // Check for NaN values
+    if (isNaN(x) || isNaN(y)) {
+      console.error("Invalid vertex coordinates", x, y, z);
+      x = y = z = 0; // Fallback to origin or handle as needed
+    }
+
     vertices.push(x, y, z);
   }
 
@@ -215,11 +236,15 @@ function drawThreeJS(mesh) {
 
   const material = new THREE.PointsMaterial({ color: 0xff0000, size: 2 });
 
-  if (points) scene.remove(points); // Remove old points if they exist
+  if (points) scene.remove(points);
   points = new THREE.Points(geometry, material);
   scene.add(points);
 
   renderer.render(scene, camera);
+}
+
+function mapCoordinate(value, fromMin, fromMax, toMin, toMax) {
+  return ((value - fromMin) / (fromMax - fromMin)) * (toMax - toMin) + toMin;
 }
 
 // window.addEventListener("resize", () => {
@@ -391,21 +416,8 @@ function adjustVideoSize() {
 
   ipcRenderer.send("webcam-size", { width: videoElement.videoWidth, height: videoElement.videoHeight });
 
-  //for the Three.js
-  if (renderer && camera) {
-    renderer.setSize(videoElement.offsetWidth, videoElement.offsetHeight);
-
-    if (camera instanceof THREE.OrthographicCamera) {
-      camera.left = -videoElement.offsetWidth / 2;
-      camera.right = videoElement.offsetWidth / 2;
-      camera.top = videoElement.offsetHeight / 2;
-      camera.bottom = -videoElement.offsetHeight / 2;
-      camera.updateProjectionMatrix();
-    } else if (camera instanceof THREE.PerspectiveCamera) {
-      camera.aspect = videoElement.offsetWidth / videoElement.offsetHeight;
-      camera.updateProjectionMatrix();
-    }
-  }
+  // Update Three.js renderer and camera
+  adjustCameraFrustum();
 }
 
 //https://vladmandic.github.io/human/typedoc/interfaces/DrawOptions.html#fillPolygons
