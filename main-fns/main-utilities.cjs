@@ -44,6 +44,7 @@ async function systemX11orWayland() {
     }
   }
 
+  console.log(`system display between x11 or wayland: ${sessionType}`)
   return sessionType;
 }
 
@@ -55,6 +56,12 @@ async function checkX11Session() {
     return false;
   }
 }
+
+////////////////////////////////////////////////////////
+//check if pulse audio or pipewire is being used TODO:
+////////////////////////////////////////////////////////
+
+
 
 ///////////////////////////////////////////////////
 // install dependencies

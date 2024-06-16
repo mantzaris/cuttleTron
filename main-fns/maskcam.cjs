@@ -105,7 +105,7 @@ async function streamMaskcamToDevice(maskcamWindowTitle, maskcamWinIdHex) {
 //TODO: check if X11 or Wayland, new approaches should have a modern version of device management https://github.com/umlaeute/v4l2loopback?tab=readme-ov-file#dynamic-device-management
 //https://github.com/umlaeute/v4l2loopback?tab=readme-ov-file#dynamic-device-management
 async function createMaskcamVideoDevice(maskcamWindowTitle) {
-  let output = execSync("v4l2-ctl --list-devices").toString();
+  let output = execSync("v4l2-ctl --list-devices").toString(); //TODO:
   console.log(`in createMaskcamVideoDevice 1, v4l2-ctl --list-devices = ${output}`);
 
   // Generating a random device number between 30 and 60

@@ -1,6 +1,6 @@
 const { ipcRenderer } = window.electron;
 const { joinPath, writeFileSync, bufferFrom, getTargetDir } = window.nodeModules;
-import { fileNameCollisionCheck } from "../../utilities/utils.js";
+import { fileNameCollisionCheck,generateRandomString } from "../../utilities/utils.js";
 
 import { initializeTooltips, getWebcamSources } from "../main-components/main-utilities.js";
 
@@ -92,9 +92,14 @@ function clearVideo() {
 
 // select a screen to snap
 document.getElementById("screenshot-snap").onclick = async () => {
-  const fileName = document.getElementById("screenshot-filename-input").value;
+  let fileName = document.getElementById("screenshot-filename-input").value;
   const videoElement = document.querySelector("#screenshot-feed video");
   const selectElement = document.getElementById("screenshot-screen-select-btn");
+
+  if(!fileName) {
+    await updateFilenameForNextSave();
+    fileName = document.getElementById("screenshot-filename-input").value;
+  }
 
   if (videoElement.srcObject == null || selectElement.value == "none") {
     writeMessageLabel("select screen feed", "gray");
@@ -118,7 +123,7 @@ document.getElementById("screenshot-snap").onclick = async () => {
   try {
     await writeFileSync({ filePath, buffer });
     writeMessageLabel("saved screenshot", "green");
-    updateFilenameForNextSave();
+    await updateFilenameForNextSave();
   } catch (error) {
     writeMessageLabel("can't save", "red");
     console.error("Error writing file:", error);
@@ -208,9 +213,19 @@ document.getElementById("screenshot-filename-input").oninput = async (event) => 
   }
 };
 
-function updateFilenameForNextSave() {
+async function updateFilenameForNextSave() {
   const filenameInput = document.getElementById("screenshot-filename-input");
   let currentFilename = filenameInput.value;
+
+  if(!currentFilename || currentFilename.length == 0) {
+    currentFilename = generateRandomString(5);
+    currentFilename += "-";
+    const fileExists = await fileNameCollisionCheck(currentFilename, [".png", ".jpg"]);
+    if(fileExists) {
+      currentFilename = generateRandomString(5);
+      currentFilename += "-";
+    }
+  }
 
   // Regular expression to separate the base filename, number part, and extension
   const filenameRegex = /^(.*?)(\d*)(\.[^.]+)?$/;
