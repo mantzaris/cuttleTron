@@ -126,16 +126,30 @@ ipcMain.handle("existsSync", (event, path) => {
 });
 
 //ge the list of ids of screens or windows to record with the electron mediaRecorder (audio on linux no go)
-ipcMain.handle("getCaptureID", async (event) => {
-  const screen_sources = await desktopCapturer.getSources({ types: ["window", "screen"] });
+ipcMain.handle('getCaptureID', async (event) => {
+  try {
+    const sources = await desktopCapturer.getSources({
+      types: ['window', 'screen']
+    });
 
-  const mappedScreenSources = screen_sources.map((source) => ({
-    id: source.id,
-    name: source.name,
-    thumbnail: source.thumbnail.toDataURL({ scaleFactor: 0.25 }),
-  }));
+    if (!sources || sources.length === 0) {
+      throw new Error('No sources available');
+    }
 
-  return mappedScreenSources;
+    // If specific thumbnail scaling is needed, maintain that feature from cuttleTron
+    return sources.map(source => ({
+      id: source.id,
+      name: source.name,
+      thumbnail: source.thumbnail.toDataURL({ scaleFactor: 0.25 }) // Adjust scaleFactor as needed
+    }));
+  } catch (error) {
+    console.error('Error getting capture sources:', error);
+    return null;  // Ensures upstream code can handle the error gracefully
+  }
+});
+
+ipcMain.handle("systemX11orWayland", async (event) => {
+  return X11orWayland;
 });
 
 ////////////////////////////////////

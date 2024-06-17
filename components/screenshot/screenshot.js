@@ -2,7 +2,7 @@ const { ipcRenderer } = window.electron;
 const { joinPath, writeFileSync, bufferFrom, getTargetDir } = window.nodeModules;
 import { fileNameCollisionCheck,generateRandomString } from "../../utilities/utils.js";
 
-import { initializeTooltips, getWebcamSources } from "../main-components/main-utilities.js";
+import { initializeTooltips, getWebcamSources } from "../component-utilities/component-utilities.js";
 
 const screenSelMenuId = "screenshot-selectionUL";
 const screen_sel_btn_id = "screenshot-screen-select-btn";
@@ -54,6 +54,32 @@ async function screenshotSelection(source) {
       frameRate: { ideal: 16, max: 24 },
       // You can add more constraints here, like width, height, etc.
     };
+  } else if(source.type == "portal") {
+    try {
+      const sources = await ipcRenderer.invoke("getCaptureID");
+      const userSelectedSource = sources[0];
+      
+      if (!sources || sources.length === 0) {
+        alert('No sources available for capturing.');
+        return;
+      }
+
+      if (!userSelectedSource) {
+        alert('No source selected.');
+        return;
+      }
+      videoConstraints = {
+        mandatory: {
+          chromeMediaSource: 'desktop',
+          chromeMediaSourceId: userSelectedSource.id,
+          frameRate: { ideal: 16, max: 24 },
+        }
+      };
+    } catch (error) {
+      alert("Error fetching screen/window sources:", error);
+      return;
+    }
+
   } else {
     videoConstraints = {
       mandatory: {
@@ -152,15 +178,35 @@ export async function populateScreenOptions(dropdownMenuId, buttonId, tooltipCla
   try {
     //fetch available screen capture sources combine with webcam sources
     let allSources = [];
-
+    const X11orWayland = await ipcRenderer.invoke("systemX11orWayland");
+    
     if (screens) {
-      const sources = await ipcRenderer.invoke("getCaptureID");
-      allSources = allSources.concat(sources);
+      if(X11orWayland == 'x11') {
+        const sources = await ipcRenderer.invoke("getCaptureID");
+        allSources = allSources.concat(sources);
+      } else if(X11orWayland == "wayland") {
+        const portal_option = {
+          id: "portal",
+          name: "select screen/window",
+          thumbnail: "",  // wayland portal doesn't have thumbnails
+          type: "portal",
+        }
+
+        allSources = allSources.concat(portal_option);
+      }
     }
 
     if (webcams) {
       const webcamSources = await getWebcamSources();
-      allSources = allSources.concat(webcamSources);
+      if (webcamSources === null) {
+        console.error("Failed to fetch webcam sources.");
+        // Optionally handle the error, e.g., disable webcam-related UI elements
+      } else if (webcamSources.length === 0) {
+        console.log("No webcams found.");
+        // Optionally handle no webcams found, e.g., display a message in the UI
+      } else {
+        allSources = allSources.concat(webcamSources);
+      }
     }
 
     addScreenDropOptions(dropdownMenu, buttonId, tooltipClassName, optionClickCallBack, { name: "none", type: "none" });
@@ -188,10 +234,24 @@ export function addScreenDropOptions(dropdownMenu, buttonId, tooltipClassName, o
   });
 
   if (source.type !== "none") {
+    let tooltipContent;
+    switch (source.type) {
+      case "webcam":
+        tooltipContent = "No thumbnail for webcam";
+        break;
+      case "portal":
+        tooltipContent = "Click to select screen/window";
+        break;
+      default:
+        tooltipContent = `<img src='${source.thumbnail}' alt='Thumbnail'>`;
+        break;
+    }
+
     anchor.classList.add(tooltipClassName);
     anchor.setAttribute("data-bs-toggle", "tooltip");
-    anchor.setAttribute("title", source.type === "webcam" ? `no thumbnail for webcam` : `<img src='${source.thumbnail}' alt='Thumbnail'>`);
+    anchor.setAttribute("title", tooltipContent);
     anchor.setAttribute("data-tooltip-init", "false"); // Custom attribute to control tooltip initialization
+
   }
 
   listItem.appendChild(anchor);

@@ -28,16 +28,40 @@ export function updateTooltipImage(elementId, newImagePath) {
 }
 
 export async function getWebcamSources() {
-  const mediaDevices = await navigator.mediaDevices.enumerateDevices();
+  if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+    console.error("MediaDevices API is not available.");
+    return null;  // Indicate that the feature isn't supported.
+  }
 
-  return mediaDevices
-    .filter((device) => device.kind === "videoinput")
-    .map((device) => ({
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoDevices = devices.filter(device => device.kind === "videoinput");
+    
+    if (videoDevices.length === 0) {
+      console.log("No webcam devices found.");
+      return [];  // Return an empty array if no video devices are found.
+    }
+
+    return videoDevices.map((device, index) => ({
       id: device.deviceId,
-      name: device.label,
-      thumbnail: "", // Webcams don't have thumbnails
+      name: device.label || `Unnamed Webcam ${index + 1}`, // Numbered label if no name
+      thumbnail: "",  // Webcams don't have thumbnails
       type: "webcam",
     }));
+  } catch (error) {
+    console.error("Error enumerating devices:", error);
+    return null;  // Return null to indicate an error during the fetching process.
+  }
+  // const mediaDevices = await navigator.mediaDevices.enumerateDevices();
+
+  // return mediaDevices
+  //   .filter((device) => device.kind === "videoinput")
+  //   .map((device) => ({
+  //     id: device.deviceId,
+  //     name: device.label,
+  //     thumbnail: "", // Webcams don't have thumbnails
+  //     type: "webcam",
+  //   }));
 }
 
 export function setRemoveHeader(div_id, add_message, message, flash_bool = false) {

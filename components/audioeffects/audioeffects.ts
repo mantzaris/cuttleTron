@@ -51,7 +51,7 @@ import { populateEffectArea_Stereo, stereo_stereo } from "./stereo/stereoeffect.
 import { populateEffectArea_DynamicExpander, dynamicExpander_ratio, dynamicExpander_threshold } from "./dynamicExpander/dynamicExpander.js";
 import { populateEffectArea_DynamicCompressor, dynamicCompressor_ratio, dynamicCompressor_threshold } from "./dynamicCompressor/dynamicCompressor.js";
 
-import { setRemoveHeader } from "../main-components/main-utilities.js";
+import { setRemoveHeader } from "../component-utilities/component-utilities.js";
 
 let initialCleaningDone = false;
 let streaming = false;

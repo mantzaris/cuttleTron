@@ -1,6 +1,6 @@
 const { ipcRenderer } = window.electron;
 
-import { setRemoveHeader } from "../main-components/main-utilities.js";
+import { setRemoveHeader } from "../component-utilities/component-utilities.js";
 
 const start_btn = document.getElementById("maskcam-start");
 

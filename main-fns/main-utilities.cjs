@@ -68,7 +68,7 @@ async function checkX11Session() {
 ///////////////////////////////////////////////////
 async function installDependencies() {
   //[ pulseaudio and pulseaudio-utils ]
-  let dependencies = [
+  let dependencies = [ //MAYBE: sudo apt install xdg-desktop-portal xdg-desktop-portal-wlr TODO:
     "ffmpeg",
     "gstreamer1.0-tools",
     "gstreamer1.0-plugins-base",

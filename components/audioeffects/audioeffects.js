@@ -60,7 +60,7 @@ import { populateEffectArea_Amplify2, amplify2_amplification } from "./amplify2/
 import { populateEffectArea_Stereo, stereo_stereo } from "./stereo/stereoeffect.js";
 import { populateEffectArea_DynamicExpander, dynamicExpander_ratio, dynamicExpander_threshold } from "./dynamicExpander/dynamicExpander.js";
 import { populateEffectArea_DynamicCompressor, dynamicCompressor_ratio, dynamicCompressor_threshold } from "./dynamicCompressor/dynamicCompressor.js";
-import { setRemoveHeader } from "../main-components/main-utilities.js";
+import { setRemoveHeader } from "../component-utilities/component-utilities.js";
 var initialCleaningDone = false;
 var streaming = false;
 var status_str = "";

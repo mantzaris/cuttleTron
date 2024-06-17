@@ -2,7 +2,7 @@ const { ipcRenderer } = window.electron;
 const { joinPath, writeFileSync, getDirname, getTargetDir } = window.nodeModules;
 import { generateRandomString } from "../../utilities/utils.js";
 
-import { initializeTooltips, getWebcamSources, setRemoveHeader } from "../main-components/main-utilities.js";
+import { initializeTooltips, getWebcamSources, setRemoveHeader } from "../component-utilities/component-utilities.js";
 
 let targetDir;
 let mediaRecorder;
