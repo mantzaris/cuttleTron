@@ -60,12 +60,24 @@ async function screenshotSelection(source) {
       const userSelectedSource = sources[0];
       
       if (!sources || sources.length === 0) {
-        alert('No sources available for capturing.');
+        ipcRenderer.invoke('show-dialog', {
+          type: 'info',
+          title: 'No screen sources',
+          message: `No sources available for capturing.`,
+          buttons: ['OK'],
+          defaultId: 0,
+        });
         return;
       }
 
-      if (!userSelectedSource) {
-        alert('No source selected.');
+      if (!userSelectedSource) {      
+        ipcRenderer.invoke('show-dialog', {
+          type: 'info',
+          title: 'No selected source',
+          message: `No source selected.`,
+          buttons: ['OK'],
+          defaultId: 0,
+        });
         return;
       }
       videoConstraints = {
@@ -76,7 +88,13 @@ async function screenshotSelection(source) {
         }
       };
     } catch (error) {
-      alert("Error fetching screen/window sources:", error);
+      ipcRenderer.invoke('show-dialog', {
+        type: 'error',
+        title: 'Cannot fetch source',
+        message: `Error fetching screen/window sources:, ${error}`,
+        buttons: ['OK'],
+        defaultId: 0,
+      });
       return;
     }
 
@@ -102,7 +120,13 @@ async function screenshotSelection(source) {
     videoElement.srcObject = media_source;
     videoElement.play(); // Start playing the video stream
   } catch (error) {
-    alert("Error capturing screen:", error);
+    ipcRenderer.invoke('show-dialog', {
+      type: 'error',
+      title: 'Error capturing screen',
+      message: `Error capturing screen: ${error} `,
+      buttons: ['OK'],
+      defaultId: 0,
+    });
   }
 }
 

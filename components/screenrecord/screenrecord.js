@@ -221,7 +221,13 @@ async function screenrecordSelection(source) {
     videoElement.srcObject = media_source;
     videoElement.play(); // Start playing the video stream
   } catch (error) {
-    alert("Error capturing screen:", error);
+    ipcRenderer.invoke('show-dialog', {
+      type: 'error',
+      title: 'Error capturing scree',
+      message: `Error capturing screen: ${error} `,
+      buttons: ['OK'],
+      defaultId: 0,
+    });
   }
 }
 

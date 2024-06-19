@@ -3,7 +3,7 @@
 // requires ...sudo apt-get install gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly
 // v4l2loopback-dkms v4l2loopback-utils, wmctrl,
 /////////
-const { app, BrowserWindow, ipcMain, desktopCapturer } = require("electron");
+const { app, BrowserWindow, ipcMain, desktopCapturer, dialog } = require("electron");
 const os = require("os");
 const fs = require("fs");
 const path = require("path");
@@ -13,7 +13,7 @@ const systemEndianness = os.endianness();
 
 const { streamMaskcamToDevice, stopMaskcamStream } = require("./main-fns/maskcam.cjs");
 
-const { myWriteFileSync, systemX11orWayland, installDependencies } = require("./main-fns/main-utilities.cjs");
+const { myWriteFileSync, showDialog, systemX11orWayland, installDependencies } = require("./main-fns/main-utilities.cjs");
 const {
   getSinksAndSourcesList,
   startAudioRecording,
@@ -152,13 +152,22 @@ ipcMain.handle("systemX11orWayland", async (event) => {
   return X11orWayland;
 });
 
+
+////////////////////////////////////
+//dialog handler
+////////////////////////////////////
+ipcMain.handle('show-dialog', async (event, options) => {
+  const response = await showDialog(options);
+  return response.response; // Return the index of the clicked button
+});
+
+
 ////////////////////////////////////
 //install dependencies
 ////////////////////////////////////
 ipcMain.handle("install-dependencies", async () => {
   try {
-    await installDependencies();
-    return { success: true };
+    return await installDependencies();
   } catch (error) {
     console.error(`Installation error: ${error}`);
     return { success: false, error: error.message };

@@ -1,3 +1,4 @@
+const { dialog } = require('electron');
 const fs = require("fs");
 const { exec, execSync } = require("child_process");
 const { promisify } = require("util");
@@ -18,6 +19,23 @@ function myWriteFileSync(event, arg_obj) {
   }
 
   return fs.writeFileSync(arg_obj.filePath, dataBuffer);
+}
+
+
+////////////////////////////////////
+//dialog generic
+////////////////////////////////////
+async function showDialog(options) {
+  const defaultOptions = {
+    type: 'info',
+    title: 'Information',
+    buttons: ['OK'],
+    message: 'No message provided',
+    detail: ''
+  };
+
+  const dialogOptions = { ...defaultOptions, ...options };
+  return dialog.showMessageBox(dialogOptions);
 }
 
 ///////////////////////////////////////////////////
@@ -68,7 +86,7 @@ async function checkX11Session() {
 ///////////////////////////////////////////////////
 async function installDependencies() {
   //[ pulseaudio and pulseaudio-utils ]
-  let dependencies = [ //MAYBE: sudo apt install xdg-desktop-portal xdg-desktop-portal-wlr TODO:
+  let dependencies = [ //TODO:  "wmctrl","ydotool", "xdotool"
     "ffmpeg",
     "gstreamer1.0-tools",
     "gstreamer1.0-plugins-base",
@@ -76,51 +94,86 @@ async function installDependencies() {
     "gstreamer1.0-plugins-bad",
     "gstreamer1.0-plugins-ugly",
     "v4l2loopback-dkms",
-    "v4l2loopback-utils",
-    "wmctrl",
+    "v4l2loopback-utils"   
   ];
 
   let installCommands = [];
 
-  if (fs.existsSync("/usr/bin/apt")) {
-    // Debian, Ubuntu, etc.
+  if (fs.existsSync("/usr/bin/apt")) { // Debian, Ubuntu, etc.
     installCommands = dependencies.map((dep) => `apt install -y ${dep}`);
-  } else if (fs.existsSync("/usr/bin/dnf")) {
-    // Fedora, RHEL, etc.
+  } else if (fs.existsSync("/usr/bin/dnf")) { // Fedora, RHEL, etc.
     installCommands = dependencies.map((dep) => `dnf install -y ${dep}`);
-  } else if (fs.existsSync("/usr/bin/yum")) {
-    // old Fedora, RHEL, etc.
+  } else if (fs.existsSync("/usr/bin/yum")) { // old Fedora, RHEL, etc.
     installCommands = dependencies.map((dep) => `yum install -y ${dep}`);
-  } else if (fs.existsSync("/usr/bin/pacman")) {
-    // Arch Linux, Manjaro, etc.
+  } else if (fs.existsSync("/usr/bin/pacman")) { // Arch Linux, Manjaro, etc.
     installCommands = dependencies.map((dep) => `pacman -S --noconfirm ${dep}`);
-  } else if (fs.existsSync("/usr/bin/zypper")) {
-    // openSUSE
+  } else if (fs.existsSync("/usr/bin/zypper")) { // openSUSE
     installCommands = dependencies.map((dep) => `zypper install -y ${dep}`);
-  } else if (fs.existsSync("/usr/bin/xbps-install")) {
-    // Void Linux
+  } else if (fs.existsSync("/usr/bin/xbps-install")) { // Void Linux
     installCommands = dependencies.map((dep) => `xbps-install -y ${dep}`);
   } else {
     console.error("Unsupported package manager or Linux distribution.");
-    return;
+    await showDialog({
+      type: 'error',
+      title: 'Unsupported package manager',
+      message: `Since this system package manager is not supported install:\n ${dependencies} `,
+      buttons: ['OK'],
+      defaultId: 0
+    });
+  
+    return { success: false, canceled: false };
   }
 
+  const result = await showDialog({
+    type: 'question',
+    title: 'Install Dependencies?',
+    message: `About to install ${dependencies.length} dependencies (permissions asked separately):\n ${dependencies.join(', ')} `,
+    buttons: ['Cancel', 'OK'],
+    defaultId: 1,
+    cancelId: 0
+  });
+
+  if (result.response === 0) { // Check if Cancel was clicked
+    console.log(`Dependency installation canceled by user`)
+    return { success: false, canceled: true };
+  }
+
+  let failureCount = 0;
+  
   for (let cmd of installCommands) {
-    console.log(`Installing ${cmd}...`);
+    console.log(`Installing ${cmd}`);
     try {
-      const stdout = await sudoExecAsync(cmd, { name: "cuttleTron" });
+      const stdout = await sudoExecAsync(cmd, { name: `Cuttle Install` });
       console.log(`${cmd} installed successfully.`);
       console.log(stdout);
     } catch (error) {
+      await showDialog({
+        type: 'error',
+        title: 'Error installing dependency',
+        message: `Attempted: ${cmd},\n Error: ${error.message}`,
+        buttons: ['OK'],
+      })
+
+      failureCount += 1;      
       console.error(`Error during the installation of ${cmd}: ${error}`);
     }
   }
+
+  return {
+    success: failureCount < dependencies.length,
+    canceled: false,
+    failures: failureCount,
+    successes: dependencies.length - failureCount
+  };
 }
+
+
 
 module.exports = {
   myWriteFileSync,
   systemX11orWayland,
   installDependencies,
+  showDialog
 };
 
 // let installCommand = "";
