@@ -20,3 +20,12 @@
   margin: 0;
   font-size: 1.5vh;
 }
+
+@keyframes flash {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: greenyellow; }
+}
+
+.flash {
+  animation: flash 1s infinite;
+}

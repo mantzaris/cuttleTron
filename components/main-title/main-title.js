@@ -1,5 +1,35 @@
 const { ipcRenderer } = window.electron;
 
+document.addEventListener('DOMContentLoaded', function() {
+  const button = document.getElementById("install-dependencies");
+  const hasRunBefore = localStorage.getItem('hasRunBefore');
+
+  if (hasRunBefore) {
+     //do nothing
+  } else {
+    ipcRenderer.invoke('show-dialog', {
+      type: 'info',
+      title: 'Install dependencies',
+      message: `It is a good idea to install the dependencies via your own package manager.`,
+      buttons: ['OK'],
+      defaultId: 0
+    }).then(() => {
+      // Start flashing after the dialog is closed
+      if (button) {
+        button.classList.add('flash');
+        
+        // Optionally, remove the class after some time
+        setTimeout(() => {
+            button.classList.remove('flash');
+        }, 4000); // Adjust time as needed
+      }
+    });
+
+    localStorage.setItem('hasRunBefore', true);
+  }
+});
+
+
 document.getElementById("install-dependencies").onclick = () => {
   ipcRenderer.invoke("install-dependencies").then((response) => {
 
