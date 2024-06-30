@@ -8,7 +8,9 @@ const screenSelMenuId = "screenshot-selectionUL";
 const screen_sel_btn_id = "screenshot-screen-select-btn";
 const tooltipClassName = "screenshot-screen-tooltip";
 
-let media_source;
+let mediaSource;
+let autoCapture = false;
+let captureInterval = null;
 
 async function getSavingFilePath(filename) {
   const targetDir = await getTargetDir();
@@ -113,12 +115,12 @@ async function screenshotSelection(source) {
   try {    
     const videoElement = document.querySelector("#screenshot-feed video");
 
-    media_source = await navigator.mediaDevices.getUserMedia({
+    mediaSource = await navigator.mediaDevices.getUserMedia({
       video: videoConstraints,
       audio: false,
     });
 
-    videoElement.srcObject = media_source;
+    videoElement.srcObject = mediaSource;
     videoElement.play(); // Start playing the video stream
     mediaInactiveHandle()
   } catch (error) {
@@ -134,7 +136,7 @@ async function screenshotSelection(source) {
 
 function mediaInactiveHandle() {
   // Handle the stream becoming inactive
-  media_source.oninactive = () => {
+  mediaSource.oninactive = () => {
     if( document.getElementById("screenshot-screen-select-btn").textContent == "none") return;
     
     console.info("The stream has become inactive.");
@@ -150,12 +152,12 @@ function mediaInactiveHandle() {
 }
 
 function clearVideo() {
-  if (media_source) {
-    const tracks = media_source.getTracks();
+  if (mediaSource) {
+    const tracks = mediaSource.getTracks();
     tracks.forEach(track => track.stop()); // Ensure all tracks are stopped
   }
   
-  media_source = null; // Clear the global reference
+  mediaSource = null; // Clear the global reference
 
   const videoElement = document.querySelector("#screenshot-feed video");
   videoElement.srcObject = null; // Remove the media stream source
@@ -357,3 +359,57 @@ async function updateFilenameForNextSave() {
 
   filenameInput.value = currentFilename;
 }
+
+// * autocapture functionality
+document.getElementById("screenshot-start-auto").onclick = () => {
+  const snapButton = document.getElementById("screenshot-snap");
+  let intervalTime = parseFloat(document.getElementById("screenshot-interval-input").value) * 1000;
+
+  if (!autoCapture && mediaSource && !snapButton.disabled && intervalTime >= 50 && intervalTime <= 120000) {
+
+    autoCapture = true;
+    document.getElementById("screenshot-start-auto").disabled = true;
+    document.getElementById("screenshot-stop-auto").disabled = false; // Enable stop button
+
+    // Set the interval to simulate the snap button click
+    captureInterval = setInterval(() => {
+      if (!snapButton.disabled) {  // Check if the snap button is still enabled
+        snapButton.click();
+      } else {
+        clearInterval(captureInterval);  // Stop the interval if snap button is disabled
+        document.getElementById("screenshot-start-auto").disabled = false;  // Re-enable the start button
+        document.getElementById("screenshot-stop-auto").disabled = true; // Disable stop button
+        autoCapture = false;
+      }
+    }, intervalTime);
+  } else {
+    ipcRenderer.invoke('show-dialog', {
+      type: 'info',
+      title: 'Problem starting auto screen shot',
+      message: "Please enter a valid interval for time or some other issue exist.",
+      buttons: ['OK'],
+      defaultId: 0,
+    });
+  }
+}
+
+document.getElementById("screenshot-stop-auto").onclick = () => {
+  if (autoCapture) {
+    clearInterval(captureInterval);  // Clear the interval
+    document.getElementById("screenshot-start-auto").disabled = false;  // Re-enable the start button
+    document.getElementById("screenshot-stop-auto").disabled = true;  // Disable stop button
+    autoCapture = false;  // Reset autoCapture state
+  }
+}
+
+document.getElementById("screenshot-interval-input").addEventListener('change', function() {
+  let value = parseFloat(this.value);
+  
+  if(isNaN(value)) {
+    this.value = 1.0;
+  } else if (value < 0.05) {
+      this.value = 0.05;
+  } else if (value > 120) {
+      this.value = 120;
+  }
+});

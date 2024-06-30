@@ -4,6 +4,7 @@
   height: 0; /* Start collapsed */
   overflow: hidden;
   padding: 0;
+  /* background-color: aqua; */
 }
 #screenshot.expanded {
   height: 25vh; /* Expand to 25% of viewport height */
@@ -15,7 +16,8 @@
   display: flex;
   align-items: center; /* Center the image vertically */
   justify-content: center; /* Center the image horizontally */
-  height: 100%; /* 90% of the #screenshot height */
+  height: 100%; /* of the #screenshot height */
+  /* background-color: chocolate; */
 }
 
 #screenshot-feed video {
@@ -24,14 +26,16 @@
 }
 
 #screenshot-selection {
-  width: 100%; /* Ensure full width */
-  flex: 1; /* Take up the remaining space */
+  /* width: 100%; 
+  flex: 1; */
+  flex: 0 0 42%; /* 60% of the remaining 70% space */
   display: flex;
   flex-direction: column; /* Stack the select and button vertically */
   align-items: flex-start; /* Center items horizontally */
   justify-content: space-between; /* Center items vertically */
   gap: 2px;
   margin-left: 10px;
+  /* background-color: rebeccapurple;  */
 }
 
 .screenshot-saved-label {
@@ -76,7 +80,7 @@
   padding: 0px 0px; /* Adjust padding to reduce space, modify as needed */
 }
 
-#screenshot-filename-input {
+#screenshot-filename-input, #screenshot-interval-input {
   padding: 2px; /* Reduces the padding inside the input field */
   font-size: smaller; /* Optionally, reduce the font size if needed */
 }
@@ -84,4 +88,27 @@
 .cool-label {
   margin: 0px 0;
   padding: 1px;
+}
+
+
+/* this is for the auto snapshot at intervals */
+
+#screenshot-interval {
+  flex: 1; /* Take up the rest of the space */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin-left: 10px;
+  /* background-color: green;  */
+}
+
+#screenshot-interval-input-label {
+  margin-top: 3px;
+}
+
+#screenshot-interval-input {
+  margin-top: 5px;
+  width: 40%;
+  margin-bottom: 8px;
 }
