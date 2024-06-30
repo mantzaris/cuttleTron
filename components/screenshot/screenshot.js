@@ -2,7 +2,7 @@ const { ipcRenderer } = window.electron;
 const { joinPath, writeFileSync, bufferFrom, getTargetDir } = window.nodeModules;
 import { fileNameCollisionCheck,generateRandomString } from "../../utilities/utils.js";
 
-import { initializeTooltips, getWebcamSources } from "../component-utilities/component-utilities.js";
+import { initializeTooltips, getWebcamSources, setRemoveHeader } from "../component-utilities/component-utilities.js";
 
 const screenSelMenuId = "screenshot-selectionUL";
 const screen_sel_btn_id = "screenshot-screen-select-btn";
@@ -30,11 +30,17 @@ document.getElementById("screenshot-expand").onclick = () => {
     screenshot.classList.add("expanded");
     expand_button.textContent = "Hide";
     expand_button.setAttribute("data-action", "hide");
+    setRemoveHeader("screenshot-message", false, "", false);
   } else {
-    clearVideo();
     screenshot.classList.remove("expanded");
     expand_button.textContent = "Expand";
     expand_button.setAttribute("data-action", "expand");
+    if( !autoCapture ) { //if no auto capture then leave, or else clear
+      clearVideo();
+      setRemoveHeader("screenshot-message", false, "", false);
+    } else {
+      setRemoveHeader("screenshot-message", true, "auto-capturing", true);
+    }
   }
 
   populateScreenOptions(screenSelMenuId, screen_sel_btn_id, tooltipClassName, screenshotSelection);
