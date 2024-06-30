@@ -8,6 +8,8 @@ const screenSelMenuId = "screenshot-selectionUL";
 const screen_sel_btn_id = "screenshot-screen-select-btn";
 const tooltipClassName = "screenshot-screen-tooltip";
 
+let media_source;
+
 async function getSavingFilePath(filename) {
   const targetDir = await getTargetDir();
 
@@ -108,8 +110,7 @@ async function screenshotSelection(source) {
     };
   }
 
-  try {
-    let media_source;
+  try {    
     const videoElement = document.querySelector("#screenshot-feed video");
 
     media_source = await navigator.mediaDevices.getUserMedia({
@@ -119,6 +120,7 @@ async function screenshotSelection(source) {
 
     videoElement.srcObject = media_source;
     videoElement.play(); // Start playing the video stream
+    mediaInactiveHandle()
   } catch (error) {
     ipcRenderer.invoke('show-dialog', {
       type: 'error',
@@ -130,7 +132,31 @@ async function screenshotSelection(source) {
   }
 }
 
+function mediaInactiveHandle() {
+  // Handle the stream becoming inactive
+  media_source.oninactive = () => {
+    if( document.getElementById("screenshot-screen-select-btn").textContent == "none") return;
+    
+    console.info("The stream has become inactive.");
+    clearVideo();
+    ipcRenderer.invoke('show-dialog', {
+      type: 'info',
+      title: 'Stream Inactive',
+      message: 'The captured window was closed or lost.',
+      buttons: ['OK'],
+      defaultId: 0,
+    });
+  };
+}
+
 function clearVideo() {
+  if (media_source) {
+    const tracks = media_source.getTracks();
+    tracks.forEach(track => track.stop()); // Ensure all tracks are stopped
+  }
+  
+  media_source = null; // Clear the global reference
+
   const videoElement = document.querySelector("#screenshot-feed video");
   videoElement.srcObject = null; // Remove the media stream source
   videoElement.pause(); // Pause the video playback
@@ -138,6 +164,8 @@ function clearVideo() {
   // Clear the selection in the dropdown
   const selectElement = document.getElementById("screenshot-screen-select-btn");
   selectElement.textContent = "none";
+
+  document.getElementById("screenshot-filename-input").value = "";
 }
 
 // select a screen to snap
