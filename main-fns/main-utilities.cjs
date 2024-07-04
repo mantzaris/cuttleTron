@@ -6,6 +6,7 @@ const execAsync = promisify(exec);
 const sudo = require("sudo-prompt");
 const sudoExecAsync = promisify(sudo.exec);
 
+
 function myWriteFileSync(event, arg_obj) {
   let dataBuffer;
 
@@ -75,8 +76,21 @@ async function checkX11Session() {
   }
 }
 
+
+/////////////////////////////////////////////////////
+// *for the gif creation from a set of images
+/////////////////////////////////////////////////////
+async function createGif(baseFilename, numDigits, targetDir, frameRate) {
+
+  
+
+}
+
+
+
+
 ////////////////////////////////////////////////////////
-//check if pulse audio or pipewire is being used TODO:
+//TODO: check if pulse audio or pipewire is being used TODO:
 ////////////////////////////////////////////////////////
 
 
@@ -94,7 +108,7 @@ async function installDependencies() {
     "gstreamer1.0-plugins-bad",
     "gstreamer1.0-plugins-ugly",
     "v4l2loopback-dkms",
-    "v4l2loopback-utils"   
+    "v4l2loopback-utils"
   ];
 
   let installCommands = [];
@@ -173,7 +187,8 @@ module.exports = {
   myWriteFileSync,
   systemX11orWayland,
   installDependencies,
-  showDialog
+  showDialog,
+  createGif
 };
 
 // let installCommand = "";

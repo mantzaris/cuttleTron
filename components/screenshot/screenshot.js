@@ -11,6 +11,8 @@ const tooltipClassName = "screenshot-screen-tooltip";
 let mediaSource;
 let autoCapture = false;
 let captureInterval = null;
+let autoCaptureFilenameFirst = "";
+let autoCaptureFilenameLast = "";
 
 async function getSavingFilePath(filename) {
   const targetDir = await getTargetDir();
@@ -36,8 +38,7 @@ document.getElementById("screenshot-expand").onclick = () => {
     expand_button.textContent = "Expand";
     expand_button.setAttribute("data-action", "expand");
     if( !autoCapture ) { //if no auto capture then leave, or else clear
-      clearVideo();
-      setRemoveHeader("screenshot-message", false, "", false);
+      clearVideo();      
     } else {
       setRemoveHeader("screenshot-message", true, "auto-capturing", true);
     }
@@ -80,7 +81,7 @@ async function screenshotSelection(source) {
         return;
       }
 
-      if (!userSelectedSource) {      
+      if (!userSelectedSource) {
         ipcRenderer.invoke('show-dialog', {
           type: 'info',
           title: 'No selected source',
@@ -143,10 +144,13 @@ async function screenshotSelection(source) {
 function mediaInactiveHandle() {
   // Handle the stream becoming inactive
   mediaSource.oninactive = () => {
-    if( document.getElementById("screenshot-screen-select-btn").textContent == "none") return;
+    clearVideo();
+
+    if( document.getElementById("screenshot-screen-select-btn").textContent == "none") {
+      return;
+    } 
     
     console.info("The stream has become inactive.");
-    clearVideo();
     ipcRenderer.invoke('show-dialog', {
       type: 'info',
       title: 'Stream Inactive',
@@ -174,6 +178,24 @@ function clearVideo() {
   selectElement.textContent = "none";
 
   document.getElementById("screenshot-filename-input").value = "";
+
+  if(autoCapture) {
+    setRemoveHeader("screenshot-message", false, "", false);
+    
+    if (document.getElementById("screenshot-gif-checkbox")?.checked) {
+      document.getElementById("screenshot-stop-auto").click();
+    } else {
+      autoCaptureFilenameFirst = "";
+      autoCaptureFilenameLast = "";
+    }
+
+    autoCapture = false;
+  }
+}
+
+function hasFourDigitsAtEnd(str) {
+  const regex = /\d{4}$/;
+  return regex.test(str);
 }
 
 // select a screen to snap
@@ -181,10 +203,19 @@ document.getElementById("screenshot-snap").onclick = async () => {
   let fileName = document.getElementById("screenshot-filename-input").value;
   const videoElement = document.querySelector("#screenshot-feed video");
   const selectElement = document.getElementById("screenshot-screen-select-btn");
+  let first = false;
 
   if(!fileName) {
     await updateFilenameForNextSave();
     fileName = document.getElementById("screenshot-filename-input").value;
+    first = true;
+  }
+
+  if(fileName && autoCapture && document.getElementById('screenshot-gif-checkbox').checked) {
+    if(!hasFourDigitsAtEnd(fileName)) {
+      await updateFilenameForNextSave();
+      fileName = document.getElementById("screenshot-filename-input").value;
+    }
   }
 
   if (videoElement.srcObject == null || selectElement.value == "none") {
@@ -206,11 +237,20 @@ document.getElementById("screenshot-snap").onclick = async () => {
   const buffer = bufferFrom(imageData, "base64");
   // Save the image data to a file
   const filePath = await getSavingFilePath(fileName);
+  
   try {
     await writeFileSync({ filePath, buffer });
     writeMessageLabel("saved screenshot", "green");
-    await updateFilenameForNextSave();
+    
+    if(autoCapture && document.getElementById("screenshot-gif-checkbox")?.checked) {
+      if(autoCaptureFilenameFirst.length > 0) autoCaptureFilenameLast = fileName;
+
+      if(autoCaptureFilenameFirst.length == 0) autoCaptureFilenameFirst = fileName;
+    }
+
+    if(!first) await updateFilenameForNextSave();
   } catch (error) {
+    document.getElementById("screenshot-stop-auto").click();
     writeMessageLabel("can't save", "red");
     console.error("Error writing file:", error);
   }
@@ -333,17 +373,17 @@ document.getElementById("screenshot-filename-input").oninput = async (event) => 
   }
 };
 
-async function updateFilenameForNextSave() {
+async function updateFilenameForNextSave(returnNames = false) {
   const filenameInput = document.getElementById("screenshot-filename-input");
   let currentFilename = filenameInput.value;
 
   if(!currentFilename || currentFilename.length == 0) {
     currentFilename = generateRandomString(5);
-    currentFilename += "-";
+    // currentFilename += "-";
     const fileExists = await fileNameCollisionCheck(currentFilename, [".png", ".jpg"]);
     if(fileExists) {
       currentFilename = generateRandomString(5);
-      currentFilename += "-";
+      // currentFilename += "-";
     }
   }
 
@@ -351,29 +391,41 @@ async function updateFilenameForNextSave() {
   const filenameRegex = /^(.*?)(\d*)(\.[^.]+)?$/;
   const matches = currentFilename.match(filenameRegex);
 
-  let baseFilename = matches[1];
+  const baseFilename = matches[1];
   let numberPart = matches[2];
   let extension = matches[3] || ""; // Include the extension if present
 
   if (numberPart) {
     let incrementedNumber = parseInt(numberPart, 10) + 1;
-    let paddedNumber = incrementedNumber.toString().padStart(numberPart.length, "0");
+    //let paddedNumber = incrementedNumber.toString().padStart(numberPart.length, "0");
+    let paddedNumber = incrementedNumber.toString().padStart(4, "0");
     currentFilename = baseFilename + paddedNumber + extension;
   } else {
-    currentFilename = baseFilename + "001" + extension;
+    currentFilename = baseFilename + "0001" + extension;
   }
 
   filenameInput.value = currentFilename;
+
+  // Optionally return the filenames if requested
+  if (returnNames) {
+    return { currentFilename, baseFilename };
+  }
 }
+
 
 // * autocapture functionality
 document.getElementById("screenshot-start-auto").onclick = () => {
   const snapButton = document.getElementById("screenshot-snap");
-  let intervalTime = parseFloat(document.getElementById("screenshot-interval-input").value) * 1000;
 
-  if (!autoCapture && mediaSource && !snapButton.disabled && intervalTime >= 50 && intervalTime <= 120000) {
+  const intervalInput = document.getElementById("screenshot-interval-input");
+  let intervalTime = parseFloat(intervalInput.value) * 1000; // Convert seconds to milliseconds
+  const minInterval = parseFloat(intervalInput.min) * 1000;  // Convert min from seconds to milliseconds
+  const maxInterval = parseFloat(intervalInput.max) * 1000;  // Convert max from seconds to milliseconds
+
+  if (!autoCapture && mediaSource && !snapButton.disabled && intervalTime >= minInterval && intervalTime <= maxInterval) {
 
     autoCapture = true;
+    
     document.getElementById("screenshot-start-auto").disabled = true;
     document.getElementById("screenshot-stop-auto").disabled = false; // Enable stop button
 
@@ -383,9 +435,10 @@ document.getElementById("screenshot-start-auto").onclick = () => {
         snapButton.click();
       } else {
         clearInterval(captureInterval);  // Stop the interval if snap button is disabled
+        
+        document.getElementById("screenshot-stop-auto").click();        
         document.getElementById("screenshot-start-auto").disabled = false;  // Re-enable the start button
         document.getElementById("screenshot-stop-auto").disabled = true; // Disable stop button
-        autoCapture = false;
       }
     }, intervalTime);
   } else {
@@ -405,17 +458,101 @@ document.getElementById("screenshot-stop-auto").onclick = () => {
     document.getElementById("screenshot-start-auto").disabled = false;  // Re-enable the start button
     document.getElementById("screenshot-stop-auto").disabled = true;  // Disable stop button
     autoCapture = false;  // Reset autoCapture state
+
+    // Check if the checkbox for saving a GIF is selected
+    const gifCheckbox = document.getElementById("screenshot-gif-checkbox");
+
+    if (gifCheckbox.checked) {
+      const fpsInput = document.getElementById("screenshot-gif-interval-input");
+      const fps = parseFloat(fpsInput.value);
+
+      // Optionally, you can add further logic here to handle GIF creation
+      const {baseFilename, numDigits,startNumber, endNumber} = getBaseFilename(autoCaptureFilenameFirst,autoCaptureFilenameLast);
+      console.log("Base Filename:", baseFilename, 'number of digits:',numDigits,
+        'start number:', startNumber, 'end number:', endNumber);
+      
+      ipcRenderer.invoke("create-gif",baseFilename, numDigits,startNumber, endNumber, fps);
+    }
   }
+
+  autoCaptureFilenameFirst = "";
+  autoCaptureFilenameLast = "";
+  autoCapture = false;
 }
 
-document.getElementById("screenshot-interval-input").addEventListener('change', function() {
-  let value = parseFloat(this.value);
-  
-  if(isNaN(value)) {
-    this.value = 1.0;
-  } else if (value < 0.05) {
-      this.value = 0.05;
-  } else if (value > 120) {
-      this.value = 120;
-  }
+
+function getBaseFilename(firstFileName, lastFileName) {
+  // Regular expression to separate the base filename, number part
+  const filenameRegex = /^(.*?)(\d*)(\.[^.]+)?$/;
+  const matchesFirst = firstFileName.match(filenameRegex);
+  const matchesSecond = lastFileName.match(filenameRegex);
+
+  if (!matchesFirst || !matchesSecond) return null; // Handle the case where the filename doesn't match the expected format
+
+  // Extract base filename and the number part
+  const baseFilenameFirst = matchesFirst[1];
+  const baseFilenameSecond = matchesSecond[1];
+
+  if(baseFilenameFirst != baseFilenameSecond) return null;
+
+  const numDigitsFirst = matchesFirst[2].length;
+  const numDigitsSecond = matchesSecond[2].length;
+
+  if(numDigitsFirst != numDigitsSecond) return null;
+
+  const startNumber = parseInt(matchesFirst[2], 10);
+  const endNumber = parseInt(matchesSecond[2], 10);
+
+  return {
+    baseFilename: baseFilenameFirst,
+    numDigits: numDigitsFirst,
+    startNumber,
+    endNumber
+  };
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  const intervalInput = document.getElementById("screenshot-interval-input");
+  intervalInput.addEventListener('change', function() {
+      let value = parseFloat(this.value);
+      const min = parseFloat(this.min);
+      const max = parseFloat(this.max);
+
+      if (isNaN(value)) {
+          this.value = 1.0; // Default value if the input is not a number
+      } else if (value < min) {
+          this.value = min; // Reset to minimum if value is below the min
+      } else if (value > max) {
+          this.value = max; // Cap at maximum if value exceeds the max
+      }
+  });
+
+  const fpsInput = document.getElementById('screenshot-gif-interval-input');
+  fpsInput.addEventListener('change', function() {
+      const min = parseFloat(fpsInput.min);
+      const max = parseFloat(fpsInput.max);
+      let value = parseFloat(fpsInput.value);
+
+      if (value < min) {
+          fpsInput.value = min;
+          // fpsInput.style.borderColor = 'red'; // Change border color to red if out of range
+      } else if (value > max) {
+          fpsInput.value = max;
+          // fpsInput.style.borderColor = 'red'; // Change border color to red if out of range
+      } else {
+          fpsInput.style.borderColor = ''; // Reset border color if within range
+      }
+  });
+
+  const checkbox = document.getElementById('screenshot-gif-checkbox');
+  const intervalDiv = document.getElementById('screenshot-gif-interval-div');
+
+    // Initially hide the interval div if the checkbox is not checked
+    intervalDiv.style.display = checkbox.checked ? 'flex' : 'none';
+
+    // Add event listener to toggle visibility based on checkbox state
+    checkbox.addEventListener('change', function() {
+        intervalDiv.style.display = this.checked ? 'flex' : 'none';
+    });
 });

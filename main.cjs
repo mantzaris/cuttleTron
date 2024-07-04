@@ -13,7 +13,7 @@ const systemEndianness = os.endianness();
 
 const { streamMaskcamToDevice, stopMaskcamStream } = require("./main-fns/maskcam.cjs");
 
-const { myWriteFileSync, showDialog, systemX11orWayland, installDependencies } = require("./main-fns/main-utilities.cjs");
+const { myWriteFileSync, showDialog, systemX11orWayland, installDependencies, createGif } = require("./main-fns/main-utilities.cjs");
 const {
   getSinksAndSourcesList,
   startAudioRecording,
@@ -174,6 +174,16 @@ ipcMain.handle("install-dependencies", async () => {
   }
 });
 
+
+///////////////////////////////////////////
+// *handler for creating a GIF
+///////////////////////////////////////////
+ipcMain.handle("create-gif", (_, baseFilename, numDigits,startNumber, endNumber, FPS) => {
+  console.log({baseFilename, numDigits,startNumber, endNumber, FPS, TARGET_DIR});
+  createGif( baseFilename, numDigits,startNumber, endNumber, FPS, TARGET_DIR); 
+})
+
+
 //*trying to use any npm package to get the audio or even repos for pulse audio specifically like
 // https://github.com/mscdex/paclient worked within nodejs itself but totally failed in electronjs
 ipcMain.handle("get-sinks-sources", async (event) => {
@@ -230,7 +240,7 @@ ipcMain.handle("audioeffects-cleanup", async (event) => {
 });
 
 //////////////////////////////////////////////////////////////////////////
-//for maskcam
+//* for maskcam
 //////////////////////////////////////////////////////////////////////////
 const maskcamWindowTitle = "cuttleTronMaskcam";
 let maskcam_window;

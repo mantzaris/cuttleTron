@@ -84,8 +84,20 @@
                     <div>
                         <button id="screenshot-start-auto" class="cool-button">Start</button>
                         <button id="screenshot-stop-auto" class="cool-button" disabled>Stop</button>
-                    </div>                    
+                    </div>
+                    <div id="screenshot-gif" >
+                        <div id="screenshot-gif-checkbox-div" >
+                          <label style="margin-right: 5px;" for="screenshot-gif-checkbox" class="cool-label">Produce Gif</label>
+                          <input id="screenshot-gif-checkbox" type="checkbox" name="screenshot-gif-checkbox" value="gif">
+                        </div>
+                        <div id="screenshot-gif-interval-div">
+                          <label for="screenshot-gif-interval-input" class="cool-label" id="screenshot-interval-input-label">FPS</label>
+                          <input type="number" id="screenshot-gif-interval-input" class="form-control" step="0.1" min="0.1" max="30.0" placeholder="10.0" value="10.0">
+                        </div>
+                    </div>                                              
                 </div>
+
+
             </div>
         </div>
 

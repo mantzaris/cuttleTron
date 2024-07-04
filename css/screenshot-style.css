@@ -80,7 +80,7 @@
   padding: 0px 0px; /* Adjust padding to reduce space, modify as needed */
 }
 
-#screenshot-filename-input, #screenshot-interval-input {
+#screenshot-filename-input, #screenshot-interval-input, #screenshot-gif-interval-input {
   padding: 2px; /* Reduces the padding inside the input field */
   font-size: smaller; /* Optionally, reduce the font size if needed */
 }
@@ -91,8 +91,6 @@
 }
 
 
-/* this is for the auto snapshot at intervals */
-
 #screenshot-interval {
   flex: 1; /* Take up the rest of the space */
   display: flex;
@@ -100,7 +98,6 @@
   align-items: flex-start;
   gap: 2px;
   margin-left: 10px;
-  /* background-color: green;  */
 }
 
 #screenshot-interval-input-label {
@@ -109,6 +106,32 @@
 
 #screenshot-interval-input {
   margin-top: 5px;
-  width: 40%;
+  width: 30%;
   margin-bottom: 8px;
+}
+
+/* this is for the auto snapshot at intervals */
+#screenshot-gif {
+  margin-top: 10px;
+  width: 100%;
+}
+
+#screenshot-gif-checkbox-div {
+  display: flex; 
+  align-items: center;
+}
+
+#screenshot-gif-interval-div {
+  display: flex;
+  flex-direction: row; /* Explicitly setting the direction */
+  align-items: center;
+  margin-top: 5px;
+  width: 100%;
+}
+
+#screenshot-interval-input-label {
+}
+
+#screenshot-gif-interval-input {
+  width: 20%;
 }
