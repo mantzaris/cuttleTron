@@ -193,31 +193,20 @@ function clearVideo() {
   }
 }
 
-function hasFourDigitsAtEnd(str) {
-  const regex = /\d{4}$/;
-  return regex.test(str);
-}
 
 // select a screen to snap
 document.getElementById("screenshot-snap").onclick = async () => {
   let fileName = document.getElementById("screenshot-filename-input").value;
   const videoElement = document.querySelector("#screenshot-feed video");
   const selectElement = document.getElementById("screenshot-screen-select-btn");
-  let first = false;
 
+  
   if(!fileName) {
     await updateFilenameForNextSave();
     fileName = document.getElementById("screenshot-filename-input").value;
-    first = true;
   }
 
-  if(fileName && autoCapture && document.getElementById('screenshot-gif-checkbox').checked) {
-    if(!hasFourDigitsAtEnd(fileName)) {
-      await updateFilenameForNextSave();
-      fileName = document.getElementById("screenshot-filename-input").value;
-    }
-  }
-
+  
   if (videoElement.srcObject == null || selectElement.value == "none") {
     writeMessageLabel("select screen feed", "gray");
     return;
@@ -248,7 +237,7 @@ document.getElementById("screenshot-snap").onclick = async () => {
       if(autoCaptureFilenameFirst.length == 0) autoCaptureFilenameFirst = fileName;
     }
 
-    if(!first) await updateFilenameForNextSave();
+    await updateFilenameForNextSave();
   } catch (error) {
     document.getElementById("screenshot-stop-auto").click();
     writeMessageLabel("can't save", "red");
@@ -429,6 +418,8 @@ document.getElementById("screenshot-start-auto").onclick = () => {
     document.getElementById("screenshot-start-auto").disabled = true;
     document.getElementById("screenshot-stop-auto").disabled = false; // Enable stop button
 
+    updateFilenameForGifCreation();
+
     // Set the interval to simulate the snap button click
     captureInterval = setInterval(() => {
       if (!snapButton.disabled) {  // Check if the snap button is still enabled
@@ -556,3 +547,48 @@ document.addEventListener('DOMContentLoaded', function() {
         intervalDiv.style.display = this.checked ? 'flex' : 'none';
     });
 });
+
+
+
+function updateFilenameForGifCreation() {
+  const gifCheckbox = document.getElementById("screenshot-gif-checkbox");
+  const filenameInput = document.getElementById("screenshot-filename-input");
+
+  if (gifCheckbox.checked) {
+    let currentFilename = filenameInput.value;
+
+    // Generate a random base string if the current filename is empty
+    if (!currentFilename || currentFilename.length === 0) {
+      currentFilename = generateRandomString(5) + "0001";
+    }
+
+    // Regular expression to separate the base filename, number part, and extension
+    const filenameRegex = /^(.*?)(\d*)(\.[^.]+)?$/;
+    const matches = currentFilename.match(filenameRegex);
+
+    if (!matches) {
+      // Handle invalid filename format
+      return;
+    }
+
+    let baseFilename = matches[1];
+    let numberPart = matches[2];
+    let extension = matches[3] || ""; // Include the extension if present
+
+    // Ensure the number part is a 4-digit number with leading zeros
+    if (numberPart) {
+      let paddedNumber = parseInt(numberPart, 10).toString().padStart(4, "0");
+      currentFilename = baseFilename + paddedNumber + extension;
+    } else {
+      currentFilename = baseFilename + "0001" + extension;
+    }
+
+    filenameInput.value = currentFilename;
+  }
+}
+
+
+function hasFourDigitsAtEnd(str) {
+  const regex = /\d{4}$/;
+  return regex.test(str);
+}
