@@ -76,7 +76,9 @@ async function streamMaskcamToDevice(maskcamWindowTitle, maskcamWinIdHex) {
       return;
     }
 
-    const output = execSync("v4l2-ctl --list-devices").toString();
+    // TODO: is this correct to have toString?
+    // const output = execSync("v4l2-ctl --list-devices").toString();
+    const { stdout: output } = await execAsync('v4l2-ctl --list-devices');//.toString();
     console.log(`in streamMaskcamToDevice, v4l2-ctl --list-devices = ${output}`);
 
     console.log("prior to spawning ffmpeg command");
@@ -105,7 +107,8 @@ async function streamMaskcamToDevice(maskcamWindowTitle, maskcamWinIdHex) {
 //TODO: check if X11 or Wayland, new approaches should have a modern version of device management https://github.com/umlaeute/v4l2loopback?tab=readme-ov-file#dynamic-device-management
 //https://github.com/umlaeute/v4l2loopback?tab=readme-ov-file#dynamic-device-management
 async function createMaskcamVideoDevice(maskcamWindowTitle) {
-  let output = execSync("v4l2-ctl --list-devices").toString(); //TODO:
+  // let output = execSync("v4l2-ctl --list-devices").toString(); 
+  let { stdout: output } = await execAsync('v4l2-ctl --list-devices');//.toString(); //TODO: needs toString?
   console.log(`in createMaskcamVideoDevice 1, v4l2-ctl --list-devices = ${output}`);
 
   // Generating a random device number between 30 and 60
@@ -118,7 +121,9 @@ async function createMaskcamVideoDevice(maskcamWindowTitle) {
 
     console.log(`Device /dev/video${videoDevIdNum} created successfully with label ${maskcamWindowTitle}.`);
 
-    output = execSync("v4l2-ctl --list-devices").toString();
+    // output = execSync("v4l2-ctl --list-devices").toString();
+    ({ stdout: output } = await execAsync('v4l2-ctl --list-devices'));//.toString(); //TODO: 
+
     console.log(`in createMaskcamVideoDevice 2, v4l2-ctl --list-devices = ${output}`);
 
     return videoDevIdNum;

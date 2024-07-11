@@ -1,6 +1,7 @@
 const { dialog } = require('electron');
 const fs = require("fs");
-const { exec, execSync } = require("child_process");
+const path = require("path");
+const { exec, spawn } = require("child_process");
 const { promisify } = require("util");
 const execAsync = promisify(exec);
 const sudo = require("sudo-prompt");
@@ -80,9 +81,61 @@ async function checkX11Session() {
 /////////////////////////////////////////////////////
 // *for the gif creation from a set of images
 /////////////////////////////////////////////////////
-async function createGif(baseFilename, numDigits, targetDir, frameRate) {
+async function createGif(baseFilename, numDigits,startNumber, endNumber, FPS, TARGET_DIR) {
 
-  
+  // const inputPattern = `${baseFilename}%0${numDigits}d.png`; // Assuming 4-digit numbering
+  const inputPattern = path.join(TARGET_DIR, `${baseFilename}%0${numDigits}d.png`);
+  console.log("Constructed file pattern:", inputPattern); // Log to verify
+
+  const framesCount = endNumber - startNumber + 1;
+  const outputPath = path.join(TARGET_DIR, `${baseFilename}${startNumber}to${endNumber}.gif`);
+  console.log(`output path: ${outputPath}`)
+
+  // Command arguments for `ffmpeg`
+  const args = [
+    '-framerate', String(FPS),
+    '-start_number', String(startNumber),
+    '-i', inputPattern,
+    '-frames:v', String(framesCount),
+    '-vf', `scale=640:-1:flags=lanczos,fps=${FPS}`,
+    '-y', outputPath
+  ];
+
+  // * fire and forget, approach, not used
+  // const ffmpeg = spawn('ffmpeg', args);\
+  // ffmpeg.stderr.on('data', (data) => {
+  //   console.error(`stderr: ${data}`);
+  // });
+  // ffmpeg.on('close', (code) => {
+  //   if (code !== 0) {
+  //     console.error(`ffmpeg exited with code ${code}`);
+  //   }
+  // });
+  // return outputPath;
+
+  return new Promise((resolve, reject) => {
+    const ffmpeg = spawn('ffmpeg', args);
+
+    ffmpeg.stdout.on('data', (data) => {
+      console.log(`stdout: ${data}`);
+    });
+
+    ffmpeg.stderr.on('data', (data) => {
+      console.error(`stderr: ${data}`);
+    });
+
+    ffmpeg.on('close', (code) => {
+      if (code === 0) {
+        resolve(`GIF created successfully at ${outputPath}`);
+      } else {
+        reject(new Error(`ffmpeg exited with code ${code}`));
+      }
+    });
+
+    ffmpeg.on('error', (error) => {
+      reject(new Error(`Failed to start ffmpeg process: ${error.message}`));
+    });
+  });
 
 }
 

@@ -178,9 +178,15 @@ ipcMain.handle("install-dependencies", async () => {
 ///////////////////////////////////////////
 // *handler for creating a GIF
 ///////////////////////////////////////////
-ipcMain.handle("create-gif", (_, baseFilename, numDigits,startNumber, endNumber, FPS) => {
+ipcMain.handle("create-gif", async (event , baseFilename, numDigits,startNumber, endNumber, FPS) => {
   console.log({baseFilename, numDigits,startNumber, endNumber, FPS, TARGET_DIR});
-  createGif( baseFilename, numDigits,startNumber, endNumber, FPS, TARGET_DIR); 
+  
+  try {
+    const result = await createGif(baseFilename, numDigits, startNumber, endNumber, FPS, TARGET_DIR);
+    return result;
+  } catch (error) {
+      throw new Error(`Error creating GIF: ${error.message}`);
+  }
 })
 
 

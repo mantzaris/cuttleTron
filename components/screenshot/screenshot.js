@@ -459,9 +459,6 @@ document.getElementById("screenshot-stop-auto").onclick = () => {
 
       // Optionally, you can add further logic here to handle GIF creation
       const {baseFilename, numDigits,startNumber, endNumber} = getBaseFilename(autoCaptureFilenameFirst,autoCaptureFilenameLast);
-      console.log("Base Filename:", baseFilename, 'number of digits:',numDigits,
-        'start number:', startNumber, 'end number:', endNumber);
-      
       ipcRenderer.invoke("create-gif",baseFilename, numDigits,startNumber, endNumber, fps);
     }
   }
