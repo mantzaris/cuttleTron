@@ -13,7 +13,7 @@ const systemEndianness = os.endianness();
 
 const { streamMaskcamToDevice, stopMaskcamStream } = require("./main-fns/maskcam.cjs");
 
-const { myWriteFileSync, showDialog, systemX11orWayland, installDependencies, createGif } = require("./main-fns/main-utilities.cjs");
+const { myWriteFileSync, showDialog, systemX11orWayland, systemPulseaudioOrPipewire, installDependencies, createGif } = require("./main-fns/main-utilities.cjs");
 const {
   getSinksAndSourcesList,
   startAudioRecording,
@@ -37,6 +37,8 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 let X11orWayland = systemX11orWayland();
+let pulseaudioOrPipeWire = systemPulseaudioOrPipewire();
+
 let mainWindow;
 
 function createWindow() {
@@ -151,6 +153,10 @@ ipcMain.handle('getCaptureID', async (event) => {
 ipcMain.handle("systemX11orWayland", async (event) => {
   return X11orWayland;
 });
+
+ipcMain.handle("pulseaudioOrPipewire", async (event) => {
+  return pulseaudioOrPipeWire;
+})
 
 
 ////////////////////////////////////

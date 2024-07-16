@@ -1,4 +1,4 @@
-const { dialog } = require('electron');
+const { dialog } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { exec, spawn } = require("child_process");
@@ -6,7 +6,6 @@ const { promisify } = require("util");
 const execAsync = promisify(exec);
 const sudo = require("sudo-prompt");
 const sudoExecAsync = promisify(sudo.exec);
-
 
 function myWriteFileSync(event, arg_obj) {
   let dataBuffer;
@@ -23,17 +22,16 @@ function myWriteFileSync(event, arg_obj) {
   return fs.writeFileSync(arg_obj.filePath, dataBuffer);
 }
 
-
 ////////////////////////////////////
 //dialog generic
 ////////////////////////////////////
 async function showDialog(options) {
   const defaultOptions = {
-    type: 'info',
-    title: 'Information',
-    buttons: ['OK'],
-    message: 'No message provided',
-    detail: ''
+    type: "info",
+    title: "Information",
+    buttons: ["OK"],
+    message: "No message provided",
+    detail: "",
   };
 
   const dialogOptions = { ...defaultOptions, ...options };
@@ -64,7 +62,7 @@ async function systemX11orWayland() {
     }
   }
 
-  console.log(`system display between x11 or wayland: ${sessionType}`)
+  console.log(`system display between x11 or wayland: ${sessionType}`);
   return sessionType;
 }
 
@@ -77,28 +75,132 @@ async function checkX11Session() {
   }
 }
 
+////////////////////////////////////////////////////////
+//?check if pulse audio or pipewire is being used
+////////////////////////////////////////////////////////
+async function systemPulseaudioOrPipewire() {
+  try {
+    //? pulse audio
+    const { stdout: pulseAudioStdout } = await execAsync(
+      "ps cax | grep pulseaudio"
+    ).catch((e) => ({ stdout: "" }));
+    if (pulseAudioStdout.includes("pulseaudio")) {
+      console.log("pulseaudio detected");
+      return "pulseaudio";
+    }
+
+    //? pipewire
+    const { stdout: pipewireStdout } = await execAsync(
+      "ps cax | grep pipewire"
+    ).catch((e) => ({ stdout: "" }));
+    if (pipewireStdout.includes("pipewire")) {
+      console.log("pipewire detected");
+      return "pipewire";
+    }
+
+    const { stdout: pulseService } = await execAsync(
+      "systemctl is-active pulseaudio.service"
+    ).catch((e) => ({ stdout: "inactive" }));
+    if (pulseService.trim() === "active") {
+      console.log("pulseaudio service is active");
+      return "pulseaudio";
+    }
+
+    const { stdout: pipeService } = await execAsync(
+      "systemctl is-active pipewire.service"
+    ).catch((e) => ({ stdout: "inactive" }));
+    if (pipeService.trim() === "active") {
+      console.log("pipewire service is active");
+      return "pipewire";
+    }
+
+    const pulseEnv = process.env.PULSE_SERVER;
+    const pipeEnv = process.env.PIPEWIRE_MEDIA_SESSION;
+
+    if (pulseEnv) {
+      console.log("PulseAudio environment variable detected");
+      return "pulseaudio";
+    } else if (pipeEnv) {
+      console.log("PipeWire environment variable detected");
+      return "pipewire";
+    }
+
+    const { stdout: processList } = await execAsync("ps aux").catch((e) => ({
+      stdout: "",
+    }));
+
+    if (processList.includes("pipewire")) {
+      return "pipewire";
+    } else if (processList.includes("pulseaudio")) {
+      return "pulseaudio";
+    }
+
+    const { stdout: systemServices } = await execAsync(
+      "systemctl --type=service --state=running"
+    ).catch((e) => ({ stdout: "" }));
+    const { stdout: userServices } = await execAsync(
+      "systemctl --user --type=service --state=running"
+    ).catch((e) => ({ stdout: "" }));
+
+    // Search both outputs for relevant service information
+    if (
+      systemServices.includes("pipewire.service") ||
+      userServices.includes("pipewire.service")
+    ) {
+      return "pipewire";
+    } else if (
+      systemServices.includes("pulseaudio.service") ||
+      userServices.includes("pulseaudio.service")
+    ) {
+      return "pulseaudio";
+    }
+
+    console.log(" audio system unknown"); // Neither found, or unable to determine
+    return "pipewire"; //default
+  } catch (error) {
+    console.error("Error checking audio system:", error);
+  }
+}
 
 /////////////////////////////////////////////////////
 // *for the gif creation from a set of images
 /////////////////////////////////////////////////////
-async function createGif(baseFilename, numDigits,startNumber, endNumber, FPS, TARGET_DIR) {
-
+async function createGif(
+  baseFilename,
+  numDigits,
+  startNumber,
+  endNumber,
+  FPS,
+  TARGET_DIR
+) {
   // const inputPattern = `${baseFilename}%0${numDigits}d.png`; // Assuming 4-digit numbering
-  const inputPattern = path.join(TARGET_DIR, `${baseFilename}%0${numDigits}d.png`);
+  const inputPattern = path.join(
+    TARGET_DIR,
+    `${baseFilename}%0${numDigits}d.png`
+  );
   console.log("Constructed file pattern:", inputPattern); // Log to verify
 
   const framesCount = endNumber - startNumber + 1;
-  const outputPath = path.join(TARGET_DIR, `${baseFilename}${startNumber}to${endNumber}.gif`);
-  console.log(`output path: ${outputPath}`)
+  const outputPath = path.join(
+    TARGET_DIR,
+    `${baseFilename}${startNumber}to${endNumber}.gif`
+  );
+  console.log(`output path: ${outputPath}`);
 
   // Command arguments for `ffmpeg`
   const args = [
-    '-framerate', String(FPS),
-    '-start_number', String(startNumber),
-    '-i', inputPattern,
-    '-frames:v', String(framesCount),
-    '-vf', `scale=640:-1:flags=lanczos,fps=${FPS}`,
-    '-y', outputPath
+    "-framerate",
+    String(FPS),
+    "-start_number",
+    String(startNumber),
+    "-i",
+    inputPattern,
+    "-frames:v",
+    String(framesCount),
+    "-vf",
+    `scale=640:-1:flags=lanczos,fps=${FPS}`,
+    "-y",
+    outputPath,
   ];
 
   // * fire and forget, approach, not used
@@ -114,17 +216,17 @@ async function createGif(baseFilename, numDigits,startNumber, endNumber, FPS, TA
   // return outputPath;
 
   return new Promise((resolve, reject) => {
-    const ffmpeg = spawn('ffmpeg', args);
+    const ffmpeg = spawn("ffmpeg", args);
 
-    ffmpeg.stdout.on('data', (data) => {
+    ffmpeg.stdout.on("data", (data) => {
       console.log(`stdout: ${data}`);
     });
 
-    ffmpeg.stderr.on('data', (data) => {
+    ffmpeg.stderr.on("data", (data) => {
       console.error(`stderr: ${data}`);
     });
 
-    ffmpeg.on('close', (code) => {
+    ffmpeg.on("close", (code) => {
       if (code === 0) {
         resolve(`GIF created successfully at ${outputPath}`);
       } else {
@@ -132,28 +234,19 @@ async function createGif(baseFilename, numDigits,startNumber, endNumber, FPS, TA
       }
     });
 
-    ffmpeg.on('error', (error) => {
+    ffmpeg.on("error", (error) => {
       reject(new Error(`Failed to start ffmpeg process: ${error.message}`));
     });
   });
-
 }
-
-
-
-
-////////////////////////////////////////////////////////
-//TODO: check if pulse audio or pipewire is being used TODO:
-////////////////////////////////////////////////////////
-
-
 
 ///////////////////////////////////////////////////
 // install dependencies
 ///////////////////////////////////////////////////
 async function installDependencies() {
   //[ pulseaudio and pulseaudio-utils ]
-  let dependencies = [ //TODO:  "wmctrl","ydotool", "xdotool"
+  let dependencies = [
+    //TODO:  "wmctrl","ydotool", "xdotool"
     "ffmpeg",
     "gstreamer1.0-tools",
     "gstreamer1.0-plugins-base",
@@ -161,52 +254,63 @@ async function installDependencies() {
     "gstreamer1.0-plugins-bad",
     "gstreamer1.0-plugins-ugly",
     "v4l2loopback-dkms",
-    "v4l2loopback-utils"
+    "v4l2loopback-utils",
   ];
 
   let installCommands = [];
 
-  if (fs.existsSync("/usr/bin/apt")) { // Debian, Ubuntu, etc.
+  if (fs.existsSync("/usr/bin/apt")) {
+    // Debian, Ubuntu, etc.
     installCommands = dependencies.map((dep) => `apt install -y ${dep}`);
-  } else if (fs.existsSync("/usr/bin/dnf")) { // Fedora, RHEL, etc.
+  } else if (fs.existsSync("/usr/bin/dnf")) {
+    // Fedora, RHEL, etc.
     installCommands = dependencies.map((dep) => `dnf install -y ${dep}`);
-  } else if (fs.existsSync("/usr/bin/yum")) { // old Fedora, RHEL, etc.
+  } else if (fs.existsSync("/usr/bin/yum")) {
+    // old Fedora, RHEL, etc.
     installCommands = dependencies.map((dep) => `yum install -y ${dep}`);
-  } else if (fs.existsSync("/usr/bin/pacman")) { // Arch Linux, Manjaro, etc.
+  } else if (fs.existsSync("/usr/bin/pacman")) {
+    // Arch Linux, Manjaro, etc.
     installCommands = dependencies.map((dep) => `pacman -S --noconfirm ${dep}`);
-  } else if (fs.existsSync("/usr/bin/zypper")) { // openSUSE
+  } else if (fs.existsSync("/usr/bin/zypper")) {
+    // openSUSE
     installCommands = dependencies.map((dep) => `zypper install -y ${dep}`);
-  } else if (fs.existsSync("/usr/bin/xbps-install")) { // Void Linux
+  } else if (fs.existsSync("/usr/bin/xbps-install")) {
+    // Void Linux
     installCommands = dependencies.map((dep) => `xbps-install -y ${dep}`);
   } else {
     console.error("Unsupported package manager or Linux distribution.");
     await showDialog({
-      type: 'error',
-      title: 'Unsupported package manager',
+      type: "error",
+      title: "Unsupported package manager",
       message: `Since this system package manager is not supported install:\n ${dependencies} `,
-      buttons: ['OK'],
-      defaultId: 0
+      buttons: ["OK"],
+      defaultId: 0,
     });
-  
+
     return { success: false, canceled: false };
   }
 
   const result = await showDialog({
-    type: 'question',
-    title: 'Install Dependencies?',
-    message: `About to install ${dependencies.length} dependencies (permissions asked separately):\n ${dependencies.join(', ')} `,
-    buttons: ['Cancel', 'OK'],
+    type: "question",
+    title: "Install Dependencies?",
+    message: `About to install ${
+      dependencies.length
+    } dependencies (permissions asked separately):\n ${dependencies.join(
+      ", "
+    )} `,
+    buttons: ["Cancel", "OK"],
     defaultId: 1,
-    cancelId: 0
+    cancelId: 0,
   });
 
-  if (result.response === 0) { // Check if Cancel was clicked
-    console.log(`Dependency installation canceled by user`)
+  if (result.response === 0) {
+    // Check if Cancel was clicked
+    console.log(`Dependency installation canceled by user`);
     return { success: false, canceled: true };
   }
 
   let failureCount = 0;
-  
+
   for (let cmd of installCommands) {
     console.log(`Installing ${cmd}`);
     try {
@@ -215,13 +319,13 @@ async function installDependencies() {
       console.log(stdout);
     } catch (error) {
       await showDialog({
-        type: 'error',
-        title: 'Error installing dependency',
+        type: "error",
+        title: "Error installing dependency",
         message: `Attempted: ${cmd},\n Error: ${error.message}`,
-        buttons: ['OK'],
-      })
+        buttons: ["OK"],
+      });
 
-      failureCount += 1;      
+      failureCount += 1;
       console.error(`Error during the installation of ${cmd}: ${error}`);
     }
   }
@@ -230,18 +334,17 @@ async function installDependencies() {
     success: failureCount < dependencies.length,
     canceled: false,
     failures: failureCount,
-    successes: dependencies.length - failureCount
+    successes: dependencies.length - failureCount,
   };
 }
-
-
 
 module.exports = {
   myWriteFileSync,
   systemX11orWayland,
+  systemPulseaudioOrPipewire,
   installDependencies,
   showDialog,
-  createGif
+  createGif,
 };
 
 // let installCommand = "";
