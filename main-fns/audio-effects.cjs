@@ -16,7 +16,13 @@ let virtualSourceModuleId = null;
 
 async function audioEffectsStart(audioEffectsParams) {
   const { source, effects } = audioEffectsParams;
-  const gs_sourceArgs = ["pulsesrc", `device=${source}`, `buffer-time=${bufferTime}`, "!", "audioconvert"];
+  const gs_sourceArgs = [
+    "pulsesrc",
+    `device=${source}`,
+    `buffer-time=${bufferTime}`,
+    "!",
+    "audioconvert",
+  ];
   const gs_sinkArgs = ["!", "pulsesink", `device=${virtualSinkName}`];
 
   let gs_effectArgs = getGStreamerEffectArgs(effects);
@@ -37,12 +43,16 @@ async function audioEffectsStart(audioEffectsParams) {
 
       const sinkResult = await execAsync(loadSinkCommand);
       virtualSinkModuleId = sinkResult.stdout.trim();
-      console.log(`Virtual sink: ${virtualSinkName}, created successfully for audio effects.`);
+      console.log(
+        `Virtual sink: ${virtualSinkName}, created successfully for audio effects.`
+      );
 
       // Create the remapped source
       const sourceResult = await execAsync(loadRemapCommand);
       virtualSourceModuleId = sourceResult.stdout.trim();
-      console.log(`Virtual source: ${virtualSourceName}, created successfully.`);
+      console.log(
+        `Virtual source: ${virtualSourceName}, created successfully.`
+      );
     } else if (gStreamerProcess != null) {
       //pulse audio modules exist so kill GStreamer to make a new one with new effects 'Alter'
       killGStreamer();
@@ -83,17 +93,24 @@ async function cleanupAudioDevices() {
     virtualSourceModuleId = null;
 
     // List all modules
+    //!FIX this TODO: pactl is always assumed
     const { stdout: modulesList } = await execAsync("pactl list short modules");
 
     // Unload virtual sinks (module-null-sink)
-    const nullSinkPattern = new RegExp(`(\\d+)\\s+module-null-sink\\s+sink_name=${virtualSinkName}`, "g");
+    const nullSinkPattern = new RegExp(
+      `(\\d+)\\s+module-null-sink\\s+sink_name=${virtualSinkName}`,
+      "g"
+    );
     let match;
     while ((match = nullSinkPattern.exec(modulesList)) !== null) {
       await unloadPA_Module(match[1]);
     }
 
     // Unload virtual sources (module-remap-source)
-    const remapSourcePattern = new RegExp(`(\\d+)\\s+module-remap-source\\s+.*?source_name=${virtualSourceName}`, "g");
+    const remapSourcePattern = new RegExp(
+      `(\\d+)\\s+module-remap-source\\s+.*?source_name=${virtualSourceName}`,
+      "g"
+    );
     while ((match = remapSourcePattern.exec(modulesList)) !== null) {
       await unloadPA_Module(match[1]);
     }
@@ -119,7 +136,13 @@ function getGStreamerEffectArgs(effects) {
         const delay = params.echo_delay;
         const intensity = params.echo_intensity;
         const feedback = params.echo_feedback;
-        gs_effectArgs.push("!", `audioecho`, `delay=${delay}`, `intensity=${intensity}`, `feedback=${feedback}`);
+        gs_effectArgs.push(
+          "!",
+          `audioecho`,
+          `delay=${delay}`,
+          `intensity=${intensity}`,
+          `feedback=${feedback}`
+        );
         break;
       case "distortion":
         const drive = params.distortion_drive;
@@ -146,21 +169,42 @@ function getGStreamerEffectArgs(effects) {
         const damping = params.reverb_damping;
         const level = params.reverb_level;
         const width = params.reverb_width;
-        gs_effectArgs.push("!", `freeverb`, `room-size=${roomsize}`, `damping=${damping}`, `level=${level}`, `width=${width}`);
+        gs_effectArgs.push(
+          "!",
+          `freeverb`,
+          `room-size=${roomsize}`,
+          `damping=${damping}`,
+          `level=${level}`,
+          `width=${width}`
+        );
         break;
       case "scaletempo":
         const stride = params.scaletempo_stride;
         const overlap = params.scaletempo_overlap;
         const search = params.scaletempo_search;
-        gs_effectArgs.push("!", `scaletempo`, `stride=${stride}`, `overlap=${overlap}`, `search=${search}`);
+        gs_effectArgs.push(
+          "!",
+          `scaletempo`,
+          `stride=${stride}`,
+          `overlap=${overlap}`,
+          `search=${search}`
+        );
         break;
       case "amplify1":
         const amplification1 = params.amplify1_amplification;
-        gs_effectArgs.push("!", `audioamplify`, `amplification=${amplification1}`);
+        gs_effectArgs.push(
+          "!",
+          `audioamplify`,
+          `amplification=${amplification1}`
+        );
         break;
       case "amplify2":
         const amplification2 = params.amplify2_amplification;
-        gs_effectArgs.push("!", `audioamplify`, `amplification=${amplification2}`);
+        gs_effectArgs.push(
+          "!",
+          `audioamplify`,
+          `amplification=${amplification2}`
+        );
         break;
       case "stereo":
         const stereo = params.stereo_stereo;
@@ -169,12 +213,24 @@ function getGStreamerEffectArgs(effects) {
       case "dynamicExpander":
         const exp_ratio = params.dynamicExpander_ratio;
         const exp_threshold = params.dynamicExpander_threshold;
-        gs_effectArgs.push("!", `audiodynamic`, `mode=expander`, `ratio=${exp_ratio}`, `threshold=${exp_threshold}`);
+        gs_effectArgs.push(
+          "!",
+          `audiodynamic`,
+          `mode=expander`,
+          `ratio=${exp_ratio}`,
+          `threshold=${exp_threshold}`
+        );
         break;
       case "dynamicCompressor":
         const comp_ratio = params.dynamicCompressor_ratio;
         const comp_threshold = params.dynamicCompressor_threshold;
-        gs_effectArgs.push("!", `audiodynamic`, `mode=compressor`, `ratio=${comp_ratio}`, `threshold=${comp_threshold}`);
+        gs_effectArgs.push(
+          "!",
+          `audiodynamic`,
+          `mode=compressor`,
+          `ratio=${comp_ratio}`,
+          `threshold=${comp_threshold}`
+        );
         break;
       case "bandFilter":
         const lower_frequency = params.band_lower;
@@ -213,6 +269,8 @@ async function unloadPA_Module(moduleId) {
     await execAsync(`pactl unload-module ${moduleId}`);
     console.log(`Successfully unloaded module with ID: ${moduleId}`);
   } catch (unloadError) {
-    console.error(`Error unloading moduleID=${moduleId}: ${unloadError.message}`);
+    console.error(
+      `Error unloading moduleID=${moduleId}: ${unloadError.message}`
+    );
   }
 }

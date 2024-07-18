@@ -1,8 +1,16 @@
 const { ipcRenderer } = window.electron;
-const { joinPath, writeFileSync, bufferFrom, getTargetDir } = window.nodeModules;
-import { fileNameCollisionCheck,generateRandomString } from "../../utilities/utils.js";
+const { joinPath, writeFileSync, bufferFrom, getTargetDir } =
+  window.nodeModules;
+import {
+  fileNameCollisionCheck,
+  generateRandomString,
+} from "../../utilities/utils.js";
 
-import { initializeTooltips, getWebcamSources, setRemoveHeader } from "../component-utilities/component-utilities.js";
+import {
+  initializeTooltips,
+  getWebcamSources,
+  setRemoveHeader,
+} from "../component-utilities/component-utilities.js";
 
 const screenSelMenuId = "screenshot-selectionUL";
 const screen_sel_btn_id = "screenshot-screen-select-btn";
@@ -37,18 +45,29 @@ document.getElementById("screenshot-expand").onclick = () => {
     screenshot.classList.remove("expanded");
     expand_button.textContent = "Expand";
     expand_button.setAttribute("data-action", "expand");
-    if( !autoCapture ) { //if no auto capture then leave, or else clear
-      clearVideo();      
+    if (!autoCapture) {
+      //if no auto capture then leave, or else clear
+      clearVideo();
     } else {
       setRemoveHeader("screenshot-message", true, "auto-capturing", true);
     }
   }
 
-  populateScreenOptions(screenSelMenuId, screen_sel_btn_id, tooltipClassName, screenshotSelection);
+  populateScreenOptions(
+    screenSelMenuId,
+    screen_sel_btn_id,
+    tooltipClassName,
+    screenshotSelection
+  );
 };
 
 document.getElementById("screenshot-refresh").onclick = () => {
-  populateScreenOptions(screenSelMenuId, screen_sel_btn_id, tooltipClassName, screenshotSelection);
+  populateScreenOptions(
+    screenSelMenuId,
+    screen_sel_btn_id,
+    tooltipClassName,
+    screenshotSelection
+  );
 };
 
 async function screenshotSelection(source) {
@@ -65,50 +84,49 @@ async function screenshotSelection(source) {
       frameRate: { ideal: 16, max: 24 },
       // You can add more constraints here, like width, height, etc.
     };
-  } else if(source.type == "portal") {
+  } else if (source.type == "portal") {
     try {
       const sources = await ipcRenderer.invoke("getCaptureID");
       const userSelectedSource = sources[0];
-      
+
       if (!sources || sources.length === 0) {
-        ipcRenderer.invoke('show-dialog', {
-          type: 'info',
-          title: 'No screen sources',
+        ipcRenderer.invoke("show-dialog", {
+          type: "info",
+          title: "No screen sources",
           message: `No sources available for capturing.`,
-          buttons: ['OK'],
+          buttons: ["OK"],
           defaultId: 0,
         });
         return;
       }
 
       if (!userSelectedSource) {
-        ipcRenderer.invoke('show-dialog', {
-          type: 'info',
-          title: 'No selected source',
+        ipcRenderer.invoke("show-dialog", {
+          type: "info",
+          title: "No selected source",
           message: `No source selected.`,
-          buttons: ['OK'],
+          buttons: ["OK"],
           defaultId: 0,
         });
         return;
       }
       videoConstraints = {
         mandatory: {
-          chromeMediaSource: 'desktop',
+          chromeMediaSource: "desktop",
           chromeMediaSourceId: userSelectedSource.id,
           frameRate: { ideal: 16, max: 24 },
-        }
+        },
       };
     } catch (error) {
-      ipcRenderer.invoke('show-dialog', {
-        type: 'error',
-        title: 'Cannot fetch source',
+      ipcRenderer.invoke("show-dialog", {
+        type: "error",
+        title: "Cannot fetch source",
         message: `Error fetching screen/window sources:, ${error}`,
-        buttons: ['OK'],
+        buttons: ["OK"],
         defaultId: 0,
       });
       return;
     }
-
   } else {
     videoConstraints = {
       mandatory: {
@@ -119,7 +137,7 @@ async function screenshotSelection(source) {
     };
   }
 
-  try {    
+  try {
     const videoElement = document.querySelector("#screenshot-feed video");
 
     mediaSource = await navigator.mediaDevices.getUserMedia({
@@ -129,13 +147,13 @@ async function screenshotSelection(source) {
 
     videoElement.srcObject = mediaSource;
     videoElement.play(); // Start playing the video stream
-    mediaInactiveHandle()
+    mediaInactiveHandle();
   } catch (error) {
-    ipcRenderer.invoke('show-dialog', {
-      type: 'error',
-      title: 'Error capturing screen',
+    ipcRenderer.invoke("show-dialog", {
+      type: "error",
+      title: "Error capturing screen",
       message: `Error capturing screen: ${error} `,
-      buttons: ['OK'],
+      buttons: ["OK"],
       defaultId: 0,
     });
   }
@@ -146,16 +164,19 @@ function mediaInactiveHandle() {
   mediaSource.oninactive = () => {
     clearVideo();
 
-    if( document.getElementById("screenshot-screen-select-btn").textContent == "none") {
+    if (
+      document.getElementById("screenshot-screen-select-btn").textContent ==
+      "none"
+    ) {
       return;
-    } 
-    
+    }
+
     console.info("The stream has become inactive.");
-    ipcRenderer.invoke('show-dialog', {
-      type: 'info',
-      title: 'Stream Inactive',
-      message: 'The captured window was closed or lost.',
-      buttons: ['OK'],
+    ipcRenderer.invoke("show-dialog", {
+      type: "info",
+      title: "Stream Inactive",
+      message: "The captured window was closed or lost.",
+      buttons: ["OK"],
       defaultId: 0,
     });
   };
@@ -164,9 +185,9 @@ function mediaInactiveHandle() {
 function clearVideo() {
   if (mediaSource) {
     const tracks = mediaSource.getTracks();
-    tracks.forEach(track => track.stop()); // Ensure all tracks are stopped
+    tracks.forEach((track) => track.stop()); // Ensure all tracks are stopped
   }
-  
+
   mediaSource = null; // Clear the global reference
 
   const videoElement = document.querySelector("#screenshot-feed video");
@@ -179,9 +200,9 @@ function clearVideo() {
 
   document.getElementById("screenshot-filename-input").value = "";
 
-  if(autoCapture) {
+  if (autoCapture) {
     setRemoveHeader("screenshot-message", false, "", false);
-    
+
     if (document.getElementById("screenshot-gif-checkbox")?.checked) {
       document.getElementById("screenshot-stop-auto").click();
     } else {
@@ -193,20 +214,17 @@ function clearVideo() {
   }
 }
 
-
 // select a screen to snap
 document.getElementById("screenshot-snap").onclick = async () => {
   let fileName = document.getElementById("screenshot-filename-input").value;
   const videoElement = document.querySelector("#screenshot-feed video");
   const selectElement = document.getElementById("screenshot-screen-select-btn");
 
-  
-  if(!fileName) {
+  if (!fileName) {
     await updateFilenameForNextSave();
     fileName = document.getElementById("screenshot-filename-input").value;
   }
 
-  
   if (videoElement.srcObject == null || selectElement.value == "none") {
     writeMessageLabel("select screen feed", "gray");
     return;
@@ -222,19 +240,26 @@ document.getElementById("screenshot-snap").onclick = async () => {
   // Draw the current frame of the video onto the canvas
   ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
   // Convert canvas content to PNG image data
-  const imageData = canvas.toDataURL("image/png").replace(/^data:image\/\w+;base64,/, "");
+  const imageData = canvas
+    .toDataURL("image/png")
+    .replace(/^data:image\/\w+;base64,/, "");
   const buffer = bufferFrom(imageData, "base64");
   // Save the image data to a file
   const filePath = await getSavingFilePath(fileName);
-  
+
   try {
     await writeFileSync({ filePath, buffer });
     writeMessageLabel("saved screenshot", "green");
-    
-    if(autoCapture && document.getElementById("screenshot-gif-checkbox")?.checked) {
-      if(autoCaptureFilenameFirst.length > 0) autoCaptureFilenameLast = fileName;
 
-      if(autoCaptureFilenameFirst.length == 0) autoCaptureFilenameFirst = fileName;
+    if (
+      autoCapture &&
+      document.getElementById("screenshot-gif-checkbox")?.checked
+    ) {
+      if (autoCaptureFilenameFirst.length > 0)
+        autoCaptureFilenameLast = fileName;
+
+      if (autoCaptureFilenameFirst.length == 0)
+        autoCaptureFilenameFirst = fileName;
     }
 
     await updateFilenameForNextSave();
@@ -260,26 +285,33 @@ function writeMessageLabel(message, color) {
 ////////////////////////////////////////////////////////////////////////////////////
 //produce the thumbnails for the screen selections on the selection
 ////////////////////////////////////////////////////////////////////////////////////
-export async function populateScreenOptions(dropdownMenuId, buttonId, tooltipClassName, optionClickCallBack, screens = true, webcams = true) {
+export async function populateScreenOptions(
+  dropdownMenuId,
+  buttonId,
+  tooltipClassName,
+  optionClickCallBack,
+  screens = true,
+  webcams = true
+) {
   const dropdownMenu = document.getElementById(dropdownMenuId);
   dropdownMenu.innerHTML = "";
 
   try {
     //fetch available screen capture sources combine with webcam sources
     let allSources = [];
-    const X11orWayland = await ipcRenderer.invoke("systemX11orWayland");
-    
+    const X11orWayland = await ipcRenderer.invoke("system-X11-or-wayland");
+
     if (screens) {
-      if(X11orWayland == 'x11') {
+      if (X11orWayland == "x11") {
         const sources = await ipcRenderer.invoke("getCaptureID");
         allSources = allSources.concat(sources);
-      } else if(X11orWayland == "wayland") {
+      } else if (X11orWayland == "wayland") {
         const portal_option = {
           id: "portal",
           name: "select screen/window",
-          thumbnail: "",  // wayland portal doesn't have thumbnails
+          thumbnail: "", // wayland portal doesn't have thumbnails
           type: "portal",
-        }
+        };
 
         allSources = allSources.concat(portal_option);
       }
@@ -298,9 +330,21 @@ export async function populateScreenOptions(dropdownMenuId, buttonId, tooltipCla
       }
     }
 
-    addScreenDropOptions(dropdownMenu, buttonId, tooltipClassName, optionClickCallBack, { name: "none", type: "none" });
+    addScreenDropOptions(
+      dropdownMenu,
+      buttonId,
+      tooltipClassName,
+      optionClickCallBack,
+      { name: "none", type: "none" }
+    );
     allSources.forEach((source) => {
-      addScreenDropOptions(dropdownMenu, buttonId, tooltipClassName, optionClickCallBack, source);
+      addScreenDropOptions(
+        dropdownMenu,
+        buttonId,
+        tooltipClassName,
+        optionClickCallBack,
+        source
+      );
     });
 
     initializeTooltips("." + tooltipClassName);
@@ -310,7 +354,13 @@ export async function populateScreenOptions(dropdownMenuId, buttonId, tooltipCla
   }
 }
 
-export function addScreenDropOptions(dropdownMenu, buttonId, tooltipClassName, optionClickCallBack, source) {
+export function addScreenDropOptions(
+  dropdownMenu,
+  buttonId,
+  tooltipClassName,
+  optionClickCallBack,
+  source
+) {
   let listItem = document.createElement("li");
   let anchor = document.createElement("a");
   anchor.classList.add("dropdown-item");
@@ -340,14 +390,15 @@ export function addScreenDropOptions(dropdownMenu, buttonId, tooltipClassName, o
     anchor.setAttribute("data-bs-toggle", "tooltip");
     anchor.setAttribute("title", tooltipContent);
     anchor.setAttribute("data-tooltip-init", "false"); // Custom attribute to control tooltip initialization
-
   }
 
   listItem.appendChild(anchor);
   dropdownMenu.appendChild(listItem);
 }
 
-document.getElementById("screenshot-filename-input").oninput = async (event) => {
+document.getElementById("screenshot-filename-input").oninput = async (
+  event
+) => {
   const fileName = event.target.value;
   const fileExists = await fileNameCollisionCheck(fileName, [".png", ".jpg"]);
 
@@ -366,11 +417,14 @@ async function updateFilenameForNextSave(returnNames = false) {
   const filenameInput = document.getElementById("screenshot-filename-input");
   let currentFilename = filenameInput.value;
 
-  if(!currentFilename || currentFilename.length == 0) {
+  if (!currentFilename || currentFilename.length == 0) {
     currentFilename = generateRandomString(5);
     // currentFilename += "-";
-    const fileExists = await fileNameCollisionCheck(currentFilename, [".png", ".jpg"]);
-    if(fileExists) {
+    const fileExists = await fileNameCollisionCheck(currentFilename, [
+      ".png",
+      ".jpg",
+    ]);
+    if (fileExists) {
       currentFilename = generateRandomString(5);
       // currentFilename += "-";
     }
@@ -401,20 +455,24 @@ async function updateFilenameForNextSave(returnNames = false) {
   }
 }
 
-
 // * autocapture functionality
 document.getElementById("screenshot-start-auto").onclick = () => {
   const snapButton = document.getElementById("screenshot-snap");
 
   const intervalInput = document.getElementById("screenshot-interval-input");
   let intervalTime = parseFloat(intervalInput.value) * 1000; // Convert seconds to milliseconds
-  const minInterval = parseFloat(intervalInput.min) * 1000;  // Convert min from seconds to milliseconds
-  const maxInterval = parseFloat(intervalInput.max) * 1000;  // Convert max from seconds to milliseconds
+  const minInterval = parseFloat(intervalInput.min) * 1000; // Convert min from seconds to milliseconds
+  const maxInterval = parseFloat(intervalInput.max) * 1000; // Convert max from seconds to milliseconds
 
-  if (!autoCapture && mediaSource && !snapButton.disabled && intervalTime >= minInterval && intervalTime <= maxInterval) {
-
+  if (
+    !autoCapture &&
+    mediaSource &&
+    !snapButton.disabled &&
+    intervalTime >= minInterval &&
+    intervalTime <= maxInterval
+  ) {
     autoCapture = true;
-    
+
     document.getElementById("screenshot-start-auto").disabled = true;
     document.getElementById("screenshot-stop-auto").disabled = false; // Enable stop button
 
@@ -422,33 +480,35 @@ document.getElementById("screenshot-start-auto").onclick = () => {
 
     // Set the interval to simulate the snap button click
     captureInterval = setInterval(() => {
-      if (!snapButton.disabled) {  // Check if the snap button is still enabled
+      if (!snapButton.disabled) {
+        // Check if the snap button is still enabled
         snapButton.click();
       } else {
-        clearInterval(captureInterval);  // Stop the interval if snap button is disabled
-        
-        document.getElementById("screenshot-stop-auto").click();        
-        document.getElementById("screenshot-start-auto").disabled = false;  // Re-enable the start button
+        clearInterval(captureInterval); // Stop the interval if snap button is disabled
+
+        document.getElementById("screenshot-stop-auto").click();
+        document.getElementById("screenshot-start-auto").disabled = false; // Re-enable the start button
         document.getElementById("screenshot-stop-auto").disabled = true; // Disable stop button
       }
     }, intervalTime);
   } else {
-    ipcRenderer.invoke('show-dialog', {
-      type: 'info',
-      title: 'Problem starting auto screen shot',
-      message: "Please enter a valid interval for time or some other issue exist.",
-      buttons: ['OK'],
+    ipcRenderer.invoke("show-dialog", {
+      type: "info",
+      title: "Problem starting auto screen shot",
+      message:
+        "Please enter a valid interval for time or some other issue exist.",
+      buttons: ["OK"],
       defaultId: 0,
     });
   }
-}
+};
 
 document.getElementById("screenshot-stop-auto").onclick = () => {
   if (autoCapture) {
-    clearInterval(captureInterval);  // Clear the interval
-    document.getElementById("screenshot-start-auto").disabled = false;  // Re-enable the start button
-    document.getElementById("screenshot-stop-auto").disabled = true;  // Disable stop button
-    autoCapture = false;  // Reset autoCapture state
+    clearInterval(captureInterval); // Clear the interval
+    document.getElementById("screenshot-start-auto").disabled = false; // Re-enable the start button
+    document.getElementById("screenshot-stop-auto").disabled = true; // Disable stop button
+    autoCapture = false; // Reset autoCapture state
 
     // Check if the checkbox for saving a GIF is selected
     const gifCheckbox = document.getElementById("screenshot-gif-checkbox");
@@ -458,16 +518,23 @@ document.getElementById("screenshot-stop-auto").onclick = () => {
       const fps = parseFloat(fpsInput.value);
 
       // Optionally, you can add further logic here to handle GIF creation
-      const {baseFilename, numDigits,startNumber, endNumber} = getBaseFilename(autoCaptureFilenameFirst,autoCaptureFilenameLast);
-      ipcRenderer.invoke("create-gif",baseFilename, numDigits,startNumber, endNumber, fps);
+      const { baseFilename, numDigits, startNumber, endNumber } =
+        getBaseFilename(autoCaptureFilenameFirst, autoCaptureFilenameLast);
+      ipcRenderer.invoke(
+        "create-gif",
+        baseFilename,
+        numDigits,
+        startNumber,
+        endNumber,
+        fps
+      );
     }
   }
 
   autoCaptureFilenameFirst = "";
   autoCaptureFilenameLast = "";
   autoCapture = false;
-}
-
+};
 
 function getBaseFilename(firstFileName, lastFileName) {
   // Regular expression to separate the base filename, number part
@@ -481,12 +548,12 @@ function getBaseFilename(firstFileName, lastFileName) {
   const baseFilenameFirst = matchesFirst[1];
   const baseFilenameSecond = matchesSecond[1];
 
-  if(baseFilenameFirst != baseFilenameSecond) return null;
+  if (baseFilenameFirst != baseFilenameSecond) return null;
 
   const numDigitsFirst = matchesFirst[2].length;
   const numDigitsSecond = matchesSecond[2].length;
 
-  if(numDigitsFirst != numDigitsSecond) return null;
+  if (numDigitsFirst != numDigitsSecond) return null;
 
   const startNumber = parseInt(matchesFirst[2], 10);
   const endNumber = parseInt(matchesSecond[2], 10);
@@ -495,57 +562,54 @@ function getBaseFilename(firstFileName, lastFileName) {
     baseFilename: baseFilenameFirst,
     numDigits: numDigitsFirst,
     startNumber,
-    endNumber
+    endNumber,
   };
 }
 
-
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function () {
   const intervalInput = document.getElementById("screenshot-interval-input");
-  intervalInput.addEventListener('change', function() {
-      let value = parseFloat(this.value);
-      const min = parseFloat(this.min);
-      const max = parseFloat(this.max);
+  intervalInput.addEventListener("change", function () {
+    let value = parseFloat(this.value);
+    const min = parseFloat(this.min);
+    const max = parseFloat(this.max);
 
-      if (isNaN(value)) {
-          this.value = 1.0; // Default value if the input is not a number
-      } else if (value < min) {
-          this.value = min; // Reset to minimum if value is below the min
-      } else if (value > max) {
-          this.value = max; // Cap at maximum if value exceeds the max
-      }
+    if (isNaN(value)) {
+      this.value = 1.0; // Default value if the input is not a number
+    } else if (value < min) {
+      this.value = min; // Reset to minimum if value is below the min
+    } else if (value > max) {
+      this.value = max; // Cap at maximum if value exceeds the max
+    }
   });
 
-  const fpsInput = document.getElementById('screenshot-gif-interval-input');
-  fpsInput.addEventListener('change', function() {
-      const min = parseFloat(fpsInput.min);
-      const max = parseFloat(fpsInput.max);
-      let value = parseFloat(fpsInput.value);
+  const fpsInput = document.getElementById("screenshot-gif-interval-input");
+  fpsInput.addEventListener("change", function () {
+    const min = parseFloat(fpsInput.min);
+    const max = parseFloat(fpsInput.max);
+    let value = parseFloat(fpsInput.value);
 
-      if (value < min) {
-          fpsInput.value = min;
-          // fpsInput.style.borderColor = 'red'; // Change border color to red if out of range
-      } else if (value > max) {
-          fpsInput.value = max;
-          // fpsInput.style.borderColor = 'red'; // Change border color to red if out of range
-      } else {
-          fpsInput.style.borderColor = ''; // Reset border color if within range
-      }
+    if (value < min) {
+      fpsInput.value = min;
+      // fpsInput.style.borderColor = 'red'; // Change border color to red if out of range
+    } else if (value > max) {
+      fpsInput.value = max;
+      // fpsInput.style.borderColor = 'red'; // Change border color to red if out of range
+    } else {
+      fpsInput.style.borderColor = ""; // Reset border color if within range
+    }
   });
 
-  const checkbox = document.getElementById('screenshot-gif-checkbox');
-  const intervalDiv = document.getElementById('screenshot-gif-interval-div');
+  const checkbox = document.getElementById("screenshot-gif-checkbox");
+  const intervalDiv = document.getElementById("screenshot-gif-interval-div");
 
-    // Initially hide the interval div if the checkbox is not checked
-    intervalDiv.style.display = checkbox.checked ? 'flex' : 'none';
+  // Initially hide the interval div if the checkbox is not checked
+  intervalDiv.style.display = checkbox.checked ? "flex" : "none";
 
-    // Add event listener to toggle visibility based on checkbox state
-    checkbox.addEventListener('change', function() {
-        intervalDiv.style.display = this.checked ? 'flex' : 'none';
-    });
+  // Add event listener to toggle visibility based on checkbox state
+  checkbox.addEventListener("change", function () {
+    intervalDiv.style.display = this.checked ? "flex" : "none";
+  });
 });
-
-
 
 function updateFilenameForGifCreation() {
   const gifCheckbox = document.getElementById("screenshot-gif-checkbox");
@@ -583,7 +647,6 @@ function updateFilenameForGifCreation() {
     filenameInput.value = currentFilename;
   }
 }
-
 
 function hasFourDigitsAtEnd(str) {
   const regex = /\d{4}$/;

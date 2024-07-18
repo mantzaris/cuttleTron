@@ -8,50 +8,98 @@ const execAsync = util.promisify(exec);
 let ffmpegProcess = null; // This will hold the child process instance
 let audioSegments = []; //holds the segments of audio from the pauses and resumes
 
-async function getSinksAndSourcesList() {
+async function getSinksAndSourcesList(pulseaudioOrPipeWire) {
   try {
-    const result_sinks = await execAsync("pactl list sinks | grep -e 'Name:' -e 'Description:' -e 'Monitor Source:'");
-    const stdout_sinks = result_sinks.stdout;
-    // Parse the stdout to create a structured list of sinks
-    const lines_sinks = stdout_sinks.split("\n");
-    const sinks = [];
-    let currentSink = {};
+    if (pulseaudioOrPipeWire == "pulseaudio") {
+      const result_sinks = await execAsync(
+        "pactl list sinks | grep -e 'Name:' -e 'Description:' -e 'Monitor Source:'"
+      );
 
-    lines_sinks.forEach((line) => {
-      const trimmedLine = line.trim();
-      if (trimmedLine.startsWith("Name:")) {
-        currentSink.name = trimmedLine.split("Name:")[1].trim();
-      } else if (trimmedLine.startsWith("Description:")) {
-        currentSink.description = trimmedLine.split("Description:")[1].trim();
-      } else if (trimmedLine.startsWith("Monitor Source:")) {
-        currentSink.monitorSource = trimmedLine.split("Monitor Source:")[1].trim();
-        sinks.push(currentSink);
-        currentSink = {};
-      }
-    });
+      const stdout_sinks = result_sinks.stdout;
+      // Parse the stdout to create a structured list of sinks
+      const lines_sinks = stdout_sinks.split("\n");
+      const sinks = [];
+      let currentSink = {};
 
-    const result_sources = await execAsync("pactl list sources | grep -e 'Name:' -e 'Description:'");
-    const stdout_sources = result_sources.stdout;
-    // Parse the stdout to create a structured list of sinks
-    const lines_sources = stdout_sources.split("\n");
-    const sources = [];
-    let currentSource = {};
+      lines_sinks.forEach((line) => {
+        const trimmedLine = line.trim();
+        if (trimmedLine.startsWith("Name:")) {
+          currentSink.name = trimmedLine.split("Name:")[1].trim();
+        } else if (trimmedLine.startsWith("Description:")) {
+          currentSink.description = trimmedLine.split("Description:")[1].trim();
+        } else if (trimmedLine.startsWith("Monitor Source:")) {
+          currentSink.monitorSource = trimmedLine
+            .split("Monitor Source:")[1]
+            .trim();
+          sinks.push(currentSink);
+          currentSink = {};
+        }
+      });
 
-    lines_sources.forEach((line) => {
-      const trimmedLine = line.trim();
-      if (trimmedLine.startsWith("Name:")) {
-        currentSource.name = trimmedLine.split("Name:")[1].trim();
-        currentSource.monitorSource = trimmedLine.split("Name:")[1].trim(); //no need for a monitor source on a source, the name is the source
-      } else if (trimmedLine.startsWith("Description:")) {
-        currentSource.description = trimmedLine.split("Description:")[1].trim();
-        sources.push(currentSource);
-        currentSource = {};
-      }
-    });
+      const result_sources = await execAsync(
+        "pactl list sources | grep -e 'Name:' -e 'Description:'"
+      );
+      const stdout_sources = result_sources.stdout;
+      // Parse the stdout to create a structured list of sinks
+      const lines_sources = stdout_sources.split("\n");
+      const sources = [];
+      let currentSource = {};
 
-    //console.log("audio list");
-    //console.log([...sinks, ...sources]);
-    return [...sinks, ...sources];
+      lines_sources.forEach((line) => {
+        const trimmedLine = line.trim();
+        if (trimmedLine.startsWith("Name:")) {
+          currentSource.name = trimmedLine.split("Name:")[1].trim();
+          currentSource.monitorSource = trimmedLine.split("Name:")[1].trim(); //no need for a monitor source on a source, the name is the source
+        } else if (trimmedLine.startsWith("Description:")) {
+          currentSource.description = trimmedLine
+            .split("Description:")[1]
+            .trim();
+          sources.push(currentSource);
+          currentSource = {};
+        }
+      });
+
+      //console.log("audio list");
+      //console.log([...sinks, ...sources]);
+      return [...sinks, ...sources];
+    } else {
+      // pipewire!
+      const { stdout } = await execAsync("pw-dump");
+      const devices = JSON.parse(stdout);
+
+      const sinks = devices
+        .filter(
+          (device) =>
+            device.info &&
+            device.info.props &&
+            device.info.props["media.class"] &&
+            device.info.props["media.class"].includes("Audio/Sink")
+        )
+        .map((device) => ({
+          name: device.info.props["node.name"],
+          description: device.info.props["node.description"],
+          monitorSource: device.info.props["node.name"] + ".monitor", // Simulating PulseAudio monitor naming
+        }));
+
+      const sources = devices
+        .filter(
+          (device) =>
+            device.info &&
+            device.info.props &&
+            device.info.props["media.class"] &&
+            device.info.props["media.class"].includes("Audio/Source")
+        )
+        .map((device) => ({
+          name: device.info.props["node.name"],
+          description: device.info.props["node.description"],
+          monitorSource: device.info.props["node.name"], // No explicit monitor source for sources
+        }));
+
+      // console.log(
+      //   `[...sinks, ...sources] = ${JSON.stringify([...sinks, ...sources])}`
+      // );
+      return [...sinks, ...sources];
+    }
   } catch (error) {
     console.error(`get-sinks-sources exec error: ${error}`);
     throw error; // This will reject the promise returned by ipcMain.handle
@@ -128,9 +176,17 @@ async function recordingsCompleted(args) {
 
   // Generate concat_list.txt
   if (audioSegments.length > 0) {
-    const mergedAudioPath = path.join(path.dirname(videoPath), "merged_audio.wav");
-    const concatList = audioSegments.map((segment) => `file '${segment}'`).join("\n");
-    const concatList_destination = path.join(path.dirname(videoPath), "concat_list.txt");
+    const mergedAudioPath = path.join(
+      path.dirname(videoPath),
+      "merged_audio.wav"
+    );
+    const concatList = audioSegments
+      .map((segment) => `file '${segment}'`)
+      .join("\n");
+    const concatList_destination = path.join(
+      path.dirname(videoPath),
+      "concat_list.txt"
+    );
     fs.writeFileSync(concatList_destination, concatList);
     const merge_command = `ffmpeg -f concat -safe 0 -i ${concatList_destination} -c copy ${mergedAudioPath}`;
 

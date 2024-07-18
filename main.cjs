@@ -3,17 +3,32 @@
 // requires ...sudo apt-get install gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly
 // v4l2loopback-dkms v4l2loopback-utils, wmctrl,
 /////////
-const { app, BrowserWindow, ipcMain, desktopCapturer, dialog } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  ipcMain,
+  desktopCapturer,
+  dialog,
+} = require("electron");
 const os = require("os");
 const fs = require("fs");
 const path = require("path");
 
-
 const systemEndianness = os.endianness();
 
-const { streamMaskcamToDevice, stopMaskcamStream } = require("./main-fns/maskcam.cjs");
+const {
+  streamMaskcamToDevice,
+  stopMaskcamStream,
+} = require("./main-fns/maskcam.cjs");
 
-const { myWriteFileSync, showDialog, systemX11orWayland, systemPulseaudioOrPipewire, installDependencies, createGif } = require("./main-fns/main-utilities.cjs");
+const {
+  myWriteFileSync,
+  showDialog,
+  systemX11orWayland,
+  systemPulseaudioOrPipewire,
+  installDependencies,
+  createGif,
+} = require("./main-fns/main-utilities.cjs");
 const {
   getSinksAndSourcesList,
   startAudioRecording,
@@ -23,7 +38,11 @@ const {
   stopAudioRecording,
   recordingsCompleted,
 } = require("./main-fns/audio-utilities.cjs");
-const { audioEffectsStart, audioEffectsStop, cleanupAudioDevices } = require("./main-fns/audio-effects.cjs");
+const {
+  audioEffectsStart,
+  audioEffectsStop,
+  cleanupAudioDevices,
+} = require("./main-fns/audio-effects.cjs");
 
 const packageJson = require("./package.json");
 const appName = packageJson.name;
@@ -128,45 +147,43 @@ ipcMain.handle("existsSync", (event, path) => {
 });
 
 //ge the list of ids of screens or windows to record with the electron mediaRecorder (audio on linux no go)
-ipcMain.handle('getCaptureID', async (event) => {
+ipcMain.handle("getCaptureID", async (event) => {
   try {
     const sources = await desktopCapturer.getSources({
-      types: ['window', 'screen']
+      types: ["window", "screen"],
     });
 
     if (!sources || sources.length === 0) {
-      throw new Error('No sources available');
+      throw new Error("No sources available");
     }
 
     // If specific thumbnail scaling is needed, maintain that feature from cuttleTron
-    return sources.map(source => ({
+    return sources.map((source) => ({
       id: source.id,
       name: source.name,
-      thumbnail: source.thumbnail.toDataURL({ scaleFactor: 0.25 }) // Adjust scaleFactor as needed
+      thumbnail: source.thumbnail.toDataURL({ scaleFactor: 0.25 }), // Adjust scaleFactor as needed
     }));
   } catch (error) {
-    console.error('Error getting capture sources:', error);
-    return null;  // Ensures upstream code can handle the error gracefully
+    console.error("Error getting capture sources:", error);
+    return null; // Ensures upstream code can handle the error gracefully
   }
 });
 
-ipcMain.handle("systemX11orWayland", async (event) => {
+ipcMain.handle("system-X11-or-wayland", async (event) => {
   return X11orWayland;
 });
 
-ipcMain.handle("pulseaudioOrPipewire", async (event) => {
-  return pulseaudioOrPipeWire;
-})
-
+ipcMain.handle("pulseaudio-or-pipewire", async (event) => {
+  return pulseaudioOrPipeWire; // await systemPulseaudioOrPipewire();
+});
 
 ////////////////////////////////////
 //dialog handler
 ////////////////////////////////////
-ipcMain.handle('show-dialog', async (event, options) => {
+ipcMain.handle("show-dialog", async (event, options) => {
   const response = await showDialog(options);
   return response.response; // Return the index of the clicked button
 });
-
 
 ////////////////////////////////////
 //install dependencies
@@ -180,26 +197,49 @@ ipcMain.handle("install-dependencies", async () => {
   }
 });
 
-
 ///////////////////////////////////////////
 // *handler for creating a GIF
 ///////////////////////////////////////////
-ipcMain.handle("create-gif", async (event , baseFilename, numDigits,startNumber, endNumber, FPS) => {
-  console.log({baseFilename, numDigits,startNumber, endNumber, FPS, TARGET_DIR});
-  
-  try {
-    const result = await createGif(baseFilename, numDigits, startNumber, endNumber, FPS, TARGET_DIR);
-    return result;
-  } catch (error) {
-      throw new Error(`Error creating GIF: ${error.message}`);
-  }
-})
+ipcMain.handle(
+  "create-gif",
+  async (event, baseFilename, numDigits, startNumber, endNumber, FPS) => {
+    console.log({
+      baseFilename,
+      numDigits,
+      startNumber,
+      endNumber,
+      FPS,
+      TARGET_DIR,
+    });
 
+    try {
+      const result = await createGif(
+        baseFilename,
+        numDigits,
+        startNumber,
+        endNumber,
+        FPS,
+        TARGET_DIR
+      );
+      return result;
+    } catch (error) {
+      throw new Error(`Error creating GIF: ${error.message}`);
+    }
+  }
+);
 
 //*trying to use any npm package to get the audio or even repos for pulse audio specifically like
 // https://github.com/mscdex/paclient worked within nodejs itself but totally failed in electronjs
 ipcMain.handle("get-sinks-sources", async (event) => {
-  return await getSinksAndSourcesList();
+  try {
+    const audioSystem = await systemPulseaudioOrPipewire();
+    const sinksAndSources = await getSinksAndSourcesList(audioSystem);
+    return sinksAndSources;
+  } catch (error) {
+    console.error("Error in get-sinks-sources IPC handler:", error);
+    // Optionally send a meaningful error message back to the renderer
+    return { error: "Failed to retrieve sinks and sources." };
+  }
 });
 
 //record audio from sink monitor provided
@@ -281,7 +321,11 @@ function resetMaskCam() {
 }
 
 ipcMain.handle("mask-opened", () => {
-  return maskcam_window && !maskcam_window.isDestroyed() && maskcam_window.isVisible();
+  return (
+    maskcam_window &&
+    !maskcam_window.isDestroyed() &&
+    maskcam_window.isVisible()
+  );
 });
 
 ipcMain.on("stop-maskcam", async (event) => {
@@ -313,7 +357,10 @@ ipcMain.handle("stream-maskcam", async (event, mask_settings) => {
 
     let bestMatch = standardResolutions[0];
     for (const res of standardResolutions) {
-      if (Math.abs(res.width / res.height - webcamAspectRatio) < Math.abs(bestMatch.width / bestMatch.height - webcamAspectRatio)) {
+      if (
+        Math.abs(res.width / res.height - webcamAspectRatio) <
+        Math.abs(bestMatch.width / bestMatch.height - webcamAspectRatio)
+      ) {
         bestMatch = res;
       }
     }
@@ -379,7 +426,9 @@ ipcMain.handle("init-maskcam", async (event, mask_settings) => {
 
   maskcamWinIdHex = `0x${maskcamWinIdInt.toString(16).padStart(8, "0")}`;
 
-  console.log(`--------Window ID int: ${maskcamWinIdInt}, maskcamWinIdHex: ${maskcamWinIdHex}`);
+  console.log(
+    `--------Window ID int: ${maskcamWinIdInt}, maskcamWinIdHex: ${maskcamWinIdHex}`
+  );
 
   await maskcam_window.webContents.send("toggle-mask-view", mask_settings);
 
@@ -406,6 +455,8 @@ ipcMain.on("webcam-size", (event, webcam_specs) => {
     webcamHeight = height;
     webcamAspectRatio = width / height; // Calculate the aspect ratio
 
-    console.log(`Webcam Aspect Ratio: ${webcamAspectRatio}, webcamWidth=${webcamWidth}, webcamHeight=${webcamHeight}`);
+    console.log(
+      `Webcam Aspect Ratio: ${webcamAspectRatio}, webcamWidth=${webcamWidth}, webcamHeight=${webcamHeight}`
+    );
   }
 });
