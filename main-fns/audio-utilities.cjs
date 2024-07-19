@@ -10,7 +10,8 @@ let audioSegments = []; //holds the segments of audio from the pauses and resume
 
 async function getSinksAndSourcesList(pulseaudioOrPipeWire) {
   try {
-    if (pulseaudioOrPipeWire == "pulseaudio") {
+    if (1 || pulseaudioOrPipeWire == "pulseaudio") {
+      //only pulse audio with pipewire compatibility layer
       const result_sinks = await execAsync(
         "pactl list sinks | grep -e 'Name:' -e 'Description:' -e 'Monitor Source:'"
       );
@@ -60,46 +61,47 @@ async function getSinksAndSourcesList(pulseaudioOrPipeWire) {
       });
 
       //console.log("audio list");
-      //console.log([...sinks, ...sources]);
-      return [...sinks, ...sources];
-    } else {
-      // pipewire!
-      const { stdout } = await execAsync("pw-dump");
-      const devices = JSON.parse(stdout);
-
-      const sinks = devices
-        .filter(
-          (device) =>
-            device.info &&
-            device.info.props &&
-            device.info.props["media.class"] &&
-            device.info.props["media.class"].includes("Audio/Sink")
-        )
-        .map((device) => ({
-          name: device.info.props["node.name"],
-          description: device.info.props["node.description"],
-          monitorSource: device.info.props["node.name"] + ".monitor", // Simulating PulseAudio monitor naming
-        }));
-
-      const sources = devices
-        .filter(
-          (device) =>
-            device.info &&
-            device.info.props &&
-            device.info.props["media.class"] &&
-            device.info.props["media.class"].includes("Audio/Source")
-        )
-        .map((device) => ({
-          name: device.info.props["node.name"],
-          description: device.info.props["node.description"],
-          monitorSource: device.info.props["node.name"], // No explicit monitor source for sources
-        }));
-
-      // console.log(
-      //   `[...sinks, ...sources] = ${JSON.stringify([...sinks, ...sources])}`
-      // );
+      console.log([...sinks, ...sources]);
       return [...sinks, ...sources];
     }
+    // else {
+    //   // pipewire!
+    //   const { stdout } = await execAsync("pw-dump");
+    //   const devices = JSON.parse(stdout);
+
+    //   const sinks = devices
+    //     .filter(
+    //       (device) =>
+    //         device.info &&
+    //         device.info.props &&
+    //         device.info.props["media.class"] &&
+    //         device.info.props["media.class"].includes("Audio/Sink")
+    //     )
+    //     .map((device) => ({
+    //       name: device.info.props["node.name"],
+    //       description: device.info.props["node.description"],
+    //       monitorSource: device.info.props["node.name"],
+    //     }));
+
+    //   const sources = devices
+    //     .filter(
+    //       (device) =>
+    //         device.info &&
+    //         device.info.props &&
+    //         device.info.props["media.class"] &&
+    //         device.info.props["media.class"].includes("Audio/Source")
+    //     )
+    //     .map((device) => ({
+    //       name: device.info.props["node.name"],
+    //       description: device.info.props["node.description"],
+    //       monitorSource: device.info.props["node.name"], // No explicit monitor source for sources
+    //     }));
+
+    //   // console.log(
+    //   //   `[...sinks, ...sources] = ${JSON.stringify([...sinks, ...sources])}`
+    //   // );
+    //   return [...sinks, ...sources];
+    // }
   } catch (error) {
     console.error(`get-sinks-sources exec error: ${error}`);
     throw error; // This will reject the promise returned by ipcMain.handle
@@ -108,6 +110,11 @@ async function getSinksAndSourcesList(pulseaudioOrPipeWire) {
 
 //record audio from sink monitor provided
 function startAudioRecording(sink_monitor, filepath) {
+  if (!sink_monitor || !filepath) {
+    console.error("Invalid input provided to startAudioRecording");
+    return;
+  }
+
   const ffmpegArgs = ["-f", "pulse", "-i", sink_monitor, filepath];
   ffmpegProcess = spawn("ffmpeg", ffmpegArgs);
   audioSegments.push(filepath);

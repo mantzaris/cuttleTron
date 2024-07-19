@@ -265,6 +265,11 @@ function killGStreamer() {
 }
 
 async function unloadPA_Module(moduleId) {
+  if (moduleId == null || moduleId.trim() === "") {
+    console.error("Invalid module ID provided for unloading.");
+    return;
+  }
+
   try {
     await execAsync(`pactl unload-module ${moduleId}`);
     console.log(`Successfully unloaded module with ID: ${moduleId}`);
@@ -272,5 +277,6 @@ async function unloadPA_Module(moduleId) {
     console.error(
       `Error unloading moduleID=${moduleId}: ${unloadError.message}`
     );
+    console.error(`Error unloading moduleID=${moduleId}:`, unloadError);
   }
 }
