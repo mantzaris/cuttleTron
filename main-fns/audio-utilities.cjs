@@ -61,7 +61,7 @@ async function getSinksAndSourcesList(pulseaudioOrPipeWire) {
       });
 
       //console.log("audio list");
-      console.log([...sinks, ...sources]);
+      //console.log([...sinks, ...sources]);
       return [...sinks, ...sources];
     }
     // else {

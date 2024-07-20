@@ -1,8 +1,13 @@
 const { ipcRenderer } = window.electron;
-const { joinPath, writeFileSync, getDirname, getTargetDir } = window.nodeModules;
+const { joinPath, writeFileSync, getDirname, getTargetDir } =
+  window.nodeModules;
 import { generateRandomString } from "../../utilities/utils.js";
 
-import { initializeTooltips, getWebcamSources, setRemoveHeader } from "../component-utilities/component-utilities.js";
+import {
+  initializeTooltips,
+  getWebcamSources,
+  setRemoveHeader,
+} from "../component-utilities/component-utilities.js";
 
 let targetDir;
 let mediaRecorder;
@@ -35,9 +40,18 @@ function mergeVideoAudio() {
 
 async function setSavingFilePath() {
   const randomString = generateRandomString(5);
-  currentSavingPath_video = await joinPath([targetDir, `screenrecord_${randomString}.webm`]);
-  currentSavingPath_audio = await joinPath([targetDir, `screenrecord_${randomString}.wav`]);
-  currentSavingPath_final = await joinPath([targetDir, `screenrecord_${randomString}f.webm`]);
+  currentSavingPath_video = await joinPath([
+    targetDir,
+    `screenrecord_${randomString}.webm`,
+  ]);
+  currentSavingPath_audio = await joinPath([
+    targetDir,
+    `screenrecord_${randomString}.wav`,
+  ]);
+  currentSavingPath_final = await joinPath([
+    targetDir,
+    `screenrecord_${randomString}f.webm`,
+  ]);
 }
 
 function writeMessageLabel(message, color) {
@@ -98,7 +112,9 @@ document.getElementById("screenrecord-refresh").onclick = () => {
 async function populatAudioSinkOptions() {
   ipcRenderer.invoke("get-sinks-sources").then((sinks) => {
     // returns the pactl commandline from the OS for sinks
-    let selection_sources = document.getElementById("screenrecord-audionameselect");
+    let selection_sources = document.getElementById(
+      "screenrecord-audionameselect"
+    );
     selection_sources.innerHTML = "";
 
     const src = document.createElement("option");
@@ -116,60 +132,81 @@ async function populatAudioSinkOptions() {
 }
 
 // Fetch available screen capture sources and populate the dropdown
-function populateScreenOptions() {
-  ipcRenderer.invoke("getCaptureID").then(async (sources) => {
-    let dropdownMenu = document.getElementById("screenrecord-selectionUL");
-    dropdownMenu.innerHTML = "";
+async function populateScreenOptions() {
+  const X11orWayland = await ipcRenderer.invoke("system-X11-or-wayland");
+  let dropdownMenu = document.getElementById("screenrecord-selectionUL");
+  dropdownMenu.innerHTML = "";
 
-    // Add 'None' option
-    let noneItem = document.createElement("li");
-    let noneAnchor = document.createElement("a");
-    noneAnchor.classList.add("dropdown-item");
-    noneAnchor.href = "#";
-    noneAnchor.textContent = "none";
-    noneAnchor.addEventListener("click", function (event) {
-      event.preventDefault();
-      document.getElementById("screenrecord-screen-select-btn").textContent = this.textContent;
-      screenrecordSelection({ type: "none" }); // Call the handler function
-    });
-    noneItem.appendChild(noneAnchor);
-    dropdownMenu.appendChild(noneItem);
-
-    const webcamSources = await getWebcamSources();
-    const allSources = sources.concat(webcamSources);
-
-    allSources.forEach((source) => {
-      let listItem = document.createElement("li");
-      let anchor = document.createElement("a");
-      anchor.classList.add("dropdown-item");
-      anchor.classList.add("class", "screenrecorder-screen-tooltip");
-      anchor.href = "#";
-      anchor.textContent = source.name;
-      anchor.setAttribute("data-bs-toggle", "tooltip");
-
-      if ("type" in source && source.type == "webcam") {
-        anchor.setAttribute("title", `no thumbnail for webcam`);
-      } else {
-        anchor.setAttribute("title", `<img src='${source.thumbnail}' alt='Thumbnail'>`);
-      }
-
-      anchor.setAttribute("data-tooltip-init", "false"); // Custom attribute to control tooltip initialization
-
-      // Attach click event listener to each dropdown item
-      anchor.addEventListener("click", function (event) {
-        event.preventDefault();
-
-        // Update the button text to reflect the selected item
-        document.getElementById("screenrecord-screen-select-btn").textContent = this.textContent;
-        screenrecordSelection(source); // Call the handler function
-      });
-
-      listItem.appendChild(anchor);
-      dropdownMenu.appendChild(listItem);
-    });
-
-    initializeTooltips(".screenrecorder-screen-tooltip");
+  // Add 'None'
+  let noneItem = document.createElement("li");
+  let noneAnchor = document.createElement("a");
+  noneAnchor.classList.add("dropdown-item");
+  noneAnchor.href = "#";
+  noneAnchor.textContent = "none";
+  noneAnchor.addEventListener("click", function (event) {
+    event.preventDefault();
+    document.getElementById("screenrecord-screen-select-btn").textContent =
+      this.textContent;
+    screenrecordSelection({ type: "none" }); // Call the handler function
   });
+  noneItem.appendChild(noneAnchor);
+  dropdownMenu.appendChild(noneItem);
+
+  let allSources = [];
+  if (X11orWayland === "x11") {
+    const screenSources = await ipcRenderer.invoke("getCaptureID");
+    allSources = allSources.concat(screenSources);
+  } else if (X11orWayland === "wayland") {
+    // Wayland portal option for user selection
+    const portal_option = {
+      id: "portal",
+      name: "select screen/window",
+      thumbnail: "", // No thumbnail for portal option
+      type: "portal",
+    };
+    allSources.push(portal_option);
+  }
+
+  const webcamSources = await getWebcamSources();
+  if (webcamSources) {
+    allSources = allSources.concat(webcamSources);
+  }
+
+  allSources.forEach((source) => {
+    let listItem = document.createElement("li");
+    let anchor = document.createElement("a");
+    anchor.classList.add("dropdown-item");
+    anchor.classList.add("class", "screenrecorder-screen-tooltip");
+    anchor.href = "#";
+    anchor.textContent = source.name;
+    anchor.setAttribute("data-bs-toggle", "tooltip");
+
+    if ("type" in source && source.type == "webcam") {
+      anchor.setAttribute("title", `no thumbnail for webcam`);
+    } else if ("type" in source && source.type == "portal") {
+      anchor.setAttribute("title", "Click to select screen/window");
+    } else {
+      anchor.setAttribute(
+        "title",
+        `<img src='${source.thumbnail}' alt='Thumbnail'>`
+      );
+    }
+
+    anchor.setAttribute("data-tooltip-init", "false"); // Custom attribute to control tooltip initialization
+    // Attach click event listener to each dropdown item
+    anchor.addEventListener("click", function (event) {
+      event.preventDefault();
+      // Update the button text to reflect the selected item
+      document.getElementById("screenrecord-screen-select-btn").textContent =
+        this.textContent;
+      screenrecordSelection(source); // Call the handler function
+    });
+
+    listItem.appendChild(anchor);
+    dropdownMenu.appendChild(listItem);
+  });
+
+  initializeTooltips(".screenrecorder-screen-tooltip");
 }
 
 function clearVideoAudio() {
@@ -178,9 +215,13 @@ function clearVideoAudio() {
   videoElement.pause(); // Pause the video playback
 
   // Clear the selection in the dropdown(s)
-  const selectElement = document.getElementById("screenrecord-screen-select-btn");
+  const selectElement = document.getElementById(
+    "screenrecord-screen-select-btn"
+  );
   selectElement.textContent = "none";
-  const selectElementAudio = document.getElementById("screenrecord-audionameselect");
+  const selectElementAudio = document.getElementById(
+    "screenrecord-audionameselect"
+  );
   selectElementAudio.value = "none";
 }
 
@@ -197,6 +238,41 @@ async function screenrecordSelection(source) {
       frameRate: { ideal: 16, max: 24 },
       // You can add more constraints here, like width, height, etc.
     };
+  } else if ("type" in source && source.type == "portal") {
+    // Handle Wayland portal interaction
+    try {
+      const sources = await ipcRenderer.invoke("getCaptureID");
+      const userSelectedSource = sources.length > 0 ? sources[0] : null;
+
+      if (!userSelectedSource) {
+        ipcRenderer.invoke("show-dialog", {
+          type: "info",
+          title: "No selected source",
+          message:
+            "No source selected. Please select a screen or window to capture.",
+          buttons: ["OK"],
+          defaultId: 0,
+        });
+        return;
+      }
+
+      videoConstraints = {
+        mandatory: {
+          chromeMediaSource: "desktop",
+          chromeMediaSourceId: userSelectedSource.id,
+          frameRate: { ideal: 16, max: 24 },
+        },
+      };
+    } catch (error) {
+      ipcRenderer.invoke("show-dialog", {
+        type: "error",
+        title: "Error fetching source",
+        message: `Error fetching screen/window sources: ${error}`,
+        buttons: ["OK"],
+        defaultId: 0,
+      });
+      return;
+    }
   } else {
     videoConstraints = {
       mandatory: {
@@ -221,11 +297,11 @@ async function screenrecordSelection(source) {
     videoElement.srcObject = media_source;
     videoElement.play(); // Start playing the video stream
   } catch (error) {
-    ipcRenderer.invoke('show-dialog', {
-      type: 'error',
-      title: 'Error capturing scree',
+    ipcRenderer.invoke("show-dialog", {
+      type: "error",
+      title: "Error capturing scree",
       message: `Error capturing screen: ${error} `,
-      buttons: ['OK'],
+      buttons: ["OK"],
       defaultId: 0,
     });
   }
@@ -259,7 +335,11 @@ function startMediaRecorder() {
     const data = await blobToArrayBuffer(blob);
 
     try {
-      await writeFileSync({ filePath: currentSavingPath_video, buffer: data, encoding: "binary" });
+      await writeFileSync({
+        filePath: currentSavingPath_video,
+        buffer: data,
+        encoding: "binary",
+      });
 
       writeMessageLabel("Saved!", "green");
       videoSaved = true;
@@ -279,9 +359,15 @@ document.getElementById("screenrecord-record").onclick = async () => {
     mediaRecorder.resume();
 
     //resume the audio recording
-    const chosenSinkMonitor = document.getElementById("screenrecord-audionameselect").value;
+    const chosenSinkMonitor = document.getElementById(
+      "screenrecord-audionameselect"
+    ).value;
     if (chosenSinkMonitor != "none") {
-      ipcRenderer.invoke("resumeAudioRecording", chosenSinkMonitor, currentSavingPath_audio);
+      ipcRenderer.invoke(
+        "resumeAudioRecording",
+        chosenSinkMonitor,
+        currentSavingPath_audio
+      );
     }
 
     isRecording = true;
@@ -292,7 +378,9 @@ document.getElementById("screenrecord-record").onclick = async () => {
   }
 
   const videoElement = document.querySelector("#screenrecord-feed video");
-  const selectElement = document.getElementById("screenrecord-screen-select-btn");
+  const selectElement = document.getElementById(
+    "screenrecord-screen-select-btn"
+  );
 
   if (videoElement.srcObject == null || selectElement.textContent == "none") {
     writeMessageLabel("select screen", "gray");
@@ -314,9 +402,15 @@ document.getElementById("screenrecord-record").onclick = async () => {
       isRecording = true;
 
       //start the audio recording
-      const chosenSinkMonitor = document.getElementById("screenrecord-audionameselect").value;
+      const chosenSinkMonitor = document.getElementById(
+        "screenrecord-audionameselect"
+      ).value;
       if (chosenSinkMonitor != "none") {
-        ipcRenderer.invoke("startAudioRecording", chosenSinkMonitor, currentSavingPath_audio);
+        ipcRenderer.invoke(
+          "startAudioRecording",
+          chosenSinkMonitor,
+          currentSavingPath_audio
+        );
       }
 
       buttonsStateControl("screenrecord-record");
@@ -331,7 +425,9 @@ document.getElementById("screenrecord-pause").onclick = () => {
     mediaRecorder.pause();
 
     //pause the audio recording
-    const chosenSinkMonitor = document.getElementById("screenrecord-audionameselect").value;
+    const chosenSinkMonitor = document.getElementById(
+      "screenrecord-audionameselect"
+    ).value;
     if (chosenSinkMonitor != "none") {
       ipcRenderer.invoke("pauseAudioRecording");
     }
@@ -344,13 +440,18 @@ document.getElementById("screenrecord-pause").onclick = () => {
 };
 
 document.getElementById("screenrecord-cancel").onclick = () => {
-  if (mediaRecorder && (mediaRecorder.state === "recording" || mediaRecorder.state === "paused")) {
+  if (
+    mediaRecorder &&
+    (mediaRecorder.state === "recording" || mediaRecorder.state === "paused")
+  ) {
     isCancelled = true;
 
     mediaRecorder.stop();
 
     //cancel the audio recording
-    const chosenSinkMonitor = document.getElementById("screenrecord-audionameselect").value;
+    const chosenSinkMonitor = document.getElementById(
+      "screenrecord-audionameselect"
+    ).value;
     if (chosenSinkMonitor != "none") {
       ipcRenderer.invoke("cancelAudioRecording", currentSavingPath_audio);
     }
@@ -364,13 +465,21 @@ document.getElementById("screenrecord-cancel").onclick = () => {
 
 document.getElementById("screenrecord-save").onclick = async () => {
   try {
-    if (mediaRecorder && (mediaRecorder.state === "recording" || mediaRecorder.state === "paused")) {
+    if (
+      mediaRecorder &&
+      (mediaRecorder.state === "recording" || mediaRecorder.state === "paused")
+    ) {
       await mediaRecorder.stop();
 
       //get the audio monitor selection value
-      const chosenSinkMonitor = document.getElementById("screenrecord-audionameselect").value;
+      const chosenSinkMonitor = document.getElementById(
+        "screenrecord-audionameselect"
+      ).value;
       if (chosenSinkMonitor != "none") {
-        await ipcRenderer.invoke("stopAudioRecording", mediaRecorder.state === "recording");
+        await ipcRenderer.invoke(
+          "stopAudioRecording",
+          mediaRecorder.state === "recording"
+        );
       }
 
       audioSaved = true;
