@@ -44,6 +44,7 @@ start_btn.onclick = async () => {
     if (!isMaskCamWindowOpen) {
       const message = await ipcRenderer.invoke("init-maskcam", mask_settings);
       setMaskcamStatusLabels("set up:", message);
+
       return;
     }
   } else if (action == "stream") {

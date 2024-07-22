@@ -88,7 +88,7 @@ async function screenshotSelection(source) {
     try {
       const sources = await ipcRenderer.invoke("getCaptureID");
       const userSelectedSource = sources[0];
-
+      console.log(`window Wayland id = ${sources[0].id}`);
       if (!sources || sources.length === 0) {
         ipcRenderer.invoke("show-dialog", {
           type: "info",

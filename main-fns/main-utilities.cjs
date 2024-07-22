@@ -244,9 +244,9 @@ async function createGif(
 // install dependencies
 ///////////////////////////////////////////////////
 async function installDependencies() {
-  //[ pulseaudio and pulseaudio-utils ]
+  //pip install websocket-client
   let dependencies = [
-    //TODO:  "wmctrl","ydotool", "xdotool"
+    //TODO: "","","",""
     "ffmpeg",
     "pulseaudio-utils",
     "gstreamer1.0-tools",
@@ -256,6 +256,7 @@ async function installDependencies() {
     "gstreamer1.0-plugins-ugly",
     "v4l2loopback-dkms",
     "v4l2loopback-utils",
+    "obs-studio",
   ];
 
   let installCommands = [];

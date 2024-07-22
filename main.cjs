@@ -14,6 +14,10 @@ const os = require("os");
 const fs = require("fs");
 const path = require("path");
 
+const { promisify } = require("util");
+const sudo = require("sudo-prompt");
+const sudoExecAsync = promisify(sudo.exec);
+
 const systemEndianness = os.endianness();
 
 const {
@@ -57,6 +61,7 @@ if (process.env.NODE_ENV !== "production") {
 
 let X11orWayland = systemX11orWayland();
 let pulseaudioOrPipeWire = systemPulseaudioOrPipewire();
+let modprobLoaded = false;
 
 let mainWindow;
 
@@ -377,7 +382,7 @@ ipcMain.handle("stream-maskcam", async (event, mask_settings) => {
   }
 
   await maskcam_window.webContents.send("anchor-mask-view");
-  streamMaskcamToDevice(maskcamWindowTitle, maskcamWinIdHex);
+  streamMaskcamToDevice(maskcamWindowTitle, maskcamWinIdHex, X11orWayland);
   return maskcamWindowTitle;
 });
 
@@ -387,12 +392,37 @@ ipcMain.handle("init-maskcam", async (event, mask_settings) => {
     return;
   }
 
+  if (!modprobLoaded) {
+    const command = `modprobe v4l2loopback`;
+
+    try {
+      await sudoExecAsync(command, { name: "CuttleTron load modprobe" });
+      modprobLoaded = true;
+      console.log("modprobe v4l2loopback loaded successfully.");
+    } catch (e) {
+      console.error(`error trying to load the modprob of v4l2, ${e}`);
+      dialog
+        .showMessageBox({
+          type: "error",
+          title: "Error loading modprobe",
+          message: `Attempted: ${command},\n Error: ${e.message}`,
+          buttons: ["OK"],
+        })
+        .then(() => {
+          throw new Error(
+            "Failed to load v4l2loopback module. Cannot continue."
+          );
+        });
+    }
+  }
+
   isCleanupInitiated = false;
 
   maskcam_window = new BrowserWindow({
     title: maskcamWindowTitle,
+    autoHideMenuBar: true,
     width: 640,
-    height: 480, //640x480 is the 4:3 aspect ratio init
+    height: 480, //640x480 is the 4:3 aspect ratio init, changed later
     minimizable: false,
     maximizable: false,
     resizable: true,
@@ -405,30 +435,30 @@ ipcMain.handle("init-maskcam", async (event, mask_settings) => {
       contextIsolation: false,
       // preload: path.join(__dirname, "preload.cjs"),
       webviewTag: false,
-    }, //skipTaskbar boolean (optional) macOS Windows - Whether to show the window in taskbar. Default is false
+    },
   }); //offscreen boolean (optional) - Whether to enable offscreen rendering for the browser window
   //win.setAspectRatio(aspectRatio[, extraSize]) //win.setSize(width, height[, animate])  win.getSize() //win.getMediaSourceId()
-  //TODO: remove from the toolbar too
 
   await maskcam_window.setMenu(null); // remove the menu bar and deactivates devTools
-
+  await maskcam_window.removeMenu(); //new
   await maskcam_window.show(); // Show the window after loading //win.destroy() //win.isDestroyed() //win.isVisible()
   await maskcam_window.loadFile("maskcam-view.html");
 
-  //TODO: do for Wayland as well
-  let buffer = maskcam_window.getNativeWindowHandle(); // The buffer contains the window ID in a platform-specific format For X11 on Linux, the ID is an unsigned long (32-bit) integer in the buffer
-  // Read the window ID based on the system's endianness
-  if (systemEndianness === "LE") {
-    maskcamWinIdInt = buffer.readUInt32LE(0);
-  } else {
-    maskcamWinIdInt = buffer.readUInt32BE(0);
+  // *do if NOT WAYLAND
+  if (systemX11orWayland == "x11") {
+    let buffer = maskcam_window.getNativeWindowHandle(); // The buffer contains the window ID in a platform-specific format For X11 on Linux, the ID is an unsigned long (32-bit) integer in the buffer
+    // Read the window ID based on the system's endianness
+    if (systemEndianness === "LE") {
+      maskcamWinIdInt = buffer.readUInt32LE(0);
+    } else {
+      maskcamWinIdInt = buffer.readUInt32BE(0);
+    }
+
+    maskcamWinIdHex = `0x${maskcamWinIdInt.toString(16).padStart(8, "0")}`;
+    console.log(
+      `--------Window ID int: ${maskcamWinIdInt}, maskcamWinIdHex: ${maskcamWinIdHex}`
+    );
   }
-
-  maskcamWinIdHex = `0x${maskcamWinIdInt.toString(16).padStart(8, "0")}`;
-
-  console.log(
-    `--------Window ID int: ${maskcamWinIdInt}, maskcamWinIdHex: ${maskcamWinIdHex}`
-  );
 
   await maskcam_window.webContents.send("toggle-mask-view", mask_settings);
 
