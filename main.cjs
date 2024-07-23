@@ -3,13 +3,7 @@
 // requires ...sudo apt-get install gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly
 // v4l2loopback-dkms v4l2loopback-utils, wmctrl,
 /////////
-const {
-  app,
-  BrowserWindow,
-  ipcMain,
-  desktopCapturer,
-  dialog,
-} = require("electron");
+const { app, BrowserWindow, ipcMain, desktopCapturer, dialog } = require("electron");
 const os = require("os");
 const fs = require("fs");
 const path = require("path");
@@ -20,19 +14,9 @@ const sudoExecAsync = promisify(sudo.exec);
 
 const systemEndianness = os.endianness();
 
-const {
-  streamMaskcamToDevice,
-  stopMaskcamStream,
-} = require("./main-fns/maskcam.cjs");
+const { streamMaskcamToDevice, stopMaskcamStream } = require("./main-fns/maskcam.cjs");
 
-const {
-  myWriteFileSync,
-  showDialog,
-  systemX11orWayland,
-  systemPulseaudioOrPipewire,
-  installDependencies,
-  createGif,
-} = require("./main-fns/main-utilities.cjs");
+const { myWriteFileSync, showDialog, systemX11orWayland, systemPulseaudioOrPipewire, installDependencies, createGif } = require("./main-fns/main-utilities.cjs");
 const {
   getSinksAndSourcesList,
   startAudioRecording,
@@ -42,11 +26,7 @@ const {
   stopAudioRecording,
   recordingsCompleted,
 } = require("./main-fns/audio-utilities.cjs");
-const {
-  audioEffectsStart,
-  audioEffectsStop,
-  cleanupAudioDevices,
-} = require("./main-fns/audio-effects.cjs");
+const { audioEffectsStart, audioEffectsStop, cleanupAudioDevices } = require("./main-fns/audio-effects.cjs");
 
 const packageJson = require("./package.json");
 const appName = packageJson.name;
@@ -59,8 +39,18 @@ if (process.env.NODE_ENV !== "production") {
   });
 }
 
-let X11orWayland = systemX11orWayland();
-let pulseaudioOrPipeWire = systemPulseaudioOrPipewire();
+let X11orWayland; // = systemX11orWayland();
+systemX11orWayland().then((value) => {
+  X11orWayland = value;
+  console.log(`top, X11orWayland = ${X11orWayland}`);
+});
+
+let pulseaudioOrPipeWire; // = systemPulseaudioOrPipewire();
+systemPulseaudioOrPipewire().then((value) => {
+  pulseaudioOrPipeWire = value;
+  console.log(`top, pulseaudioOrPipeWire = ${pulseaudioOrPipeWire}`);
+});
+
 let modprobLoaded = false;
 
 let mainWindow;
@@ -205,33 +195,23 @@ ipcMain.handle("install-dependencies", async () => {
 ///////////////////////////////////////////
 // *handler for creating a GIF
 ///////////////////////////////////////////
-ipcMain.handle(
-  "create-gif",
-  async (event, baseFilename, numDigits, startNumber, endNumber, FPS) => {
-    console.log({
-      baseFilename,
-      numDigits,
-      startNumber,
-      endNumber,
-      FPS,
-      TARGET_DIR,
-    });
+ipcMain.handle("create-gif", async (event, baseFilename, numDigits, startNumber, endNumber, FPS) => {
+  console.log({
+    baseFilename,
+    numDigits,
+    startNumber,
+    endNumber,
+    FPS,
+    TARGET_DIR,
+  });
 
-    try {
-      const result = await createGif(
-        baseFilename,
-        numDigits,
-        startNumber,
-        endNumber,
-        FPS,
-        TARGET_DIR
-      );
-      return result;
-    } catch (error) {
-      throw new Error(`Error creating GIF: ${error.message}`);
-    }
+  try {
+    const result = await createGif(baseFilename, numDigits, startNumber, endNumber, FPS, TARGET_DIR);
+    return result;
+  } catch (error) {
+    throw new Error(`Error creating GIF: ${error.message}`);
   }
-);
+});
 
 //*trying to use any npm package to get the audio or even repos for pulse audio specifically like
 // https://github.com/mscdex/paclient worked within nodejs itself but totally failed in electronjs
@@ -326,11 +306,7 @@ function resetMaskCam() {
 }
 
 ipcMain.handle("mask-opened", () => {
-  return (
-    maskcam_window &&
-    !maskcam_window.isDestroyed() &&
-    maskcam_window.isVisible()
-  );
+  return maskcam_window && !maskcam_window.isDestroyed() && maskcam_window.isVisible();
 });
 
 ipcMain.on("stop-maskcam", async (event) => {
@@ -362,10 +338,7 @@ ipcMain.handle("stream-maskcam", async (event, mask_settings) => {
 
     let bestMatch = standardResolutions[0];
     for (const res of standardResolutions) {
-      if (
-        Math.abs(res.width / res.height - webcamAspectRatio) <
-        Math.abs(bestMatch.width / bestMatch.height - webcamAspectRatio)
-      ) {
+      if (Math.abs(res.width / res.height - webcamAspectRatio) < Math.abs(bestMatch.width / bestMatch.height - webcamAspectRatio)) {
         bestMatch = res;
       }
     }
@@ -387,6 +360,13 @@ ipcMain.handle("stream-maskcam", async (event, mask_settings) => {
 });
 
 ipcMain.handle("init-maskcam", async (event, mask_settings) => {
+  console.log(`in init-maskcam, X11orWayland = ${X11orWayland}`);
+
+  if (!(X11orWayland == "x11" || X11orWayland == "Wayland")) {
+    X11orWayland = await systemX11orWayland();
+    console.log(`now, X11orWayland = ${X11orWayland}`);
+  }
+
   if (maskcam_window) {
     maskcam_window.focus(); // Focus the already opened window instead of creating a new one
     return;
@@ -409,9 +389,7 @@ ipcMain.handle("init-maskcam", async (event, mask_settings) => {
           buttons: ["OK"],
         })
         .then(() => {
-          throw new Error(
-            "Failed to load v4l2loopback module. Cannot continue."
-          );
+          throw new Error("Failed to load v4l2loopback module. Cannot continue.");
         });
     }
   }
@@ -445,7 +423,7 @@ ipcMain.handle("init-maskcam", async (event, mask_settings) => {
   await maskcam_window.loadFile("maskcam-view.html");
 
   // *do if NOT WAYLAND
-  if (systemX11orWayland == "x11") {
+  if (X11orWayland == "x11") {
     let buffer = maskcam_window.getNativeWindowHandle(); // The buffer contains the window ID in a platform-specific format For X11 on Linux, the ID is an unsigned long (32-bit) integer in the buffer
     // Read the window ID based on the system's endianness
     if (systemEndianness === "LE") {
@@ -455,9 +433,7 @@ ipcMain.handle("init-maskcam", async (event, mask_settings) => {
     }
 
     maskcamWinIdHex = `0x${maskcamWinIdInt.toString(16).padStart(8, "0")}`;
-    console.log(
-      `--------Window ID int: ${maskcamWinIdInt}, maskcamWinIdHex: ${maskcamWinIdHex}`
-    );
+    console.log(`--------Window ID int: ${maskcamWinIdInt}, maskcamWinIdHex: ${maskcamWinIdHex}`);
   }
 
   await maskcam_window.webContents.send("toggle-mask-view", mask_settings);
@@ -485,8 +461,6 @@ ipcMain.on("webcam-size", (event, webcam_specs) => {
     webcamHeight = height;
     webcamAspectRatio = width / height; // Calculate the aspect ratio
 
-    console.log(
-      `Webcam Aspect Ratio: ${webcamAspectRatio}, webcamWidth=${webcamWidth}, webcamHeight=${webcamHeight}`
-    );
+    console.log(`Webcam Aspect Ratio: ${webcamAspectRatio}, webcamWidth=${webcamWidth}, webcamHeight=${webcamHeight}`);
   }
 });

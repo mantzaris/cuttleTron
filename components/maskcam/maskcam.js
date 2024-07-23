@@ -34,7 +34,8 @@ start_btn.onclick = async () => {
   };
 
   const isMaskCamWindowOpen = await ipcRenderer.invoke("mask-opened");
-  console.log("maskcam window open (in maskcam.js)?:", isMaskCamWindowOpen);
+  console.log("maskcam start button, maskcam window open (in maskcam.js)?:", isMaskCamWindowOpen);
+  console.log(`maskcam start button, maskcam_settings = `, mask_settings);
   const action = start_btn.getAttribute("data-action"); //init or stream
 
   if (action == "init") {

@@ -95,9 +95,7 @@ ipcRenderer.on("anchor-mask-view", (event) => {
 document.addEventListener("DOMContentLoaded", async () => {
   maskcam_stop = false;
   videoElement = document.getElementById("maskcam-webcam-feed");
-  webcam_show
-    ? (videoElement.style.visibility = "visible")
-    : (videoElement.style.visibility = "hidden");
+  webcam_show ? (videoElement.style.visibility = "visible") : (videoElement.style.visibility = "hidden");
 
   videoContainer = document.getElementById("video-container");
   canvas = document.getElementById("face-mesh-canvas");
@@ -105,14 +103,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (navigator.mediaDevices.getUserMedia) {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia(
-        webcam_constraints
-      );
+      const stream = await navigator.mediaDevices.getUserMedia(webcam_constraints);
       videoElement.srcObject = stream;
       await new Promise((resolve) => {
         videoElement.onloadedmetadata = () => {
-          const aspectRatio =
-            videoElement.videoWidth / videoElement.videoHeight;
+          const aspectRatio = videoElement.videoWidth / videoElement.videoHeight;
           ipcRenderer.send("webcam-size", {
             width: videoElement.videoWidth,
             height: videoElement.videoHeight,
@@ -148,9 +143,9 @@ async function processVideoFrame() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawings
 
     result.face.forEach((face) => {
-      if (mesh_show || 1) drawMesh(face.mesh, ctx); // You can also use meshRaw depending on your needs
-      //if (basic_mask_show) drawMask(face, ctx);
-      drawThreeJS(face.mesh);
+      if (mesh_show) drawMesh(face.mesh, ctx); // You can also use meshRaw depending on your needs
+      if (basic_mask_show) drawMask(face, ctx);
+      //drawThreeJS(face.mesh);
     });
     //console.log(result); // result.face[0].mesh.drawMesh // result.hand// result.body // result.face[0].annotations;
   }
@@ -212,9 +207,7 @@ function adjustCameraFrustum() {
 
 function drawThreeJS(mesh) {
   if (!renderer || !scene || mesh.length < 3) {
-    console.error(
-      "Renderer, scene is not initialized, or mesh data is insufficient."
-    );
+    console.error("Renderer, scene is not initialized, or mesh data is insufficient.");
     return;
   }
 
@@ -228,20 +221,8 @@ function drawThreeJS(mesh) {
   for (let i = 0; i < mesh.length; i++) {
     //TODO: exclude the wierd artifact of the face appearing on the sides sporadically by ignoring edge/boundary situations
 
-    let x = mapCoordinate(
-      mesh[i][0],
-      0,
-      videoElement.offsetWidth,
-      camera.left,
-      camera.right
-    );
-    let y = mapCoordinate(
-      mesh[i][1],
-      0,
-      videoElement.offsetHeight,
-      camera.top,
-      camera.bottom
-    );
+    let x = mapCoordinate(mesh[i][0], 0, videoElement.offsetWidth, camera.left, camera.right);
+    let y = mapCoordinate(mesh[i][1], 0, videoElement.offsetHeight, camera.top, camera.bottom);
     let z = 0; // Since it's a 2D overlay in a 3D space
 
     // Check for NaN values
@@ -254,10 +235,7 @@ function drawThreeJS(mesh) {
   }
 
   const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute(
-    "position",
-    new THREE.BufferAttribute(new Float32Array(vertices), 3)
-  );
+  geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(vertices), 3));
 
   const material = new THREE.PointsMaterial({ color: 0xff0000, size: 2 });
 
@@ -304,50 +282,14 @@ function drawMask(face, ctx) {
   drawFeature(face.annotations.leftEyeIris, ctx, scaleX, scaleY);
   drawFeature(face.annotations.rightEyeIris, ctx, scaleX, scaleY);
   //mouth
-  drawPairedFeatures(
-    face.annotations.lipsUpperInner,
-    face.annotations.lipsLowerInner,
-    ctx,
-    scaleX,
-    scaleY
-  );
-  drawPairedFeatures(
-    face.annotations.lipsUpperSemiOuter,
-    face.annotations.lipsLowerSemiOuter,
-    ctx,
-    scaleX,
-    scaleY
-  );
+  drawPairedFeatures(face.annotations.lipsUpperInner, face.annotations.lipsLowerInner, ctx, scaleX, scaleY);
+  drawPairedFeatures(face.annotations.lipsUpperSemiOuter, face.annotations.lipsLowerSemiOuter, ctx, scaleX, scaleY);
   //eyes core
-  drawPairedFeatures(
-    face.annotations.leftEyeUpper0,
-    face.annotations.leftEyeLower0,
-    ctx,
-    scaleX,
-    scaleY
-  );
-  drawPairedFeatures(
-    face.annotations.rightEyeUpper0,
-    face.annotations.rightEyeLower0,
-    ctx,
-    scaleX,
-    scaleY
-  );
+  drawPairedFeatures(face.annotations.leftEyeUpper0, face.annotations.leftEyeLower0, ctx, scaleX, scaleY);
+  drawPairedFeatures(face.annotations.rightEyeUpper0, face.annotations.rightEyeLower0, ctx, scaleX, scaleY);
   //eyebrows
-  drawPairedFeatures(
-    face.annotations.leftEyebrowUpper,
-    face.annotations.leftEyebrowLower,
-    ctx,
-    scaleX,
-    scaleY
-  );
-  drawPairedFeatures(
-    face.annotations.rightEyebrowUpper,
-    face.annotations.rightEyebrowLower,
-    ctx,
-    scaleX,
-    scaleY
-  );
+  drawPairedFeatures(face.annotations.leftEyebrowUpper, face.annotations.leftEyebrowLower, ctx, scaleX, scaleY);
+  drawPairedFeatures(face.annotations.rightEyebrowUpper, face.annotations.rightEyebrowLower, ctx, scaleX, scaleY);
   //nose
   drawNose(
     {
@@ -383,13 +325,7 @@ function drawFeature(featurePoints, ctx, scaleX, scaleY) {
   ctx.stroke(); // Or fill, depending on the desired effect
 }
 
-function drawPairedFeatures(
-  upperFeaturePoints,
-  lowerFeaturePoints,
-  ctx,
-  scaleX,
-  scaleY
-) {
+function drawPairedFeatures(upperFeaturePoints, lowerFeaturePoints, ctx, scaleX, scaleY) {
   ctx.beginPath();
 
   // Draw the upper feature
@@ -414,29 +350,14 @@ function drawPairedFeatures(
 }
 
 function drawNose(nosePoints, ctx, scaleX, scaleY) {
-  const {
-    noseBottom,
-    noseLeftCorner,
-    noseRightCorner,
-    noseTip,
-    midwayBetweenEyes,
-  } = nosePoints;
+  const { noseBottom, noseLeftCorner, noseRightCorner, noseTip, midwayBetweenEyes } = nosePoints;
 
   // Scale the points
   const bottom = [noseBottom[0][0] * scaleX, noseBottom[0][1] * scaleY];
-  const leftCorner = [
-    noseLeftCorner[0][0] * scaleX,
-    noseLeftCorner[0][1] * scaleY,
-  ];
-  const rightCorner = [
-    noseRightCorner[0][0] * scaleX,
-    noseRightCorner[0][1] * scaleY,
-  ];
+  const leftCorner = [noseLeftCorner[0][0] * scaleX, noseLeftCorner[0][1] * scaleY];
+  const rightCorner = [noseRightCorner[0][0] * scaleX, noseRightCorner[0][1] * scaleY];
   const tip = [noseTip[0][0] * scaleX, noseTip[0][1] * scaleY];
-  const midway = [
-    midwayBetweenEyes[0][0] * scaleX,
-    midwayBetweenEyes[0][1] * scaleY,
-  ];
+  const midway = [midwayBetweenEyes[0][0] * scaleX, midwayBetweenEyes[0][1] * scaleY];
 
   // Draw the nose
   ctx.beginPath();

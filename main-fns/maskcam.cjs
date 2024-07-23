@@ -17,21 +17,15 @@ let videoDevIdNum = null;
 // xwininfo -id  0x4600002: to get the dimensions and position for ffmpeg
 // ffmpeg -probesize 10M -analyzeduration 10M -f x11grab -framerate 30 -video_size 1280x720 -i :0.0+2582,491 -vf "hflip" -f v4l2 -vcodec rawvideo -pix_fmt yuv420p /dev/video12
 // const ffmpegCommand = `ffmpeg -probesize 10M -analyzeduration 10M -f x11grab -framerate 30 -video_size 1280x720 -i :0.0+2582,491 -vf "hflip" -f v4l2 -vcodec rawvideo -pix_fmt yuv420p /dev/video${videoDevIdNum}`;
-async function streamMaskcamToDevice(
-  maskcamWindowTitle,
-  maskcamWinIdHex,
-  X11orWayland
-) {
+async function streamMaskcamToDevice(maskcamWindowTitle, maskcamWinIdHex, X11orWayland) {
   try {
     console.log("Starting device creation and streaming process");
     await createMaskcamVideoDevice(maskcamWindowTitle); // set the global device ID
   } catch (error) {
-    console.error(
-      `Error in streamMaskcamToDevice trying to set the maskcam video device and ID: ${error}`
-    );
+    console.error(`Error in streamMaskcamToDevice trying to set the maskcam video device and ID: ${error}`);
   }
 
-  console.log(`maskcam.cjs X11orWayland = ${X11orWayland}`);
+  console.log(`in maskcam.cjs X11orWayland = ${X11orWayland}`);
 
   let ffmpegCommand;
   let ffmpegArgs;
@@ -102,25 +96,19 @@ async function streamMaskcamToDevice(
         detail: "",
       })
       .then(() => {
-        console.log(
-          "user needs to connect window output to virtual video device"
-        );
+        console.log("user needs to connect window output to virtual video device");
       });
   }
 
   try {
     if (!videoDevIdNum) {
-      console.error(
-        "No video device ID returned. Exiting the streaming process."
-      );
+      console.error("No video device ID returned. Exiting the streaming process.");
       return;
     }
 
     // const output = execSync("v4l2-ctl --list-devices").toString();
     const { stdout: output } = await execAsync("v4l2-ctl --list-devices"); //.toString();
-    console.log(
-      `in streamMaskcamToDevice, v4l2-ctl --list-devices = ${output}`
-    );
+    console.log(`in streamMaskcamToDevice, v4l2-ctl --list-devices = ${output}`);
 
     if (X11orWayland == "x11") {
       console.log("prior to spawning ffmpeg command");
@@ -151,9 +139,7 @@ async function streamMaskcamToDevice(
 async function createMaskcamVideoDevice(maskcamWindowTitle) {
   // let output = execSync("v4l2-ctl --list-devices").toString();
   let { stdout: output } = await execAsync("v4l2-ctl --list-devices"); //.toString(); //TODO: needs toString?
-  console.log(
-    `in createMaskcamVideoDevice 1, v4l2-ctl --list-devices = ${output}`
-  );
+  console.log(`in createMaskcamVideoDevice 1, v4l2-ctl --list-devices = ${output}`);
 
   // Generating a random device number between 30 and 60
   videoDevIdNum = Math.floor(Math.random() * (61 - 30) + 30);
@@ -163,16 +149,12 @@ async function createMaskcamVideoDevice(maskcamWindowTitle) {
     // Executing the combined command with sudo
     await sudoExecAsync(command, { name: "cuttleTron" });
 
-    console.log(
-      `Device /dev/video${videoDevIdNum} created successfully with label ${maskcamWindowTitle}.`
-    );
+    console.log(`Device /dev/video${videoDevIdNum} created successfully with label ${maskcamWindowTitle}.`);
 
     // output = execSync("v4l2-ctl --list-devices").toString();
     ({ stdout: output } = await execAsync("v4l2-ctl --list-devices")); //.toString(); //TODO:
 
-    console.log(
-      `in createMaskcamVideoDevice 2, v4l2-ctl --list-devices = ${output}`
-    );
+    console.log(`in createMaskcamVideoDevice 2, v4l2-ctl --list-devices = ${output}`);
 
     return videoDevIdNum;
   } catch (error) {
@@ -210,8 +192,7 @@ async function stopMaskcamStream(isCleanupInitiated) {
 
 function parseX11WindowInfo(xwininfoOutput) {
   const sizeRegex = /Width:\s*(\d+)\s+Height:\s*(\d+)/;
-  const posRegex =
-    /Absolute upper-left X:\s*(\d+)\s+Absolute upper-left Y:\s*(\d+)/;
+  const posRegex = /Absolute upper-left X:\s*(\d+)\s+Absolute upper-left Y:\s*(\d+)/;
 
   const sizeMatches = sizeRegex.exec(xwininfoOutput);
   const posMatches = posRegex.exec(xwininfoOutput);
