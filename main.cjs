@@ -35,7 +35,7 @@ let TARGET_DIR = path.join(__dirname, "..", appName + "Files");
 
 // Enable hot-reloading for development
 //TODO: set this in the package.json build scripts
-process.env.NODE_ENV = "production";
+process.env.NODE_ENV = "development"; //"production"
 console.log(`process.env.NODE_ENV = ${process.env.NODE_ENV}`);
 
 if (process.env.NODE_ENV !== "production") {
