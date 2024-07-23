@@ -1,22 +1,36 @@
 //GStreamer 'audioamplify'
-var divArea = document.getElementById("audioeffects-controls");
+let divArea = document.getElementById("audioeffects-controls");
 // Amplification scales sound (range offered is theoretical and not practical: (-3.402823e+38 to 3.402823e+38)
-export var amplify1_amplification = 1;
-var minAmplify = -1.0;
-var maxAmplify = 25;
+export let amplify1_amplification = 1;
+const minAmplify = -1.0;
+const maxAmplify = 25;
 export function populateEffectArea_Amplify1() {
-    divArea.innerHTML = "<div id=\"sliderContainer\">\n                            \n                            <label id=\"scaleAmplificationLabel\" for=\"\">amplification=".concat(amplify1_amplification, "</label>\n                            \n                            <div class=\"sliderGroup\">\n                            <label for=\"scaleAmplificationSlider-amplication\">amplication</label>\n                            <div class=\"sliderWithValues\">\n                                <span class=\"minValue\">").concat(minAmplify, "</span>\n                                <input type=\"range\" id=\"scaleAmplificationSlider-amplication\" min=\"").concat(minAmplify, "\" max=\"").concat(maxAmplify, "\" step=\"0.5\" value=\"").concat(amplify1_amplification, "\">\n                                <span class=\"maxValue\">").concat(maxAmplify, "</span>\n                            </div>\n                            </div>\n\n                        </div>\n                            ");
-    document.querySelectorAll("#sliderContainer .sliderWithValues input[type='range']").forEach(function (element) {
-        var slider = element;
+    divArea.innerHTML = `<div id="sliderContainer">
+                            
+                            <label id="scaleAmplificationLabel" for="">amplification=${amplify1_amplification}</label>
+                            
+                            <div class="sliderGroup">
+                            <label for="scaleAmplificationSlider-amplication">amplication</label>
+                            <div class="sliderWithValues">
+                                <span class="minValue">${minAmplify}</span>
+                                <input type="range" id="scaleAmplificationSlider-amplication" min="${minAmplify}" max="${maxAmplify}" step="0.5" value="${amplify1_amplification}">
+                                <span class="maxValue">${maxAmplify}</span>
+                            </div>
+                            </div>
+
+                        </div>
+                            `;
+    document.querySelectorAll("#sliderContainer .sliderWithValues input[type='range']").forEach((element) => {
+        const slider = element;
         slider.onchange = updateAmplificationParam;
         // for the init
         slider.style.setProperty("--thumb-color", getSliderColors(slider.id, parseFloat(slider.value)));
     });
 }
 function updateAmplificationParam(event) {
-    var target = event.target;
-    var sliderId = target.id;
-    var value = parseFloat(target.value);
+    const target = event.target;
+    const sliderId = target.id;
+    const value = parseFloat(target.value);
     switch (sliderId) {
         case "scaleAmplificationSlider-amplication":
             amplify1_amplification = value;
@@ -25,7 +39,7 @@ function updateAmplificationParam(event) {
         default:
             break;
     }
-    document.getElementById("scaleAmplificationLabel").innerText = "amplification=".concat(amplify1_amplification);
+    document.getElementById("scaleAmplificationLabel").innerText = `amplification=${amplify1_amplification}`;
 }
 function getSliderColors(sliderId, value) {
     switch (sliderId) {

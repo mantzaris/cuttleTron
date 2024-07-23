@@ -1,15 +1,27 @@
 {
   "name": "cuttletron",
   "productName": "cuttletron",
-  "version": "0.0.1",
-  "description": "",
+  "version": "1.0.0",
+  "icon": "./cuttlefish.png",
+  "description": "Users can make screen snapshots, video record from various audio sources/sinks, apply sound effects to audio sources/sinks, and apply face masks to a webcam feed.",
   "type": "module",
   "main": "main.cjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mantzaris/cuttleTron"
+  },
   "scripts": {
     "start": "concurrently \"npm run watch-ts\" \"npm run watch-electron\"",
-    "watch-ts": "nodemon",
+    "watch-ts": "nodemon --config nodemon.json",
     "watch-electron": "NODE_ENV=development electron . --no-sandbox",
-    "build": "tsc"
+    "build": "tsc",
+    "start:prod": "cross-env NODE_ENV=production electron . --no-sandbox",
+    "dist": "cross-env NODE_ENV=production npm run build && electron-builder --linux --x64",
+    "postinstall": "electron-builder install-app-deps",
+    "package": "cross-env NODE_ENV=production electron-forge package",
+    "make": "cross-env NODE_ENV=production electron-forge make",
+    "publish": "electron-forge publish",
+    "lint": "eslint ."
   },
   "keywords": [
     "fun",
@@ -20,7 +32,18 @@
   "author": "mantzaris",
   "license": "MIT",
   "devDependencies": {
+    "@electron-forge/cli": "^7.4.0",
+    "@electron-forge/maker-deb": "^7.4.0",
+    "@electron-forge/maker-rpm": "^7.4.0",
+    "@electron-forge/maker-squirrel": "^7.4.0",
+    "@electron-forge/maker-zip": "^7.4.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.4.0",
+    "@electron-forge/plugin-fuses": "^7.4.0",
+    "@electron/fuses": "^1.8.0",
     "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron": "^27.1.2",
+    "electron-builder": "^24.13.3",
     "electron-rebuild": "^3.2.9",
     "electron-reload": "^2.0.0-alpha.1",
     "nodemon": "^3.0.1",
@@ -32,9 +55,55 @@
     "@vladmandic/human": "^3.2.1",
     "babylonjs": "^6.48.1",
     "bootstrap": "^5.3.2",
-    "electron": "^27.1.2",
+    "electron-squirrel-startup": "^1.0.1",
     "node-record-lpcm16": "^1.0.1",
     "sudo-prompt": "^9.2.1",
     "three": "^0.162.0"
+  },
+  "build": {
+    "appId": "com.example.cuttletron",
+    "productName": "CuttleTron",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "dist/**/*",
+      "node_modules/**/*",
+      "package.json",
+      "cuttlefish.png",
+      "main.cjs",
+      "main.html",
+      "maskcam-view.html",
+      "preload.cjs",
+      "preloadMaskcam.cjs",
+      "assets/**/*",
+      "components/**/*",
+      "css/**/*",
+      "main-fns/**/*",
+      "models/**/*",
+      "utilities/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "node_modules/@tensorflow/tfjs-node/deps/lib/",
+        "to": "deps/lib/",
+        "filter": ["**/*"]
+      }
+    ],
+    "asarUnpack": [
+      "node_modules/@tensorflow/tfjs-node/deps/lib/**/*"
+    ],
+    "linux": {
+      "target": [
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Utility",
+      "icon": "./cuttlefish.png"
+    }
   }
 }

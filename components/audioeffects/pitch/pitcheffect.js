@@ -1,14 +1,22 @@
-var labelText = "pitch";
-var divArea = document.getElementById("audioeffects-controls");
+const labelText = "pitch";
+let divArea = document.getElementById("audioeffects-controls");
 //pitch is non altered with 1.0, min is 0.1 max 3 and moderate is 0.7 to 1.4
-export var pitchValue = 1.0;
-var minPitch = 0.1;
-var maxPitch = 3;
+export let pitchValue = 1.0;
+const minPitch = 0.1;
+const maxPitch = 3;
 export function populateEffectArea_Pitch() {
-    divArea.innerHTML = "<div id=\"sliderContainer\">\n                          <label id=\"pitchSliderLabel\" for=\"pitchSlider\">".concat(labelText, ":").concat(pitchValue, "</label>\n                          <div class=\"sliderWithValues\">\n                              <span class=\"minValue\">").concat(minPitch, "</span>\n                              <input type=\"range\" id=\"pitchSlider\" min=\"").concat(minPitch, "\" max=\"").concat(maxPitch, "\" step=\"0.1\" value=\"").concat(pitchValue, "\">\n                              <span class=\"maxValue\">").concat(maxPitch, "</span>\n                          </div>\n                      </div>\n                        ");
-    var pitchSlider = document.getElementById("pitchSlider");
-    pitchSlider.onchange = function (event) {
-        var target = event.target;
+    divArea.innerHTML = `<div id="sliderContainer">
+                          <label id="pitchSliderLabel" for="pitchSlider">${labelText}:${pitchValue}</label>
+                          <div class="sliderWithValues">
+                              <span class="minValue">${minPitch}</span>
+                              <input type="range" id="pitchSlider" min="${minPitch}" max="${maxPitch}" step="0.1" value="${pitchValue}">
+                              <span class="maxValue">${maxPitch}</span>
+                          </div>
+                      </div>
+                        `;
+    const pitchSlider = document.getElementById("pitchSlider");
+    pitchSlider.onchange = (event) => {
+        const target = event.target;
         pitchValue = target.valueAsNumber; //parseFloat(target.value);
         updateSlider(pitchSlider, pitchValue);
         document.getElementById("pitchSliderLabel").innerText = labelText + ": " + target.value;
@@ -16,7 +24,7 @@ export function populateEffectArea_Pitch() {
     updateSlider(pitchSlider, pitchValue);
 }
 function updateSlider(slider, value) {
-    var color = sliderColor(value);
+    const color = sliderColor(value);
     slider.style.setProperty("--thumb-color", color);
 }
 function sliderColor(value) {

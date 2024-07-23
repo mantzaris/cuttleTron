@@ -1,22 +1,36 @@
 //GStreamer 'audioamplify'
-var divArea = document.getElementById("audioeffects-controls");
+let divArea = document.getElementById("audioeffects-controls");
 // Amplification scales sound (range offered is theoretical and not practical: (-3.402823e+38 to 3.402823e+38)
-export var stereo_stereo = 0.1;
-var minStereo = 0.0;
-var maxStereo = 1;
+export let stereo_stereo = 0.1;
+const minStereo = 0.0;
+const maxStereo = 1;
 export function populateEffectArea_Stereo() {
-    divArea.innerHTML = "<div id=\"sliderContainer\">\n                            \n                            <label id=\"scaleStereoLabel\" for=\"\">stereo=".concat(stereo_stereo, "</label>\n                            \n                            <div class=\"sliderGroup\">\n                            <label for=\"scaleStereoSlider-stereo\">stereo</label>\n                            <div class=\"sliderWithValues\">\n                                <span class=\"minValue\">").concat(minStereo, "</span>\n                                <input type=\"range\" id=\"scaleStereoSlider-stereo\" min=\"").concat(minStereo, "\" max=\"").concat(maxStereo, "\" step=\"0.1\" value=\"").concat(stereo_stereo, "\">\n                                <span class=\"maxValue\">").concat(maxStereo, "</span>\n                            </div>\n                            </div>\n\n                        </div>\n                            ");
-    document.querySelectorAll("#sliderContainer .sliderWithValues input[type='range']").forEach(function (element) {
-        var slider = element;
+    divArea.innerHTML = `<div id="sliderContainer">
+                            
+                            <label id="scaleStereoLabel" for="">stereo=${stereo_stereo}</label>
+                            
+                            <div class="sliderGroup">
+                            <label for="scaleStereoSlider-stereo">stereo</label>
+                            <div class="sliderWithValues">
+                                <span class="minValue">${minStereo}</span>
+                                <input type="range" id="scaleStereoSlider-stereo" min="${minStereo}" max="${maxStereo}" step="0.1" value="${stereo_stereo}">
+                                <span class="maxValue">${maxStereo}</span>
+                            </div>
+                            </div>
+
+                        </div>
+                            `;
+    document.querySelectorAll("#sliderContainer .sliderWithValues input[type='range']").forEach((element) => {
+        const slider = element;
         slider.onchange = updateStereoParam;
         // for the init
         slider.style.setProperty("--thumb-color", getSliderColors(slider.id, parseFloat(slider.value)));
     });
 }
 function updateStereoParam(event) {
-    var target = event.target;
-    var sliderId = target.id;
-    var value = parseFloat(target.value);
+    const target = event.target;
+    const sliderId = target.id;
+    const value = parseFloat(target.value);
     switch (sliderId) {
         case "scaleStereoSlider-stereo":
             stereo_stereo = value;
@@ -25,7 +39,7 @@ function updateStereoParam(event) {
         default:
             break;
     }
-    document.getElementById("scaleStereoLabel").innerText = "amplification=".concat(stereo_stereo);
+    document.getElementById("scaleStereoLabel").innerText = `amplification=${stereo_stereo}`;
 }
 function getSliderColors(sliderId, value) {
     switch (sliderId) {

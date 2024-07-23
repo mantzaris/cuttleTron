@@ -1,47 +1,115 @@
 //GStreamer 'ladspa-guitarix-distortion-so-guitarix-distortion' for distortion effect
-var divArea = document.getElementById("audioeffects-controls");
+let divArea = document.getElementById("audioeffects-controls");
 //drive is distortion
-export var distortion_drive = 0.0;
-var minDrive = 0.0;
-var maxDrive = 1.0;
+export let distortion_drive = 0.0;
+const minDrive = 0.0;
+const maxDrive = 1.0;
 //drive again
-export var distortion_gain = -20;
-var minDriveGain = -20;
-var maxDriveGain = 20;
+export let distortion_gain = -20;
+const minDriveGain = -20;
+const maxDriveGain = 20;
 //drive level
-export var distortion_level = 0;
-var minDriveLevel = 0;
-var maxDriveLevel = 1;
+export let distortion_level = 0;
+const minDriveLevel = 0;
+const maxDriveLevel = 1;
 //drive over toggles more overtones (Boolean)
-export var distortion_over = false;
-var distortion_over_shown = 0;
-var minDriveOver = 0;
-var maxDriveOver = 1;
+export let distortion_over = false;
+let distortion_over_shown = 0;
+const minDriveOver = 0;
+const maxDriveOver = 1;
 //increasing the distortion effect intensifying
-export var distortion_overdrive = 1;
-var minDriveOverDrive = 1;
-var maxDriveOverDrive = 20;
+export let distortion_overdrive = 1;
+const minDriveOverDrive = 1;
+const maxDriveOverDrive = 20;
 //
-export var distortion_trigger = 1;
-var minTrigger = 0;
-var maxTrigger = 1;
+export let distortion_trigger = 1;
+const minTrigger = 0;
+const maxTrigger = 1;
 //varying pitch like a wave
-export var distortion_vibrato = 0.01;
-var minVibrato = 0.01;
-var maxVibrato = 1;
+export let distortion_vibrato = 0.01;
+const minVibrato = 0.01;
+const maxVibrato = 1;
 export function populateEffectArea_Distortion() {
-    divArea.innerHTML = "<div id=\"sliderContainer\">\n                            \n                          <label id=\"distortionSliderLabel\" for=\"\">drive=".concat(distortion_drive, ", drive-gain=").concat(distortion_gain, ", drive-level=").concat(distortion_level, ", drive-over=").concat(distortion_over_shown, ", overdrive=").concat(distortion_overdrive, ", vibrato=").concat(distortion_vibrato, ", trigger=").concat(distortion_trigger, "</label>\n                          \n                          <div class=\"sliderGroup\">\n                          <label for=\"distortionSlider-drive\">drive</label>\n                            <div class=\"sliderWithValues\">\n                                <span class=\"minValue\">").concat(minDrive, "</span>\n                                <input type=\"range\" id=\"distortionSlider-drive\" min=\"").concat(minDrive, "\" max=\"").concat(maxDrive, "\" step=\"0.1\" value=\"").concat(distortion_drive, "\">\n                                <span class=\"maxValue\">").concat(maxDrive, "</span>\n                            </div>\n                          </div>\n  \n                          <div class=\"sliderGroup\">\n                            <label for=\"distortionSlider-again\">drive-gain</label>\n                            <div class=\"sliderWithValues\">\n                                <span class=\"minValue\">").concat(minDriveGain, "</span>\n                                <input type=\"range\" id=\"distortionSlider-gain\" min=\"").concat(minDriveGain, "\" max=\"").concat(maxDriveGain, "\" step=\"1\" value=\"").concat(distortion_gain, "\">\n                                <span class=\"maxValue\">").concat(maxDriveGain, "</span>\n                            </div>\n                          </div>\n\n                          <div class=\"sliderGroup\">\n                            <label for=\"distortionSlider-level\">level</label>\n                            <div class=\"sliderWithValues\">\n                                <span class=\"minValue\">").concat(minDriveLevel, "</span>\n                                <input type=\"range\" id=\"distortionSlider-level\" min=\"").concat(minDriveLevel, "\" max=\"").concat(maxDriveLevel, "\" step=\"0.1\" value=\"").concat(distortion_level, "\">\n                                <span class=\"maxValue\">").concat(maxDriveLevel, "</span>\n                            </div>\n                          </div>\n\n                          <div class=\"sliderGroup\">\n                            <label for=\"distortionSlider-overdrive\">overdrive</label>\n                            <div class=\"sliderWithValues\">\n                                <span class=\"minValue\">").concat(minDriveOverDrive, "</span>\n                                <input type=\"range\" id=\"distortionSlider-overdrive\" min=\"").concat(minDriveOverDrive, "\" max=\"").concat(maxDriveOverDrive, "\" step=\"1\" value=\"").concat(distortion_overdrive, "\">\n                                <span class=\"maxValue\">").concat(maxDriveOverDrive, "</span>\n                            </div>\n                          </div>\n\n                          <div class=\"sliderGroup\">\n                            <label for=\"distortionSlider-trigger\">trigger</label>\n                            <div class=\"sliderWithValues\">\n                                <span class=\"minValue\">").concat(minTrigger, "</span>\n                                <input type=\"range\" id=\"distortionSlider-trigger\" min=\"").concat(minTrigger, "\" max=\"").concat(maxTrigger, "\" step=\"0.1\" value=\"").concat(distortion_trigger, "\">\n                                <span class=\"maxValue\">").concat(maxTrigger, "</span>\n                            </div>\n                          </div>\n\n                          <div class=\"sliderGroup\">\n                            <label for=\"distortionSlider-vibrato\">vibrato</label>\n                            <div class=\"sliderWithValues\">\n                                <span class=\"minValue\">").concat(minVibrato, "</span>\n                                <input type=\"range\" id=\"distortionSlider-vibrato\" min=\"").concat(minVibrato, "\" max=\"").concat(maxVibrato, "\" step=\"0.05\" value=\"").concat(distortion_vibrato, "\">\n                                <span class=\"maxValue\">").concat(maxVibrato, "</span>\n                            </div>\n                          </div>\n\n                          <div class=\"sliderGroup\">\n                            <label for=\"distortionSlider-over\">drive-over</label>\n                            <div class=\"sliderWithValues\">\n                                <span class=\"minValue\">").concat(minDriveOver, "</span>\n                                <input type=\"range\" id=\"distortionSlider-over\" min=\"").concat(minDriveOver, "\" max=\"").concat(maxDriveOver, "\" step=\"1\" value=\"").concat(distortion_over_shown, "\">\n                                <span class=\"maxValue\">").concat(maxDriveOver, "</span>\n                            </div>\n                          </div>\n  \n                        </div>\n                          ");
-    document.querySelectorAll("#sliderContainer .sliderWithValues input[type='range']").forEach(function (element) {
-        var slider = element;
+    divArea.innerHTML = `<div id="sliderContainer">
+                            
+                          <label id="distortionSliderLabel" for="">drive=${distortion_drive}, drive-gain=${distortion_gain}, drive-level=${distortion_level}, drive-over=${distortion_over_shown}, overdrive=${distortion_overdrive}, vibrato=${distortion_vibrato}, trigger=${distortion_trigger}</label>
+                          
+                          <div class="sliderGroup">
+                          <label for="distortionSlider-drive">drive</label>
+                            <div class="sliderWithValues">
+                                <span class="minValue">${minDrive}</span>
+                                <input type="range" id="distortionSlider-drive" min="${minDrive}" max="${maxDrive}" step="0.1" value="${distortion_drive}">
+                                <span class="maxValue">${maxDrive}</span>
+                            </div>
+                          </div>
+  
+                          <div class="sliderGroup">
+                            <label for="distortionSlider-again">drive-gain</label>
+                            <div class="sliderWithValues">
+                                <span class="minValue">${minDriveGain}</span>
+                                <input type="range" id="distortionSlider-gain" min="${minDriveGain}" max="${maxDriveGain}" step="1" value="${distortion_gain}">
+                                <span class="maxValue">${maxDriveGain}</span>
+                            </div>
+                          </div>
+
+                          <div class="sliderGroup">
+                            <label for="distortionSlider-level">level</label>
+                            <div class="sliderWithValues">
+                                <span class="minValue">${minDriveLevel}</span>
+                                <input type="range" id="distortionSlider-level" min="${minDriveLevel}" max="${maxDriveLevel}" step="0.1" value="${distortion_level}">
+                                <span class="maxValue">${maxDriveLevel}</span>
+                            </div>
+                          </div>
+
+                          <div class="sliderGroup">
+                            <label for="distortionSlider-overdrive">overdrive</label>
+                            <div class="sliderWithValues">
+                                <span class="minValue">${minDriveOverDrive}</span>
+                                <input type="range" id="distortionSlider-overdrive" min="${minDriveOverDrive}" max="${maxDriveOverDrive}" step="1" value="${distortion_overdrive}">
+                                <span class="maxValue">${maxDriveOverDrive}</span>
+                            </div>
+                          </div>
+
+                          <div class="sliderGroup">
+                            <label for="distortionSlider-trigger">trigger</label>
+                            <div class="sliderWithValues">
+                                <span class="minValue">${minTrigger}</span>
+                                <input type="range" id="distortionSlider-trigger" min="${minTrigger}" max="${maxTrigger}" step="0.1" value="${distortion_trigger}">
+                                <span class="maxValue">${maxTrigger}</span>
+                            </div>
+                          </div>
+
+                          <div class="sliderGroup">
+                            <label for="distortionSlider-vibrato">vibrato</label>
+                            <div class="sliderWithValues">
+                                <span class="minValue">${minVibrato}</span>
+                                <input type="range" id="distortionSlider-vibrato" min="${minVibrato}" max="${maxVibrato}" step="0.05" value="${distortion_vibrato}">
+                                <span class="maxValue">${maxVibrato}</span>
+                            </div>
+                          </div>
+
+                          <div class="sliderGroup">
+                            <label for="distortionSlider-over">drive-over</label>
+                            <div class="sliderWithValues">
+                                <span class="minValue">${minDriveOver}</span>
+                                <input type="range" id="distortionSlider-over" min="${minDriveOver}" max="${maxDriveOver}" step="1" value="${distortion_over_shown}">
+                                <span class="maxValue">${maxDriveOver}</span>
+                            </div>
+                          </div>
+  
+                        </div>
+                          `;
+    document.querySelectorAll("#sliderContainer .sliderWithValues input[type='range']").forEach((element) => {
+        const slider = element;
         slider.onchange = updateDistortionParam;
         // for the init
         slider.style.setProperty("--thumb-color", getSliderColors(slider.id, parseFloat(slider.value)));
     });
 }
 function updateDistortionParam(event) {
-    var target = event.target;
-    var sliderId = target.id;
-    var value = parseFloat(target.value);
+    const target = event.target;
+    const sliderId = target.id;
+    const value = parseFloat(target.value);
     switch (sliderId) {
         case "distortionSlider-drive":
             distortion_drive = value;
@@ -75,7 +143,7 @@ function updateDistortionParam(event) {
         default:
             break;
     }
-    document.getElementById("distortionSliderLabel").innerText = "drive=".concat(distortion_drive, ", drive-gain=").concat(distortion_gain, ", drive-level=").concat(distortion_level, ", drive-over=").concat(distortion_over_shown, ", overdrive=").concat(distortion_overdrive, ", vibrato=").concat(distortion_vibrato, ", trigger=").concat(distortion_trigger);
+    document.getElementById("distortionSliderLabel").innerText = `drive=${distortion_drive}, drive-gain=${distortion_gain}, drive-level=${distortion_level}, drive-over=${distortion_over_shown}, overdrive=${distortion_overdrive}, vibrato=${distortion_vibrato}, trigger=${distortion_trigger}`;
 }
 function getSliderColors(sliderId, value) {
     switch (sliderId) {

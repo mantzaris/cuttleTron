@@ -1,6 +1,9 @@
 {
-    "watch": ["**/*.ts"],
-    "ext": "ts",
-    "exec": "npm run build"
-}
+    "watch": ["**/*.ts", "**/*.js"],
+    "ignore": ["dist/*", "node_modules/*"],
+    "ext": "ts,js",
+    "exec": "tsc --noEmitOnError false"
+  }
+
+  
   

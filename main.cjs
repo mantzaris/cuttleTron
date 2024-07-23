@@ -30,13 +30,24 @@ const { audioEffectsStart, audioEffectsStop, cleanupAudioDevices } = require("./
 
 const packageJson = require("./package.json");
 const appName = packageJson.name;
-const TARGET_DIR = path.join(__dirname, "..", appName + "Files");
+
+let TARGET_DIR = path.join(__dirname, "..", appName + "Files");
 
 // Enable hot-reloading for development
+//TODO: set this in the package.json build scripts
+process.env.NODE_ENV = "production";
+console.log(`process.env.NODE_ENV = ${process.env.NODE_ENV}`);
+
 if (process.env.NODE_ENV !== "production") {
   require("electron-reload")(__dirname, {
     electron: path.join(__dirname, "node_modules", ".bin", "electron"),
   });
+} else {
+  TARGET_DIR = path.join(__dirname, "..", "..", "..", appName + "Files");
+  //For tfjs and Human
+  const depsPath = path.join(__dirname, "..", "deps", "lib");
+  process.env.LD_LIBRARY_PATH = depsPath + ":" + (process.env.LD_LIBRARY_PATH || "");
+  console.log("LD_LIBRARY_PATH:", process.env.LD_LIBRARY_PATH);
 }
 
 let X11orWayland; // = systemX11orWayland();
@@ -359,6 +370,9 @@ ipcMain.handle("stream-maskcam", async (event, mask_settings) => {
   return maskcamWindowTitle;
 });
 
+const preloadMaskcamPath = path.join(__dirname, "preloadMaskcam.cjs");
+console.log(`Loading maskcam preload script from: ${preloadMaskcamPath}`);
+
 ipcMain.handle("init-maskcam", async (event, mask_settings) => {
   console.log(`in init-maskcam, X11orWayland = ${X11orWayland}`);
 
@@ -411,7 +425,7 @@ ipcMain.handle("init-maskcam", async (event, mask_settings) => {
       nodeIntegration: true, //needed for tensorflow in the renderer window...
       nodeIntegrationInWorker: true, // Enable Node.js integration in Web Workers
       contextIsolation: false,
-      // preload: path.join(__dirname, "preload.cjs"),
+      preload: path.join(__dirname, "preloadMaskcam.cjs"),
       webviewTag: false,
     },
   }); //offscreen boolean (optional) - Whether to enable offscreen rendering for the browser window

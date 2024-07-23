@@ -2,33 +2,8 @@ const { ipcRenderer } = require("electron");
 const fs = require("fs");
 const path = require("path");
 
-const tf = require("@tensorflow/tfjs");
-const Human = require("@vladmandic/human").default;
-
-const THREE = require("three");
-
-const model_path = path.join(__dirname, "models");
-
-const human_config = {
-  backend: "webgl", // Specify the backend to use, wasm alternative
-  modelBasePath: model_path,
-  face: {
-    enabled: true,
-    detector: { rotation: true, maxDetected: 5, return: true },
-    mesh: { enabled: true, return: true },
-    meshRaw: { enabled: true, return: true },
-    iris: { enabled: true, return: true },
-    distance: { enabled: true, return: true },
-    description: { enabled: true },
-    emotion: { enabled: false },
-  },
-  gesture: { enabled: true },
-};
-//hand: { enabled: false, minConfidence: 0.1, maxDetected: 1, landmarks: true, rotation: false },
-//attention: { enabled: true },
-//body: { enabled: false, minConfidence: 0.1, maxDetected: 1, modelPath: 'blazepose-heavy.json' },
-
-const human = new Human(human_config);
+//TODO: xxx
+//const tf = require("@tensorflow/tfjs");
 
 const webcam_constraints = {
   video: {
